@@ -10,11 +10,7 @@ CPacketListener::CPacketListener()
 }
 CPacketListener::~CPacketListener()
 {
-	if (m_thread != NULL)
-	{
-		delete m_thread;
-		m_thread = NULL;
-	}
+
 }
 void CPacketListener::PollingThread(void* args)
 {
@@ -34,8 +30,8 @@ void CPacketListener::PollingThread(void* args)
 	} while ((nBytes > 0) && !pListener->IsStopped());
 
 	free(pBuffer);
+	pBuffer = NULL;
 	closesocket(pListener->GetSocket());
-	WSACleanup();
 }
 
 bool CPacketListener::StartListening(FNCallbackPacketListener fnPtr)
@@ -86,4 +82,12 @@ bool CPacketListener::StartListening(FNCallbackPacketListener fnPtr)
 void CPacketListener::StopListening()
 {
 	m_bIsStopped = true;
+	m_thread->join();
+
+	if (m_thread != NULL)
+	{
+		delete m_thread;
+		m_thread = NULL;
+	}
+	WSACleanup();
 }

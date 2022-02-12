@@ -5,9 +5,12 @@
 #include "CSocketClient.h"
 #include "CLocalAreaListener.h"
 #include "CSNMP.h"
+#include "CPacketListener.h"
 
 CCheckOpenPorts* g_pOpenPorts = NULL;
 CLocalAreaListener* g_pLocalAreaListener = NULL;
+CPacketListener* g_pPacketListener = NULL;
+
 CSNMP*   g_SNMP = NULL;
 
 BOOL APIENTRY DllMain(HMODULE hModule,
@@ -28,6 +31,11 @@ BOOL APIENTRY DllMain(HMODULE hModule,
         {
             delete g_pLocalAreaListener;
             g_pLocalAreaListener = NULL;
+        }
+        if (g_pPacketListener != NULL)
+        {
+            delete g_pPacketListener;
+            g_pPacketListener = NULL;
         }
         if (g_SNMP != NULL)
         {
@@ -234,5 +242,21 @@ bool ENZTCPLIBRARY_API GetDefaultGateway(char* szDefaultIPAddress)
     {
         WSACleanup();
         return false;
+    }
+}
+
+bool ENZTCPLIBRARY_API StartPacketListener(FNCallbackPacketListener fnpPtr)
+{
+    StopPacketListener();
+    g_pPacketListener = new CPacketListener();
+    return g_pPacketListener->StartListening(fnpPtr);
+}
+void ENZTCPLIBRARY_API StopPacketListener()
+{
+    if (g_pPacketListener != NULL)
+    {
+        g_pPacketListener->StopListening();
+        delete g_pPacketListener;
+        g_pPacketListener = NULL;
     }
 }

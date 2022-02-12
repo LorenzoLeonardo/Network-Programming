@@ -103,6 +103,7 @@ public:
 };
 
 typedef void (*CallbackLocalAreaListener)(const char* , const char*, const char*, bool );
+typedef void (*FNCallbackPacketListener)(char* buffer, int nSize);
 typedef void (*FuncNewConnection)(void*);
 typedef void (*FuncFindOpenPort)(char* , int, bool, int);
 
@@ -121,3 +122,5 @@ extern "C" ENZTCPLIBRARY_API	void		EndSNMP();
 extern "C" ENZTCPLIBRARY_API	bool        GetDefaultGateway(char* szDefaultIPAddress);
 extern "C" ENZTCPLIBRARY_API	HANDLE		ConnectToServer(const char* ipAddress, const char* portNum, int* pnlastError);
 extern "C" ENZTCPLIBRARY_API	void		DisconnectFromServer(HANDLE hHandle);
+extern "C" ENZTCPLIBRARY_API	bool		StartPacketListener(FNCallbackPacketListener fnpPtr);
+extern "C" ENZTCPLIBRARY_API	void		StopPacketListener();

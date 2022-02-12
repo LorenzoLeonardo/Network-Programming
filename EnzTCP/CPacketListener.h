@@ -5,8 +5,6 @@
 
 using namespace std;
 
-typedef void (*FNCallbackPacketListener)(char *buffer, int nSize);
-
 class CPacketListener
 {
 private:
