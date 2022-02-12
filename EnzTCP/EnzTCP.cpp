@@ -253,10 +253,6 @@ bool ENZTCPLIBRARY_API StartPacketListener(FNCallbackPacketListener fnpPtr)
 }
 void ENZTCPLIBRARY_API StopPacketListener()
 {
-    if (g_pPacketListener != NULL)
-    {
+    if(g_pPacketListener!=NULL)
         g_pPacketListener->StopListening();
-        delete g_pPacketListener;
-        g_pPacketListener = NULL;
-    }
 }

@@ -40,6 +40,8 @@ typedef smiVALUE (*FNSNMPGet)(const char* szOID, DWORD & dwLastError);
 typedef void (*FNEndSNMP)();
 typedef bool (*FNGetDefaultGateway)(char szDefaultGateway[]);
 typedef bool (*FNStopSearchingOpenPorts)();
+typedef bool (*FNStartPacketListener)(FNCallbackPacketListener);
+typedef void (*FNStopPacketListener)();
 
 inline WCHAR* convert_to_wstring(const char* str);
 inline char* convert_from_wstring(const WCHAR* wstr);
@@ -58,6 +60,8 @@ public:
 	FNEndSNMP m_pfnPtrEndSNMP;
 	FNGetDefaultGateway m_pfnPtrGetDefaultGateway;
 	FNStartSNMP m_pfnPtrStartSNMP;
+	FNStartPacketListener m_pfnPtrStartPacketListener;
+	FNStopPacketListener m_pfnPtrStopPacketListener;
 // Dialog Data
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_CHECKOPENPORST_DIALOG };
@@ -76,13 +80,15 @@ protected:
 
 	static void CallbackLANListener(const char* ipAddress, const char* hostName, const char* macAddress, bool bIsopen);
 	static void CallBackEnumPort(char* ipAddress, int nPort, bool bIsopen, int nLastError);
+	static bool CallPacketListener(char* buffer, int nSize);
+
 	static unsigned __stdcall  RouterThread(void* parg);
 
 // Implementation
 protected:
 	HICON m_hIcon;
 
-	
+	bool m_bStopPacketListener;
 	// Generated message map functions
 	virtual BOOL OnInitDialog();
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
@@ -134,6 +140,10 @@ public:
 	{
 		return m_bStopSearchingOpenPorts;
 	}
+	bool IsPacketStopped()
+	{
+		return m_bStopPacketListener;
+	}
 	bool IsThreadRunning()
 	{
 		return m_bIsRunning;
@@ -178,4 +188,8 @@ public:
 private:
 
 	CStatic m_ctrlStaticRouterUpTime;
+public:
+	CEdit m_ctrlEditPacketReport;
+	afx_msg void OnBnClickedButtonStartPacket();
+	afx_msg void OnBnClickedButtonStopPacket();
 };

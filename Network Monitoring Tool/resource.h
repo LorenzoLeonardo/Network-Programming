@@ -17,6 +17,7 @@
 #define IDC_BUTTON_CHECKPORT            1005
 #define IDC_PROGRESS1                   1006
 #define IDC_PROGRESS_STATUS             1006
+#define IDC_EDIT_PACKET_REPORT          1007
 #define IDC_LIST_LAN                    1008
 #define IDC_BUTTON_LISTEN_LAN           1009
 #define IDC_EDIT1                       1010
@@ -30,6 +31,8 @@
 #define IDC_STATIC_INOCTETS             1018
 #define IDC_STATIC_INOCTETS2            1019
 #define IDC_STATIC_OUTOCTETS            1019
+#define IDC_BUTTON_START_PACKET         1019
+#define IDC_BUTTON_STOP_PACKET          1020
 
 // Next default values for new objects
 // 
@@ -37,7 +40,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        131
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1019
+#define _APS_NEXT_CONTROL_VALUE         1021
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

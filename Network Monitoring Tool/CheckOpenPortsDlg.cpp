@@ -131,7 +131,8 @@ void CCheckOpenPortsDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BUTTON_STOP_LAN, m_ctrlBtnStopListening);
 	DDX_Control(pDX, IDC_STATIC_UPTIME, m_ctrlStaticRouterUpTime);
 	DDX_Control(pDX, IDC_BUTTON_STOP_SEARCHINGPORTS, m_ctrlBtnStopSearchingPort);
-	
+
+	DDX_Control(pDX, IDC_EDIT_PACKET_REPORT, m_ctrlEditPacketReport);
 }
 
 BEGIN_MESSAGE_MAP(CCheckOpenPortsDlg, CDialogEx)
@@ -152,6 +153,8 @@ BEGIN_MESSAGE_MAP(CCheckOpenPortsDlg, CDialogEx)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST_LAN, &CCheckOpenPortsDlg::OnNMDblclkListLan)
 	ON_WM_CREATE()
 	ON_WM_CTLCOLOR()
+	ON_BN_CLICKED(IDC_BUTTON_START_PACKET, &CCheckOpenPortsDlg::OnBnClickedButtonStartPacket)
+	ON_BN_CLICKED(IDC_BUTTON_STOP_PACKET, &CCheckOpenPortsDlg::OnBnClickedButtonStopPacket)
 END_MESSAGE_MAP()
 
 
@@ -222,6 +225,8 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 		m_pfnPtrEndSNMP = (FNEndSNMP)GetProcAddress(dll_handle, "EndSNMP");
 		m_pfnPtrGetDefaultGateway = (FNGetDefaultGateway)GetProcAddress(dll_handle, "GetDefaultGateway");
 		m_pfnPtrStopSearchingOpenPorts = (FNStopSearchingOpenPorts)GetProcAddress(dll_handle, "StopSearchingOpenPorts");
+		m_pfnPtrStartPacketListener = (FNStartPacketListener)GetProcAddress(dll_handle, "StartPacketListener");
+		m_pfnPtrStopPacketListener = (FNStopPacketListener)GetProcAddress(dll_handle, "StopPacketListener");
 	}
 
 	LPCTSTR lpcRecHeader[] = { _T("No."), _T("IP Address"), _T("HostName"), _T("MAC Address") };
@@ -248,12 +253,13 @@ HBRUSH CCheckOpenPortsDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 		{
 			int id = pWnd->GetDlgCtrlID();
 
-			if (id == IDC_EDIT_AREA)
+			if (id == IDC_EDIT_AREA || id == IDC_EDIT_PACKET_REPORT)
 			{
 				pDC->SetTextColor(RGB(0, 0, 0));
 				pDC->SetBkColor(RGB(255, 255, 255));
 				return m_hBrushEditArea;
 			}
+			
 			else
 			{
 				pDC->SetTextColor(RGB(255, 255, 255));
@@ -778,4 +784,114 @@ void CCheckOpenPortsDlg::CallBackEnumPort(char* ipAddress, int nPort, bool bIsop
 		g_dlg->Increment();
 	}
 
+}
+
+CString ProcessPacket(char* Buffer, int Size)
+{
+	IPV4_HDR *iphdr = (IPV4_HDR*)Buffer;
+	CString cs;
+
+	switch (iphdr->ucIPProtocol) //Check the Protocol and do accordingly...
+	{
+	case 1: //ICMP Protocol
+		//++icmp;
+		cs = _T("ICMP : ");
+		break;
+
+	case 2: //IGMP Protocol
+		//++igmp;
+		cs = _T("IGMP : ");
+		break;
+
+	case 6: //TCP Protocol
+		//++tcp;
+		cs = _T("TCP : ");
+		break;
+
+	case 17: //UDP Protocol
+		//++udp;
+		cs = _T("UDP : ");
+		break;
+
+	default: //Some Other Protocol like ARP etc.
+		//++others;
+		break;
+	}
+	return cs;
+	//printf("TCP : %d UDP : %d ICMP : %d IGMP : %d Others : %d Total : %d\r", tcp, udp, icmp, igmp, others, total);
+}
+bool CCheckOpenPortsDlg::CallPacketListener(char* buffer, int nSize)
+{
+	CString csText, csSrcPort, csDestPort;
+	struct sockaddr_in source, dest;
+	int iphdrlen;
+	IPV4_HDR* iphdr;
+	TCP_HDR* tcpheader;
+	UDP_HDR* udpheader;
+
+	csText = ProcessPacket(buffer,nSize);
+
+	iphdr = (IPV4_HDR*)buffer;
+	iphdrlen = iphdr->ucIPHeaderLen * 4;
+
+	if (iphdr->ucIPProtocol == 6)//TCP
+	{
+		tcpheader = (TCP_HDR*)(buffer + iphdrlen);
+		csSrcPort = to_wstring(ntohs(tcpheader->usSourcePort)).c_str();
+		csDestPort = to_wstring(ntohs(tcpheader->usDestPort)).c_str();
+	}
+	else if (iphdr->ucIPProtocol == 17)
+	{
+		udpheader = (UDP_HDR*)(buffer + iphdrlen);
+		csSrcPort = to_wstring(ntohs(udpheader->usSourcePort)).c_str();
+		csDestPort = to_wstring(ntohs(udpheader->usDestPort)).c_str();
+	}
+
+	memset(&source, 0, sizeof(source));
+	source.sin_addr.s_addr = iphdr->unSrcaddress;
+	memset(&dest, 0, sizeof(dest));
+	dest.sin_addr.s_addr = iphdr->unDestaddress;
+
+	WCHAR *temp = convert_to_wstring(inet_ntoa(source.sin_addr));
+	CString sourceIP = temp;
+	free(temp);
+	temp = convert_to_wstring(inet_ntoa(dest.sin_addr));
+	CString destIP = temp;
+	free(temp);
+
+	csText += sourceIP + _T(":")+ csSrcPort+_T(" -> ") + destIP + _T(":") + csDestPort + _T(" Size: ") + to_wstring(nSize).c_str() + _T(" bytes\r\n");
+	CString csTemp;
+	g_dlg->m_ctrlEditPacketReport.GetWindowText(csTemp);
+	long nLength = csTemp.GetLength();
+	if (nLength < 20000)
+	{
+		g_dlg->m_ctrlEditPacketReport.SetSel(0, 0);
+		g_dlg->m_ctrlEditPacketReport.ReplaceSel(csText);
+	}
+	else
+	{
+		CString csTemp;
+		g_dlg->m_ctrlEditPacketReport.GetWindowText(csTemp);
+		csTemp = csTemp.Left(csTemp.ReverseFind(_T('\r')));
+		g_dlg->m_ctrlEditPacketReport.SetWindowText(csTemp);
+
+	}
+	return true;
+}
+void CCheckOpenPortsDlg::OnBnClickedButtonStartPacket()
+{
+	// TODO: Add your control notification handler code here
+	m_bStopPacketListener = false;
+	if (!m_pfnPtrStartPacketListener(CallPacketListener))
+	{
+		AfxMessageBox(_T("Packet Listener failed to start."));
+	}
+}
+
+
+void CCheckOpenPortsDlg::OnBnClickedButtonStopPacket()
+{
+	// TODO: Add your control notification handler code here
+	m_bStopPacketListener = true;
+	m_pfnPtrStopPacketListener();
 }

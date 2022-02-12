@@ -9,7 +9,7 @@ class CPacketListener
 {
 private:
 	bool m_bIsStopped;
-	thread* m_thread;
+	HANDLE m_thread;
 	SOCKET m_socket;
 public :
 
@@ -18,7 +18,7 @@ public :
 	
 	FNCallbackPacketListener m_fnCallback;
 
-	static void PollingThread(void* args);
+	static UINT PollingThread(void* args);
 	bool StartListening(FNCallbackPacketListener fnPtr);
 	void StopListening();
 	bool IsStopped()

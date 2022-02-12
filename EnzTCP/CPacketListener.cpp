@@ -12,26 +12,25 @@ CPacketListener::~CPacketListener()
 {
 
 }
-void CPacketListener::PollingThread(void* args)
+UINT CPacketListener::PollingThread(void* args)
 {
 	CPacketListener* pListener = (CPacketListener*)args;
 	int nBytes = 0;
 	char* pBuffer = (char*)malloc(65536);
 
 	if (pBuffer == NULL)
-		return;
+		return 0;
 	do
 	{
 		nBytes = recvfrom(pListener->GetSocket(), pBuffer, 65536, 0, 0, 0); //Eat as much as u can
-		if (nBytes > 0)
-			pListener->m_fnCallback(pBuffer, nBytes);
-		else
-			pListener->m_fnCallback(NULL, 0);
+		pListener->m_fnCallback(pBuffer, nBytes);
 	} while ((nBytes > 0) && !pListener->IsStopped());
 
 	free(pBuffer);
 	pBuffer = NULL;
 	closesocket(pListener->GetSocket());
+	WSACleanup();
+	return 0;
 }
 
 bool CPacketListener::StartListening(FNCallbackPacketListener fnPtr)
@@ -64,7 +63,7 @@ bool CPacketListener::StartListening(FNCallbackPacketListener fnPtr)
 
 	iResult = getaddrinfo(szHostname, NULL, &hints, &result);
 
-	if (iResult == NULL)
+	if (iResult != NULL)
 		return false;
 
 	iResult = bind(m_socket, result->ai_addr, (int)result->ai_addrlen);
@@ -74,20 +73,15 @@ bool CPacketListener::StartListening(FNCallbackPacketListener fnPtr)
 	int nInput = 1;
 	if (WSAIoctl(m_socket, SIO_RCVALL, &nInput, sizeof(nInput), 0, 0, (LPDWORD)&iResult, 0, 0) == SOCKET_ERROR)
 		return false;
-	
-	m_thread = new thread(PollingThread, this);
+	UINT id = 0;
+	m_thread = (HANDLE)_beginthreadex(NULL, 0, PollingThread, this, 0, &id);
 
+
+	
 	return true;
 }
 void CPacketListener::StopListening()
 {
 	m_bIsStopped = true;
-	m_thread->join();
 
-	if (m_thread != NULL)
-	{
-		delete m_thread;
-		m_thread = NULL;
-	}
-	WSACleanup();
 }
