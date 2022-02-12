@@ -5,6 +5,7 @@
 
 CSocketClient::CSocketClient()
 {
+	m_socket = INVALID_SOCKET;
 	WSADATA wsaData;
 	int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
 	if (iResult != 0) {
@@ -13,6 +14,7 @@ CSocketClient::CSocketClient()
 }
 CSocketClient::CSocketClient(string ipServer)
 {
+	m_socket = INVALID_SOCKET;
 	m_ipAddress = ipServer;
 	WSADATA wsaData;
 	int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -23,6 +25,7 @@ CSocketClient::CSocketClient(string ipServer)
 }
 CSocketClient::CSocketClient(string ipServer,string sPort)
 {
+	m_socket = INVALID_SOCKET;
 	m_ipAddress = ipServer;
 	m_sPortNum = sPort;
 	WSADATA wsaData;
@@ -34,6 +37,11 @@ CSocketClient::CSocketClient(string ipServer,string sPort)
 }
 CSocketClient::~CSocketClient()
 {
+	if (m_socket != INVALID_SOCKET)
+	{
+		closesocket(m_socket);
+		m_socket = NULL;
+	}
 	WSACleanup();
 }
 bool CSocketClient::ConnectToServer(int* pLastError)
@@ -78,7 +86,6 @@ bool CSocketClient::ConnectToServer(int* pLastError)
 		freeaddrinfo(result);
 		closesocket(m_socket);
 		m_socket = INVALID_SOCKET;
-
 		return false;
 	}
 	freeaddrinfo(result);
@@ -124,14 +131,13 @@ bool CSocketClient::ConnectToServer(string ipServer, string sPort, int *pLastErr
 	iResult = connect(m_socket, ptr->ai_addr, (int)ptr->ai_addrlen);
 	if (iResult == SOCKET_ERROR) {
 		*pLastError = WSAGetLastError();
-
 		freeaddrinfo(result);
 		closesocket(m_socket);
 		m_socket = INVALID_SOCKET;
 		return false;
 	}
 	freeaddrinfo(result);
-	DisconnectFromServer();
+
 	return true;
 }
 bool CSocketClient::DisconnectFromServer()

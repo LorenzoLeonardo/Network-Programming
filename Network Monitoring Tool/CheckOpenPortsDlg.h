@@ -169,21 +169,13 @@ public:
 	afx_msg void OnHdnItemKeyDownListLan(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnLvnKeydownListLan(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnNMDblclkListLan(NMHDR* pNMHDR, LRESULT* pResult);
-	void SetRouterBrand(CString cs)
-	{
-		m_ctrlStaticRouterBrand.SetWindowText(cs);
-	}
 
-	void SetRouterDescription(CString cs)
-	{
-		m_ctrlStaticRouterDescription.SetWindowText(cs);
-	}
+
 	void SetRouterUpTime(CString cs)
 	{
 		m_ctrlStaticRouterUpTime.SetWindowText(cs);
 	}
 private:
-	CStatic m_ctrlStaticRouterBrand;
-	CStatic m_ctrlStaticRouterDescription;
+
 	CStatic m_ctrlStaticRouterUpTime;
 };

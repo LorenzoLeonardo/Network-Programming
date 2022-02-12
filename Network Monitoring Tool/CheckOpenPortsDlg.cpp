@@ -129,8 +129,6 @@ void CCheckOpenPortsDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT_POLLINGTIME, m_ctrlEditPollingTime);
 	DDX_Control(pDX, IDC_BUTTON_LISTEN_LAN, m_ctrlBtnListen);
 	DDX_Control(pDX, IDC_BUTTON_STOP_LAN, m_ctrlBtnStopListening);
-	DDX_Control(pDX, IDC_STATIC_BRAND, m_ctrlStaticRouterBrand);
-	DDX_Control(pDX, IDC_STATIC_DESCRIPITON, m_ctrlStaticRouterDescription);
 	DDX_Control(pDX, IDC_STATIC_UPTIME, m_ctrlStaticRouterUpTime);
 	DDX_Control(pDX, IDC_BUTTON_STOP_SEARCHINGPORTS, m_ctrlBtnStopSearchingPort);
 	
@@ -593,6 +591,9 @@ unsigned __stdcall  CCheckOpenPortsDlg::RouterThread(void* parg)
 	CCheckOpenPortsDlg* pDlg = (CCheckOpenPortsDlg*)parg;
 	char szDefaultGateway[40];
 	memset(szDefaultGateway, 0, sizeof(szDefaultGateway));
+	CString csBrand = _T("");
+	CString csModel = _T("");
+	CString csDesc = _T("");
 
 	if (pDlg->m_pfnPtrGetDefaultGateway(szDefaultGateway))
 	{
@@ -600,53 +601,49 @@ unsigned __stdcall  CCheckOpenPortsDlg::RouterThread(void* parg)
 		smiVALUE value;
 		if (pDlg->m_pfnPtrStartSNMP(szDefaultGateway, "public", 1, error))
 		{
-			CString cs;
 
 			value = pDlg->m_pfnPtrSNMPGet(".1.3.6.1.2.1.1.6.0", error);//Brand name
 			if (error != SNMPAPI_SUCCESS)
 			{
-				AfxMessageBox(_T("Please turn on the SNMP of your main router."));
-
 				_endthreadex(0);
 				return 0;
 			}
 #ifdef UNICODE
 			WCHAR* pszTemp = convert_to_wstring((const char*)value.value.string.ptr);
-			cs = pszTemp;
+			csBrand = pszTemp;
 			free(pszTemp);
 #else
-			cs = value.value.string.ptr;
+			csBrand = value.value.string.ptr;
 #endif
-			cs += _T(" ");
+			
 			value = pDlg->m_pfnPtrSNMPGet(".1.3.6.1.2.1.1.5.0", error);//Model name
 			if (error != SNMPAPI_SUCCESS)
 			{
-				AfxMessageBox(_T("Please turn on the SNMP of your main router."));
 				_endthreadex(0);
 				return 0;
 			}
 #ifdef UNICODE
 			pszTemp = convert_to_wstring((const char*)value.value.string.ptr);
-			cs += pszTemp;
+			csModel = pszTemp;
 			free(pszTemp);
 #else
-			cs = value.value.string.ptr;
+			csModel = value.value.string.ptr;
 #endif
-			pDlg->SetRouterBrand(cs);
+			//pDlg->SetRouterBrand(cs);
 
 			value = pDlg->m_pfnPtrSNMPGet(".1.3.6.1.2.1.1.1.0", error);//decription
 			if (error != SNMPAPI_SUCCESS)
 			{
-				AfxMessageBox(_T("Please turn on the SNMP of your main router."));
 				_endthreadex(0);
 				return 0;
 			}
 #ifdef UNICODE
 			pszTemp = convert_to_wstring((const char*)value.value.string.ptr);
-			pDlg->SetRouterDescription(pszTemp);
+			//pDlg->SetRouterDescription(pszTemp);
+			csDesc = pszTemp;
 			free(pszTemp);
 #else
-			pDlg->SetRouterDescription((const char*)value.value.string.ptr);
+			csDesc = value.value.string.ptr;
 #endif
 		}
 
@@ -655,7 +652,6 @@ unsigned __stdcall  CCheckOpenPortsDlg::RouterThread(void* parg)
 			value = pDlg->m_pfnPtrSNMPGet(".1.3.6.1.2.1.25.1.1.0", error);//time
 			if (error != SNMPAPI_SUCCESS)
 			{
-				AfxMessageBox(_T("Please turn on the SNMP of your main router."));
 				break;
 			}
 			ULONG ulDays = value.value.uNumber / 8640000;
@@ -665,10 +661,11 @@ unsigned __stdcall  CCheckOpenPortsDlg::RouterThread(void* parg)
 			ULONG ulMin = fRem * 60;
 			fRem = (double)(fRem * 60) - ulMin;
 			ULONG ulSec = fRem * 60;
+	
+			CString csFormat;
+			csFormat.Format(_T("%s %s %s\r\n\r\nRouter's Up Time\r\n%u days, %u hours, %u min, %u secs"),	csBrand,csModel,csDesc, ulDays, ulHour, ulMin, ulSec);
 
-			CString csTime;
-			csTime.Format(_T("Router's Up Time\r\n%u days, %u hours, %u min, %u secs"), ulDays, ulHour, ulMin, ulSec);
-			pDlg->SetRouterUpTime(csTime);
+			pDlg->SetRouterUpTime(csFormat);
 			Sleep(500);
 		}
 	}
