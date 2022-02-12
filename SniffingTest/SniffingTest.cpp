@@ -364,7 +364,11 @@ void PrintUdpPacket(char* Buffer, int Size)
 	fprintf(logfile, "\n\n***********************UDP Packet*************************\n");
 
 	PrintIpHeader(Buffer);
+	string sourceIP = inet_ntoa(source.sin_addr);
+	string destIP = inet_ntoa(dest.sin_addr);
 
+	printf("UDP: %s:%u -> %s:%u  size:%u\n", sourceIP.c_str(), ntohs(tcpheader->source_port),
+		destIP.c_str(), ntohs(tcpheader->dest_port), Size);
 	fprintf(logfile, "\nUDP Header\n");
 	fprintf(logfile, " |-Source Port : %d\n", ntohs(udpheader->source_port));
 	fprintf(logfile, " |-Destination Port : %d\n", ntohs(udpheader->dest_port));
@@ -398,7 +402,11 @@ void PrintIcmpPacket(char* Buffer, int Size)
 
 	fprintf(logfile, "\n\n***********************ICMP Packet*************************\n");
 	PrintIpHeader(Buffer);
+	string sourceIP = inet_ntoa(source.sin_addr);
+	string destIP = inet_ntoa(dest.sin_addr);
 
+	printf("ICMP: %s:%u -> %s:%u  size:%u\n", sourceIP.c_str(), ntohs(tcpheader->source_port),
+		destIP.c_str(), ntohs(tcpheader->dest_port), Size);
 	fprintf(logfile, "\n");
 
 	fprintf(logfile, "ICMP Header\n");

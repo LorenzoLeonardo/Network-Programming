@@ -154,6 +154,7 @@
     <ClInclude Include="CCheckOpenPorts.h" />
     <ClInclude Include="CICMP.h" />
     <ClInclude Include="CLocalAreaListener.h" />
+    <ClInclude Include="CPacketListener.h" />
     <ClInclude Include="CSNMP.h" />
     <ClInclude Include="CSocket.h" />
     <ClInclude Include="CSocketClient.h" />
@@ -168,6 +169,7 @@
     <ClCompile Include="CCheckOpenPorts.cpp" />
     <ClCompile Include="CICMP.cpp" />
     <ClCompile Include="CLocalAreaListener.cpp" />
+    <ClCompile Include="CPacketListener.cpp" />
     <ClCompile Include="CSNMP.cpp" />
     <ClCompile Include="CSocket.cpp" />
     <ClCompile Include="CSocketClient.cpp" />

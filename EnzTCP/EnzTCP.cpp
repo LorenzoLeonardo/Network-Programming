@@ -89,8 +89,7 @@ HANDLE ENZTCPLIBRARY_API ConnectToServer(const char* ipAddress, const char* port
     }
     catch (int nError)
     {
-        if(nError !=0)
-            return (HANDLE)SOCKET_ERROR;
+         return (HANDLE)SOCKET_ERROR;
     }
 }
 

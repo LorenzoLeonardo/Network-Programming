@@ -51,6 +51,9 @@
     <ClInclude Include="CSNMP.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="CPacketListener.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -81,6 +84,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="CSNMP.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CPacketListener.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

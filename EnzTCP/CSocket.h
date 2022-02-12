@@ -1,7 +1,5 @@
 #pragma once
 #include "EnzTCP.h"
-#include <ws2tcpip.h>
-#include <iphlpapi.h>
 #include <string>
 #include <windows.h>
 

@@ -9,6 +9,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Enzo Chat Server", "Enzo Ch
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Network Monitoring Tool", "Network Monitoring Tool\Network Monitoring Tool.vcxproj", "{20A8E3CD-5E38-4390-960A-B305E4333C67}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SniffingTest", "SniffingTest\SniffingTest.vcxproj", "{88ECEEED-42A7-404F-A764-3C09BA547E39}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -41,6 +43,14 @@ Global
 		{20A8E3CD-5E38-4390-960A-B305E4333C67}.Release|x64.Build.0 = Release|x64
 		{20A8E3CD-5E38-4390-960A-B305E4333C67}.Release|x86.ActiveCfg = Release|Win32
 		{20A8E3CD-5E38-4390-960A-B305E4333C67}.Release|x86.Build.0 = Release|Win32
+		{88ECEEED-42A7-404F-A764-3C09BA547E39}.Debug|x64.ActiveCfg = Debug|x64
+		{88ECEEED-42A7-404F-A764-3C09BA547E39}.Debug|x64.Build.0 = Debug|x64
+		{88ECEEED-42A7-404F-A764-3C09BA547E39}.Debug|x86.ActiveCfg = Debug|Win32
+		{88ECEEED-42A7-404F-A764-3C09BA547E39}.Debug|x86.Build.0 = Debug|Win32
+		{88ECEEED-42A7-404F-A764-3C09BA547E39}.Release|x64.ActiveCfg = Release|x64
+		{88ECEEED-42A7-404F-A764-3C09BA547E39}.Release|x64.Build.0 = Release|x64
+		{88ECEEED-42A7-404F-A764-3C09BA547E39}.Release|x86.ActiveCfg = Release|Win32
+		{88ECEEED-42A7-404F-A764-3C09BA547E39}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
