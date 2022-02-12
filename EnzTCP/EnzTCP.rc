@@ -68,7 +68,7 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "CompanyName", "Enzo Tech Computer Solutions"
-            VALUE "FileDescription", "Enzo Tech Computer Solutions Library for TCP, ICMP, SNMP"
+            VALUE "FileDescription", "Enzo Tech Computer Solutions Library for TCP, ICMP, SNMP, UDP"
             VALUE "FileVersion", "1.0.0.1"
             VALUE "InternalName", "EnzTCP.dll"
             VALUE "LegalCopyright", "Copyright (C) 2022"
