@@ -200,9 +200,9 @@ smiVALUE ENZTCPLIBRARY_API SNMPGet(const char* szOID, DWORD& dwLastError)
 }
 void ENZTCPLIBRARY_API EndSNMP()
 {
-    g_SNMP->EndSNMP();
     if (g_SNMP != NULL)
     {
+        g_SNMP->EndSNMP();
         delete g_SNMP;
         g_SNMP = NULL;
     }

@@ -8,6 +8,7 @@ bool      CSNMP::m_fDone = true;
 bool      CSNMP::m_bSnmpSuccess = true;
 CSNMP::CSNMP()
 {
+    m_pSession = NULL;
 }
 CSNMP::~CSNMP()
 {
@@ -92,7 +93,8 @@ bool CSNMP::InitSNMP(const char* szAgentIPAddress, const char* szCommunity, int 
 }
 void CSNMP::EndSNMP()
 {
-    SnmpUtilMemFree(m_pSession);
+    if(m_pSession!=NULL)
+        SnmpUtilMemFree(m_pSession);
     WSACleanup();
 }
 

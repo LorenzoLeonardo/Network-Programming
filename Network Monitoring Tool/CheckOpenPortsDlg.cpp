@@ -16,29 +16,6 @@ CCheckOpenPortsDlg* g_dlg;
 #define new DEBUG_NEW
 #endif
 
-inline char* convert_from_wstring(const WCHAR* wstr)
-{
-	int wstr_len = (int)wcslen(wstr);
-	int num_chars = WideCharToMultiByte(CP_UTF8, 0, wstr, wstr_len, NULL, 0, NULL, NULL);
-	CHAR* strTo = (CHAR*)malloc((num_chars + 1) * sizeof(CHAR));
-	if (strTo)
-	{
-		WideCharToMultiByte(CP_UTF8, 0, wstr, wstr_len, strTo, num_chars, NULL, NULL);
-		strTo[num_chars] = '\0';
-	}
-	return strTo;
-}
-
-inline WCHAR* convert_to_wstring(const char* str)
-{
-	int size_needed = MultiByteToWideChar(CP_UTF8, 0, str, (int)strlen(str), NULL, 0);
-	WCHAR* wstrTo = (WCHAR*)malloc((size_needed + 1) * sizeof(WCHAR));
-	wmemset(wstrTo, 0, (size_needed + 1));
-	MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)strlen(str), wstrTo, size_needed);
-
-	return wstrTo;
-}
-
 inline void GetLastErrorMessageString(_tstring& str, int nGetLastError)
 {
 	DWORD dwSize = 0;
@@ -256,7 +233,7 @@ HBRUSH CCheckOpenPortsDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 		{
 			int id = pWnd->GetDlgCtrlID();
 
-			if (id == IDC_EDIT_AREA || id == IDC_EDIT_PACKET_REPORT)
+			if (id == IDC_EDIT_AREA || id == IDC_EDIT_PACKET_REPORT || id == IDC_EDIT_SPEED)
 			{
 				pDC->SetTextColor(RGB(0, 0, 0));
 				pDC->SetBkColor(RGB(255, 255, 255));
@@ -615,17 +592,16 @@ unsigned __stdcall  CCheckOpenPortsDlg::SpeedThread(void* parg)
 	pDlg->SetDataSize(0);
 	while (!pDlg->HasClickClose())
 	{
-		prev = pDlg->GetDataSize();
-	//	Sleep(1000);
-		current = pDlg->GetDataSize();
+		
+		//Sleep(1000);
 		
 		cs.Format(_T("%.2f bytes/sec"),(float)(current - prev)/(float)1000);
-	
 		pDlg->SetSpeed(cs);
 		pDlg->SetDataSize(0);
+		prev = pDlg->GetDataSize();
 		Sleep(1000);
+		current = pDlg->GetDataSize();
 	}
-	_endthreadex(0);
 	return 0;
 }
 
@@ -638,6 +614,7 @@ unsigned __stdcall  CCheckOpenPortsDlg::RouterThread(void* parg)
 	CString csBrand = _T("");
 	CString csModel = _T("");
 	CString csDesc = _T("");
+	string sTemp;
 
 	if (pDlg->m_pfnPtrGetDefaultGateway(szDefaultGateway))
 	{
@@ -649,13 +626,11 @@ unsigned __stdcall  CCheckOpenPortsDlg::RouterThread(void* parg)
 			value = pDlg->m_pfnPtrSNMPGet(".1.3.6.1.2.1.1.6.0", error);//Brand name
 			if (error != SNMPAPI_SUCCESS)
 			{
-				_endthreadex(0);
 				return 0;
 			}
 #ifdef UNICODE
-			WCHAR* pszTemp = convert_to_wstring((const char*)value.value.string.ptr);
-			csBrand = pszTemp;
-			free(pszTemp);
+			sTemp = (char*)value.value.string.ptr;
+			csBrand = pDlg->MultiByteToUnicode(sTemp).c_str();
 #else
 			csBrand = value.value.string.ptr;
 #endif
@@ -663,13 +638,11 @@ unsigned __stdcall  CCheckOpenPortsDlg::RouterThread(void* parg)
 			value = pDlg->m_pfnPtrSNMPGet(".1.3.6.1.2.1.1.5.0", error);//Model name
 			if (error != SNMPAPI_SUCCESS)
 			{
-				_endthreadex(0);
 				return 0;
 			}
 #ifdef UNICODE
-			pszTemp = convert_to_wstring((const char*)value.value.string.ptr);
-			csModel = pszTemp;
-			free(pszTemp);
+			sTemp = (char*)value.value.string.ptr;
+			csModel = pDlg->MultiByteToUnicode(sTemp).c_str();
 #else
 			csModel = value.value.string.ptr;
 #endif
@@ -678,14 +651,11 @@ unsigned __stdcall  CCheckOpenPortsDlg::RouterThread(void* parg)
 			value = pDlg->m_pfnPtrSNMPGet(".1.3.6.1.2.1.1.1.0", error);//decription
 			if (error != SNMPAPI_SUCCESS)
 			{
-				_endthreadex(0);
 				return 0;
 			}
 #ifdef UNICODE
-			pszTemp = convert_to_wstring((const char*)value.value.string.ptr);
-			//pDlg->SetRouterDescription(pszTemp);
-			csDesc = pszTemp;
-			free(pszTemp);
+			sTemp = (char*)value.value.string.ptr;
+			csDesc = pDlg->MultiByteToUnicode(sTemp).c_str();
 #else
 			csDesc = value.value.string.ptr;
 #endif
@@ -707,13 +677,12 @@ unsigned __stdcall  CCheckOpenPortsDlg::RouterThread(void* parg)
 			ULONG ulSec = fRem * 60;
 	
 			csFormat=_T("");
-			csFormat.Format(_T("%s %s %s\r\n\r\nRouter's Up Time\r\n%u days, %u hours, %u min, %u secs"),	csBrand,csModel,csDesc, ulDays, ulHour, ulMin, ulSec);
+			csFormat.Format(_T("%s %s %s\r\n\r\nRouter's Up Time\r\n%u days, %u hours, %u min, %u secs"),	csBrand.GetBuffer(), csModel.GetBuffer(), csDesc.GetBuffer(), ulDays, ulHour, ulMin, ulSec);
 
 			pDlg->SetRouterUpTime(csFormat);
 			Sleep(500);
 		}
 	}
-	_endthreadex(0);
 	return 0;
 }
 
@@ -760,12 +729,8 @@ void CCheckOpenPortsDlg::CallbackLANListener(const char* ipAddress, const char* 
 					to_wstring(nRow + 1).c_str(), 0, 0, 0, 0);
 
 				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 1, csIPAddress);
-				temp = convert_to_wstring(it->second[0].c_str());
-				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 2, temp);
-				free(temp);
-				temp = convert_to_wstring(it->second[1].c_str());
-				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 3, temp);
-				free(temp);
+				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 2, g_dlg->MultiByteToUnicode(it->second[0]).c_str());
+				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 3, g_dlg->MultiByteToUnicode(it->second[1]).c_str());
 #else 
 				g_dlg->m_ctrlLANConnected.InsertItem(LVIF_TEXT | LVIF_STATE, nRow,
 					to_string(nRow + 1).c_str(), 0, 0, 0, 0);
@@ -804,7 +769,8 @@ void CCheckOpenPortsDlg::CallBackEnumPort(char* ipAddress, int nPort, bool bIsop
 			mtx_enumPorts.lock();
 			CString csStr;
 #ifdef UNICODE
-			TCHAR* wr = convert_to_wstring(ipAddress);
+			string sTemp = ipAddress;
+			TCHAR* wr = (TCHAR*)g_dlg->MultiByteToUnicode(sTemp).c_str();
 #else
 			TCHAR* wr = ipAddress;
 #endif
@@ -864,8 +830,7 @@ CString ProcessPacket(unsigned char* Buffer, int Size)
 }
 bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 {
-
-	CString csText = _T(""), csSrcPort = _T(""), csDestPort = _T("");
+	CString csText = _T(""), csSrcPort = _T(""), csDestPort = _T(""), sourceIP, destIP;
 	struct sockaddr_in source, dest;
 	int iphdrlen;
 	IPV4_HDR* iphdr;
@@ -894,25 +859,18 @@ bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 
 		g_dlg->SetDataSize(g_dlg->GetDataSize() + nSize);
 
-
 		memset(&source, 0, sizeof(source));
 		source.sin_addr.s_addr = iphdr->unSrcaddress;
 		memset(&dest, 0, sizeof(dest));
 		dest.sin_addr.s_addr = iphdr->unDestaddress;
 
-
-
-
 		csText = ProcessPacket(buffer, nSize);
+	
+		string sTemp = inet_ntoa(source.sin_addr);
+		sourceIP = g_dlg->MultiByteToUnicode(sTemp).c_str();
+		sTemp = inet_ntoa(dest.sin_addr);
+		destIP = g_dlg->MultiByteToUnicode(sTemp).c_str();
 
-
-
-		WCHAR* temp = convert_to_wstring(inet_ntoa(source.sin_addr));
-		CString sourceIP = temp;
-		free(temp);
-		temp = convert_to_wstring(inet_ntoa(dest.sin_addr));
-		CString destIP = temp;
-		free(temp);
 
 		csText += sourceIP + _T(":") + csSrcPort + _T(" -> ") + destIP + _T(":") + csDestPort + _T(" Size: ") + to_wstring(nSize).c_str() + _T(" bytes\r\n");
 		CString csTemp;

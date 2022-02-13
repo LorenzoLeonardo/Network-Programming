@@ -43,8 +43,6 @@ typedef bool (*FNStopSearchingOpenPorts)();
 typedef bool (*FNStartPacketListener)(FNCallbackPacketListener);
 typedef void (*FNStopPacketListener)();
 
-inline WCHAR* convert_to_wstring(const char* str);
-inline char* convert_from_wstring(const WCHAR* wstr);
 inline void GetLastErrorMessageString(_tstring& str, int nGetLastError);
 template <typename Map>
 inline bool key_compare(Map const& lhs, Map const& rhs);
@@ -128,8 +126,8 @@ public:
 		return m_ulDataSize;
 	}
 	afx_msg void OnBnClickedButtonPort();
-	string UnicodeToMultiByte(wstring& wstr);
-	wstring MultiByteToUnicode(string& wstr);
+	inline string UnicodeToMultiByte(wstring& wstr);
+	inline wstring MultiByteToUnicode(string& wstr);
 	HANDLE Handle[MAX_PORT];
 	CIPAddressCtrl m_ctrlIPAddress;
 	CEdit m_ctrlResult;
