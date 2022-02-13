@@ -20,12 +20,15 @@ void CPacketListener::PollingThread(void* args)
 	int nBytes = 0;
 	char* pBuffer = (char*)malloc(65536);
 
+	unsigned char* upBuffer = NULL;
+	reinterpret_cast<unsigned char*> (pBuffer);
 	if (pBuffer == NULL)
 		return;
 	do
 	{
 		nBytes = recvfrom(pListener->GetSocket(), pBuffer, 65536, 0, 0, 0); //Eat as much as u can
-		pListener->m_fnCallback(pBuffer, nBytes);
+		upBuffer = reinterpret_cast<unsigned char*> (pBuffer);
+		pListener->m_fnCallback(upBuffer, nBytes);
 	} while ((nBytes > 0) && !pListener->IsStopped());
 
 	free(pBuffer);

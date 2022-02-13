@@ -103,7 +103,7 @@ public:
 };
 
 typedef void (*CallbackLocalAreaListener)(const char* , const char*, const char*, bool );
-typedef bool (*FNCallbackPacketListener)(char* buffer, int nSize);
+typedef bool (*FNCallbackPacketListener)(unsigned char* buffer, int nSize);
 typedef void (*FuncNewConnection)(void*);
 typedef void (*FuncFindOpenPort)(char* , int, bool, int);
 

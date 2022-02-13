@@ -80,7 +80,7 @@ protected:
 
 	static void CallbackLANListener(const char* ipAddress, const char* hostName, const char* macAddress, bool bIsopen);
 	static void CallBackEnumPort(char* ipAddress, int nPort, bool bIsopen, int nLastError);
-	static bool CallPacketListener(char* buffer, int nSize);
+	static bool CallPacketListener(unsigned char* buffer, int nSize);
 
 	static unsigned __stdcall  RouterThread(void* parg);
 	static unsigned __stdcall  SpeedThread(void* parg);

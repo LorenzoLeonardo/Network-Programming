@@ -596,18 +596,20 @@ void CCheckOpenPortsDlg::OnNMDblclkListLan(NMHDR* pNMHDR, LRESULT* pResult)
 unsigned __stdcall  CCheckOpenPortsDlg::SpeedThread(void* parg)
 {
 	CCheckOpenPortsDlg* pDlg = (CCheckOpenPortsDlg*)parg;
-
+	CString cs;
+	ULONG prev = 0, current = 0;
 	pDlg->SetDataSize(0);
 	while (!pDlg->HasClickClose())
 	{
-		ULONG prev = pDlg->GetDataSize();
+		prev = pDlg->GetDataSize();
 		Sleep(1000);
-		ULONG current = pDlg->GetDataSize();
-		CString cs;
-		cs.Format(_T("%f bytes/sec"),(float)(current - prev)/(float)1000);
+		current = pDlg->GetDataSize();
+		
+		cs.Format(_T("%.2f bytes/sec"),(float)(current - prev)/(float)1000);
 		pDlg->m_ctrlEditSpeed.SetWindowTextW(cs);
 		pDlg->SetDataSize(0);
 	}
+	return 0;
 }
 
 // CCheckOpenPortsDlg message handlers
@@ -805,7 +807,7 @@ void CCheckOpenPortsDlg::CallBackEnumPort(char* ipAddress, int nPort, bool bIsop
 
 }
 
-CString ProcessPacket(char* Buffer, int Size)
+CString ProcessPacket(unsigned char* Buffer, int Size)
 {
 	IPV4_HDR *iphdr = (IPV4_HDR*)Buffer;
 	CString cs;
@@ -839,20 +841,17 @@ CString ProcessPacket(char* Buffer, int Size)
 	return cs;
 	//printf("TCP : %d UDP : %d ICMP : %d IGMP : %d Others : %d Total : %d\r", tcp, udp, icmp, igmp, others, total);
 }
-bool CCheckOpenPortsDlg::CallPacketListener(char* buffer, int nSize)
+bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 {
-	mtx_packetlistener.lock();
-	CString csText, csSrcPort, csDestPort;
+
+	CString csText = _T(""), csSrcPort = _T(""), csDestPort = _T("");
 	struct sockaddr_in source, dest;
 	int iphdrlen;
 	IPV4_HDR* iphdr;
-	TCP_HDR* tcpheader;
-	UDP_HDR* udpheader;
-
-	g_dlg->SetDataSize(g_dlg->GetDataSize() + nSize);
-
-	csText = ProcessPacket(buffer,nSize);
-
+	TCP_HDR* tcpheader = NULL;
+	UDP_HDR* udpheader = NULL;
+	int nPort = 0;
+	
 	iphdr = (IPV4_HDR*)buffer;
 	iphdrlen = iphdr->ucIPHeaderLen * 4;
 
@@ -861,44 +860,58 @@ bool CCheckOpenPortsDlg::CallPacketListener(char* buffer, int nSize)
 		tcpheader = (TCP_HDR*)(buffer + iphdrlen);
 		csSrcPort = to_wstring(ntohs(tcpheader->usSourcePort)).c_str();
 		csDestPort = to_wstring(ntohs(tcpheader->usDestPort)).c_str();
+		nPort = ntohs(tcpheader->usSourcePort);
 	}
 	else if (iphdr->ucIPProtocol == 17)
 	{
 		udpheader = (UDP_HDR*)(buffer + iphdrlen);
 		csSrcPort = to_wstring(ntohs(udpheader->usSourcePort)).c_str();
 		csDestPort = to_wstring(ntohs(udpheader->usDestPort)).c_str();
+		nPort = ntohs(udpheader->usSourcePort);
 	}
 
-	memset(&source, 0, sizeof(source));
-	source.sin_addr.s_addr = iphdr->unSrcaddress;
-	memset(&dest, 0, sizeof(dest));
-	dest.sin_addr.s_addr = iphdr->unDestaddress;
 
-	WCHAR *temp = convert_to_wstring(inet_ntoa(source.sin_addr));
-	CString sourceIP = temp;
-	free(temp);
-	temp = convert_to_wstring(inet_ntoa(dest.sin_addr));
-	CString destIP = temp;
-	free(temp);
+		g_dlg->SetDataSize(g_dlg->GetDataSize() + nSize);
 
-	csText += sourceIP + _T(":")+ csSrcPort+_T(" -> ") + destIP + _T(":") + csDestPort + _T(" Size: ") + to_wstring(nSize).c_str() + _T(" bytes\r\n");
-	CString csTemp;
-	g_dlg->m_ctrlEditPacketReport.GetWindowText(csTemp);
-	long nLength = csTemp.GetLength();
-	if (nLength < 20000)
-	{
-		g_dlg->m_ctrlEditPacketReport.SetSel(0, 0);
-		g_dlg->m_ctrlEditPacketReport.ReplaceSel(csText);
-	}
-	else
-	{
+
+		memset(&source, 0, sizeof(source));
+		source.sin_addr.s_addr = iphdr->unSrcaddress;
+		memset(&dest, 0, sizeof(dest));
+		dest.sin_addr.s_addr = iphdr->unDestaddress;
+
+
+
+
+		csText = ProcessPacket(buffer, nSize);
+
+
+
+		WCHAR* temp = convert_to_wstring(inet_ntoa(source.sin_addr));
+		CString sourceIP = temp;
+		free(temp);
+		temp = convert_to_wstring(inet_ntoa(dest.sin_addr));
+		CString destIP = temp;
+		free(temp);
+
+		csText += sourceIP + _T(":") + csSrcPort + _T(" -> ") + destIP + _T(":") + csDestPort + _T(" Size: ") + to_wstring(nSize).c_str() + _T(" bytes\r\n");
 		CString csTemp;
 		g_dlg->m_ctrlEditPacketReport.GetWindowText(csTemp);
-		csTemp = csTemp.Left(csTemp.ReverseFind(_T('\r')));
-		g_dlg->m_ctrlEditPacketReport.SetWindowText(csTemp);
+		long nLength = csTemp.GetLength();
+		if (nLength < 20000)
+		{
+			g_dlg->m_ctrlEditPacketReport.SetSel(0, 0);
+			g_dlg->m_ctrlEditPacketReport.ReplaceSel(csText);
+		}
+		else
+		{
+			CString csTemp;
+			g_dlg->m_ctrlEditPacketReport.GetWindowText(csTemp);
+			csTemp = csTemp.Left(csTemp.ReverseFind(_T('\r')));
+			g_dlg->m_ctrlEditPacketReport.SetWindowText(csTemp);
 
-	}
-	mtx_packetlistener.unlock();
+		}
+	
+
 	return true;
 }
 void CCheckOpenPortsDlg::OnBnClickedButtonStartPacket()
