@@ -209,50 +209,8 @@ void ENZTCPLIBRARY_API EndSNMP()
 
 bool ENZTCPLIBRARY_API GetDefaultGateway(char* szDefaultIPAddress)
 {
-    WSADATA wsaData;
-    IPAddr* pDefaultGateway = 0;
-    char hostname[NI_MAXHOST];
-    char servInfo[NI_MAXSERV];
-
-    ULONG PhysAddrLen = 6;
-    addrinfo* result = NULL, * ptr = NULL, hints;
-    int iResult = 0;
-    
-    iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
-    if (iResult != 0) 
-        return false;
- 
-    ZeroMemory(&hints, sizeof(hints));
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_RAW;
-    hints.ai_protocol = IPPROTO_ICMP;
-    hints.ai_flags = AI_ALL;
-    
-    iResult = getaddrinfo("localhost", NULL, &hints, &result);
-    if (iResult == 0)
-    {
-        memset(hostname, 0, sizeof(hostname));
-        int status = getnameinfo(result->ai_addr, (socklen_t)result->ai_addrlen, hostname, NI_MAXHOST, servInfo, NI_MAXSERV, 0);
-        freeaddrinfo(result);
-        iResult = getaddrinfo(hostname, NULL, &hints, &result);
-        pDefaultGateway = (IPAddr*)(result->ai_addr->sa_data + 2);
-        char szIPAddress[32];
-        memset(szIPAddress, 0, sizeof(szIPAddress));
-        inet_ntop(AF_INET, (const void*)pDefaultGateway, szIPAddress, sizeof(szIPAddress));
-        string sTemp = szIPAddress;
-
-        sTemp= sTemp.substr(0,sTemp.rfind('.', sTemp.length())+1);
-        sTemp += "1";
-        
-        memcpy_s(szDefaultIPAddress, sizeof(char)*sTemp.length(), sTemp.c_str(), sizeof(char) * sTemp.length());
-        WSACleanup();
-        return true;
-    }
-    else
-    {
-        WSACleanup();
-        return false;
-    }
+    CSocket sock;
+    return sock.GetDefaultGateway(szDefaultIPAddress);
 }
 
 bool ENZTCPLIBRARY_API StartPacketListener(FNCallbackPacketListener fnpPtr)

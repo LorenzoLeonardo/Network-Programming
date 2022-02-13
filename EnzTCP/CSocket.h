@@ -26,5 +26,6 @@ public:
 	const char* GetHostName();
 	const char* Receive();
 	void Send(char* sendbuf);
+	bool GetDefaultGateway(char* szDefaultIPAddress);
 };
 
