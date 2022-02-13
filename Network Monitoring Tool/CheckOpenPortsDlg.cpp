@@ -857,28 +857,34 @@ bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 	sourceIP = g_dlg->MultiByteToUnicode(sTemp).c_str();
 	sTemp = inet_ntoa(dest.sin_addr);
 	destIP = g_dlg->MultiByteToUnicode(sTemp).c_str();
+	CString ipFilter;
 
-	g_dlg->SetDownloadSize(g_dlg->GetDownloadSize() + nSize);
+	g_dlg->m_ctrlIPAddress.GetWindowText(ipFilter);
 
-	csText += sourceIP + _T(":") + csSrcPort + _T(" -> ") + destIP + _T(":") + csDestPort + _T(" Size: ") + to_wstring(nSize).c_str() + _T(" bytes\r\n");
-	CString csTemp;
-	g_dlg->m_ctrlEditPacketReport.GetWindowText(csTemp);
-	long nLength = csTemp.GetLength();
-	if (nLength < 5000)
+	if (ipFilter.Compare(sourceIP) == 0 || ipFilter.Compare(destIP) == 0)
 	{
-		g_dlg->m_ctrlEditPacketReport.SetSel(0, 0);
-		g_dlg->m_ctrlEditPacketReport.ReplaceSel(csText);
-	}
-	else
-	{
+
+		g_dlg->SetDownloadSize(g_dlg->GetDownloadSize() + nSize);
+
+		csText += sourceIP + _T(":") + csSrcPort + _T(" -> ") + destIP + _T(":") + csDestPort + _T(" Size: ") + to_wstring(nSize).c_str() + _T(" bytes\r\n");
 		CString csTemp;
 		g_dlg->m_ctrlEditPacketReport.GetWindowText(csTemp);
-		csTemp = csTemp.Left(csTemp.ReverseFind(_T('\r')));
-		g_dlg->m_ctrlEditPacketReport.SetWindowText(csTemp);
+		long nLength = csTemp.GetLength();
+		if (nLength < 5000)
+		{
+			g_dlg->m_ctrlEditPacketReport.SetSel(0, 0);
+			g_dlg->m_ctrlEditPacketReport.ReplaceSel(csText);
+		}
+		else
+		{
+			CString csTemp;
+			g_dlg->m_ctrlEditPacketReport.GetWindowText(csTemp);
+			csTemp = csTemp.Left(csTemp.ReverseFind(_T('\r')));
+			g_dlg->m_ctrlEditPacketReport.SetWindowText(csTemp);
+
+		}
 
 	}
-	
-
 	return true;
 }
 void CCheckOpenPortsDlg::OnBnClickedButtonStartPacket()
