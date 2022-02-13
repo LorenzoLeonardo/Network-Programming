@@ -218,7 +218,7 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	g_dlg = this;
 
 	m_hThreadRouter = (HANDLE)_beginthreadex(NULL, 0, RouterThread, this, 0, NULL);
-	m_hThreadSpeed = (HANDLE)_beginthreadex(NULL, 0, SpeedThread, this, 0, NULL);
+	m_hThreadDownloadSpeed = (HANDLE)_beginthreadex(NULL, 0, DownloadSpeedThread, this, 0, NULL);
 	
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -431,9 +431,9 @@ void CCheckOpenPortsDlg::OnClose()
 	{
 		m_pfnPtrEndSNMP();
 		WaitForSingleObject(m_hThreadRouter, INFINITE);
-		WaitForSingleObject(m_hThreadSpeed, INFINITE);
+		WaitForSingleObject(m_hThreadDownloadSpeed, INFINITE);
 		CloseHandle(m_hThreadRouter);
-		CloseHandle(m_hThreadSpeed);
+		CloseHandle(m_hThreadDownloadSpeed);
 		FreeLibrary(dll_handle);
 
 		CDialog::OnClose();
@@ -584,23 +584,26 @@ void CCheckOpenPortsDlg::OnNMDblclkListLan(NMHDR* pNMHDR, LRESULT* pResult)
 		
 	}
 }
-unsigned __stdcall  CCheckOpenPortsDlg::SpeedThread(void* parg)
+unsigned __stdcall  CCheckOpenPortsDlg::DownloadSpeedThread(void* parg)
 {
 	CCheckOpenPortsDlg* pDlg = (CCheckOpenPortsDlg*)parg;
 	CString cs;
 	ULONG prev = 0, current = 0;
-	pDlg->SetDataSize(0);
+	ULONGLONG timePrev = GetTickCount64(), timeCurrent;
+
+	pDlg->SetDownloadSize(0);
+	prev = pDlg->GetDownloadSize();
 	while (!pDlg->HasClickClose())
 	{
-		
-		//Sleep(1000);
-		
-		cs.Format(_T("%.2f bytes/sec"),(float)(current - prev)/(float)1000);
-		pDlg->SetSpeed(cs);
-		pDlg->SetDataSize(0);
-		prev = pDlg->GetDataSize();
-		Sleep(1000);
-		current = pDlg->GetDataSize();
+		timeCurrent = GetTickCount64();
+		if ((timeCurrent - timePrev) >= 1000)
+		{
+			current = pDlg->GetDownloadSize();
+			cs.Format(_T("%.2f Kbps"), ((float)(current - prev) / (float)(timeCurrent - timePrev))*8);
+			pDlg->SetDownloadSpeedText(cs);
+			timePrev = timeCurrent;
+			prev = current;
+		}
 	}
 	return 0;
 }
@@ -837,7 +840,7 @@ bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 	TCP_HDR* tcpheader = NULL;
 	UDP_HDR* udpheader = NULL;
 	int nPort = 0;
-	
+
 	iphdr = (IPV4_HDR*)buffer;
 	iphdrlen = iphdr->ucIPHeaderLen * 4;
 
@@ -857,38 +860,41 @@ bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 	}
 
 
-		g_dlg->SetDataSize(g_dlg->GetDataSize() + nSize);
-
-		memset(&source, 0, sizeof(source));
-		source.sin_addr.s_addr = iphdr->unSrcaddress;
-		memset(&dest, 0, sizeof(dest));
-		dest.sin_addr.s_addr = iphdr->unDestaddress;
-
-		csText = ProcessPacket(buffer, nSize);
-	
-		string sTemp = inet_ntoa(source.sin_addr);
-		sourceIP = g_dlg->MultiByteToUnicode(sTemp).c_str();
-		sTemp = inet_ntoa(dest.sin_addr);
-		destIP = g_dlg->MultiByteToUnicode(sTemp).c_str();
 
 
-		csText += sourceIP + _T(":") + csSrcPort + _T(" -> ") + destIP + _T(":") + csDestPort + _T(" Size: ") + to_wstring(nSize).c_str() + _T(" bytes\r\n");
-		CString csTemp;
-		g_dlg->m_ctrlEditPacketReport.GetWindowText(csTemp);
-		long nLength = csTemp.GetLength();
-		if (nLength < 20000)
-		{
-			g_dlg->m_ctrlEditPacketReport.SetSel(0, 0);
-			g_dlg->m_ctrlEditPacketReport.ReplaceSel(csText);
-		}
-		else
-		{
-			CString csTemp;
-			g_dlg->m_ctrlEditPacketReport.GetWindowText(csTemp);
-			csTemp = csTemp.Left(csTemp.ReverseFind(_T('\r')));
-			g_dlg->m_ctrlEditPacketReport.SetWindowText(csTemp);
+	memset(&source, 0, sizeof(source));
+	source.sin_addr.s_addr = iphdr->unSrcaddress;
+	memset(&dest, 0, sizeof(dest));
+	dest.sin_addr.s_addr = iphdr->unDestaddress;
 
-		}
+	csText = ProcessPacket(buffer, nSize);
+
+	string sTemp = inet_ntoa(source.sin_addr);
+	sourceIP = g_dlg->MultiByteToUnicode(sTemp).c_str();
+	sTemp = inet_ntoa(dest.sin_addr);
+	destIP = g_dlg->MultiByteToUnicode(sTemp).c_str();
+
+	if (sourceIP.Compare(_T("192.168.0.101")) == 0)
+	{
+		g_dlg->SetDownloadSize(g_dlg->GetDownloadSize() + nSize);
+	}
+	//	csText += sourceIP + _T(":") + csSrcPort + _T(" -> ") + destIP + _T(":") + csDestPort + _T(" Size: ") + to_wstring(nSize).c_str() + _T(" bytes\r\n");
+	//	CString csTemp;
+	//	g_dlg->m_ctrlEditPacketReport.GetWindowText(csTemp);
+	//	long nLength = csTemp.GetLength();
+	//	if (nLength < 20000)
+	//	{
+	//		g_dlg->m_ctrlEditPacketReport.SetSel(0, 0);
+	//		g_dlg->m_ctrlEditPacketReport.ReplaceSel(csText);
+	//	}
+	//	else
+	//	{
+	//		CString csTemp;
+	//		g_dlg->m_ctrlEditPacketReport.GetWindowText(csTemp);
+	//		csTemp = csTemp.Left(csTemp.ReverseFind(_T('\r')));
+	//		g_dlg->m_ctrlEditPacketReport.SetWindowText(csTemp);
+
+	//	}
 	
 
 	return true;

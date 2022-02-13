@@ -81,7 +81,7 @@ protected:
 	static bool CallPacketListener(unsigned char* buffer, int nSize);
 
 	static unsigned __stdcall  RouterThread(void* parg);
-	static unsigned __stdcall  SpeedThread(void* parg);
+	static unsigned __stdcall  DownloadSpeedThread(void* parg);
 
 // Implementation
 protected:
@@ -117,11 +117,11 @@ public:
 	{
 		return m_bHasClickClose;
 	}
-	void SetDataSize(ULONG size)
+	void SetDownloadSize(ULONG size)
 	{
 		m_ulDataSize = size;
 	}
-	ULONG GetDataSize()
+	ULONG GetDownloadSize()
 	{
 		return m_ulDataSize;
 	}
@@ -180,7 +180,7 @@ public:
 protected:
 	CEdit m_ctrlEditPollingTime;
 	HANDLE m_hThreadRouter;
-	HANDLE m_hThreadSpeed;
+	HANDLE m_hThreadDownloadSpeed;
 public:
 	CButton m_ctrlBtnListen;
 	CButton m_ctrlBtnStopListening;
@@ -195,7 +195,7 @@ public:
 	{
 		m_ctrlStaticRouterUpTime.SetWindowText(cs);
 	}
-	void SetSpeed(CString cs)
+	void SetDownloadSpeedText(CString cs)
 	{
 		m_ctrlEditSpeed.SetWindowText(cs);
 	}
