@@ -247,12 +247,19 @@ bool ENZTCPLIBRARY_API GetDefaultGateway(char* szDefaultIPAddress)
 
 bool ENZTCPLIBRARY_API StartPacketListener(FNCallbackPacketListener fnpPtr)
 {
-    StopPacketListener();
-    g_pPacketListener = new CPacketListener();
-    return g_pPacketListener->StartListening(fnpPtr);
+    if (g_pPacketListener == NULL)
+    {
+        g_pPacketListener = new CPacketListener(fnpPtr);
+        if (g_pPacketListener == NULL)
+            return false;
+    }
+    if (g_pPacketListener->IsStopped())
+        return g_pPacketListener->StartListening();
+    else
+        return true;
 }
 void ENZTCPLIBRARY_API StopPacketListener()
 {
-    if(g_pPacketListener!=NULL)
+    if (g_pPacketListener != NULL)
         g_pPacketListener->StopListening();
 }

@@ -100,6 +100,7 @@ END_MESSAGE_MAP()
 
 mutex mtx_enumPorts;
 mutex mtx_lanlistener;
+mutex mtx_packetlistener;
 
 CCheckOpenPortsDlg::CCheckOpenPortsDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_CHECKOPENPORST_DIALOG, pParent)
@@ -822,6 +823,7 @@ CString ProcessPacket(char* Buffer, int Size)
 }
 bool CCheckOpenPortsDlg::CallPacketListener(char* buffer, int nSize)
 {
+	mtx_packetlistener.lock();
 	CString csText, csSrcPort, csDestPort;
 	struct sockaddr_in source, dest;
 	int iphdrlen;
@@ -876,6 +878,7 @@ bool CCheckOpenPortsDlg::CallPacketListener(char* buffer, int nSize)
 		g_dlg->m_ctrlEditPacketReport.SetWindowText(csTemp);
 
 	}
+	mtx_packetlistener.unlock();
 	return true;
 }
 void CCheckOpenPortsDlg::OnBnClickedButtonStartPacket()
@@ -884,7 +887,7 @@ void CCheckOpenPortsDlg::OnBnClickedButtonStartPacket()
 	m_bStopPacketListener = false;
 	if (!m_pfnPtrStartPacketListener(CallPacketListener))
 	{
-		AfxMessageBox(_T("Packet Listener failed to start."));
+		AfxMessageBox(_T("Packet Listener failed to start. Please run the tool as Administrator."));
 	}
 }
 

@@ -2,24 +2,26 @@
 #include "CPacketListener.h"
 
 
-CPacketListener::CPacketListener()
+CPacketListener::CPacketListener(FNCallbackPacketListener fnPtr)
 {
-	m_bIsStopped = false;
+	m_bIsStopped = true;
 	m_socket = INVALID_SOCKET;
-	m_thread = NULL;
+	m_threadListening = NULL;
+	m_fnCallback = fnPtr;
+
 }
 CPacketListener::~CPacketListener()
 {
 
 }
-UINT CPacketListener::PollingThread(void* args)
+void CPacketListener::PollingThread(void* args)
 {
 	CPacketListener* pListener = (CPacketListener*)args;
 	int nBytes = 0;
 	char* pBuffer = (char*)malloc(65536);
 
 	if (pBuffer == NULL)
-		return 0;
+		return;
 	do
 	{
 		nBytes = recvfrom(pListener->GetSocket(), pBuffer, 65536, 0, 0, 0); //Eat as much as u can
@@ -30,16 +32,15 @@ UINT CPacketListener::PollingThread(void* args)
 	pBuffer = NULL;
 	closesocket(pListener->GetSocket());
 	WSACleanup();
-	return 0;
+	return;
 }
 
-bool CPacketListener::StartListening(FNCallbackPacketListener fnPtr)
+bool CPacketListener::StartListening()
 {
 	WSADATA wsa;
 	int	iResult = 0;
 	char szHostname[100];
 
-	m_fnCallback = fnPtr;
 	memset(szHostname, 0, sizeof(szHostname));
 
 	m_bIsStopped = false;
@@ -73,15 +74,12 @@ bool CPacketListener::StartListening(FNCallbackPacketListener fnPtr)
 	int nInput = 1;
 	if (WSAIoctl(m_socket, SIO_RCVALL, &nInput, sizeof(nInput), 0, 0, (LPDWORD)&iResult, 0, 0) == SOCKET_ERROR)
 		return false;
-	UINT id = 0;
-	m_thread = (HANDLE)_beginthreadex(NULL, 0, PollingThread, this, 0, &id);
-
-
 	
+	m_threadListening = new thread(PollingThread, this);
+
 	return true;
 }
 void CPacketListener::StopListening()
 {
 	m_bIsStopped = true;
-
 }
