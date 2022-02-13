@@ -84,6 +84,8 @@ HANDLE ENZTCPLIBRARY_API ConnectToServer(const char* ipAddress, const char* port
     {
         CSocketClient* pSocket = new CSocketClient(ipAddress, portNum);
         int nLastError = 0;
+        if (pSocket == NULL)
+            throw (HANDLE)SOCKET_ERROR;
 
         if (pSocket->ConnectToServer(&nLastError))
             return (HANDLE)pSocket;
@@ -92,12 +94,12 @@ HANDLE ENZTCPLIBRARY_API ConnectToServer(const char* ipAddress, const char* port
             pSocket->DisconnectFromServer();
             delete pSocket;
             pSocket = NULL;
-            return (HANDLE)SOCKET_ERROR;
+            throw (HANDLE)SOCKET_ERROR;
         }
     }
-    catch (int nError)
+    catch (HANDLE nError)
     {
-         return (HANDLE)SOCKET_ERROR;
+         return nError;
     }
 }
 
@@ -121,6 +123,8 @@ void ENZTCPLIBRARY_API EnumOpenPorts(char* ipAddress, int nNumPorts, FuncFindOpe
     string sAddress(ipAddress);
 
     g_pOpenPorts = new CCheckOpenPorts(sAddress, nNumPorts, pfnPtr);
+    if (g_pOpenPorts == NULL)
+        return;
     g_pOpenPorts->StartSearchingOpenPorts();
     return;
 }
@@ -155,6 +159,8 @@ void ENZTCPLIBRARY_API StartLocalAreaListening(const char* ipAddress, CallbackLo
         g_pLocalAreaListener = NULL;
     }
     g_pLocalAreaListener = new CLocalAreaListener(ipAddress, fnpPtr, nPollingTimeMS);
+    if (g_pLocalAreaListener == NULL)
+        return;
     g_pLocalAreaListener->Start();
 }
 void ENZTCPLIBRARY_API StopLocalAreaListening()
@@ -173,7 +179,11 @@ bool ENZTCPLIBRARY_API StartSNMP(const char* szAgentIPAddress, const char* szCom
         g_SNMP = NULL;
     }
     g_SNMP = new CSNMP();
-
+    if (g_SNMP == NULL)
+    {
+        dwLastError = ERROR_NOT_ENOUGH_MEMORY;
+        return false;
+    }
     return g_SNMP->InitSNMP(szAgentIPAddress, szCommunity, nVersion, dwLastError);
 }
 smiVALUE ENZTCPLIBRARY_API SNMPGet(const char* szOID, DWORD& dwLastError)
