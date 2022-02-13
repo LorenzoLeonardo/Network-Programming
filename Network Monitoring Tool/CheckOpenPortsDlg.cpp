@@ -341,12 +341,22 @@ HCURSOR CCheckOpenPortsDlg::OnQueryDragIcon()
 string CCheckOpenPortsDlg::UnicodeToMultiByte(wstring& wstr)
 {
 	if (wstr.empty()) 
-		return string();
+		return "";
 
 	int size_needed = WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), NULL, 0, NULL, NULL);
 	string strTo(size_needed, 0);
 	WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), &strTo[0], size_needed, NULL, NULL);
 	return strTo;
+}
+wstring CCheckOpenPortsDlg::MultiByteToUnicode(string& str)
+{
+	if (str.empty())
+		return L"";
+
+	int size_needed =MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), NULL, 0);
+	wstring wstrTo(size_needed, 0);
+	MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), &wstrTo[0], size_needed);
+	return wstrTo;
 }
 
 void CCheckOpenPortsDlg::Increment()
@@ -437,19 +447,23 @@ void CCheckOpenPortsDlg::OnClose()
 	// TODO: Add your message handler code here and/or call default
 	m_pfnPtrStopLocalAreaListening();
 	m_pfnPtrStopSearchingOpenPorts();
+	m_pfnPtrStopPacketListener();
 	m_bHasClickClose = TRUE;
 
 	if (!m_bIsRunning)
 	{
 		m_pfnPtrEndSNMP();
 		WaitForSingleObject(m_hThreadRouter, INFINITE);
+		WaitForSingleObject(m_hThreadSpeed, INFINITE);
+		CloseHandle(m_hThreadRouter);
+		CloseHandle(m_hThreadSpeed);
 		FreeLibrary(dll_handle);
 
 		CDialog::OnClose();
 	}
 	else
 	{
-		m_bStopLANClicked = TRUE;
+	//	m_bStopLANClicked = TRUE;
 		AfxMessageBox(_T("Application is still busy. Make sure all searching and listening has stopped."));
 	}
 }
@@ -602,13 +616,16 @@ unsigned __stdcall  CCheckOpenPortsDlg::SpeedThread(void* parg)
 	while (!pDlg->HasClickClose())
 	{
 		prev = pDlg->GetDataSize();
-		Sleep(1000);
+	//	Sleep(1000);
 		current = pDlg->GetDataSize();
 		
 		cs.Format(_T("%.2f bytes/sec"),(float)(current - prev)/(float)1000);
-		pDlg->m_ctrlEditSpeed.SetWindowTextW(cs);
+	
+		pDlg->SetSpeed(cs);
 		pDlg->SetDataSize(0);
+		Sleep(1000);
 	}
+	_endthreadex(0);
 	return 0;
 }
 
@@ -673,7 +690,7 @@ unsigned __stdcall  CCheckOpenPortsDlg::RouterThread(void* parg)
 			csDesc = value.value.string.ptr;
 #endif
 		}
-
+		CString csFormat;
 		while (!pDlg->HasClickClose())
 		{
 			value = pDlg->m_pfnPtrSNMPGet(".1.3.6.1.2.1.25.1.1.0", error);//time
@@ -689,7 +706,7 @@ unsigned __stdcall  CCheckOpenPortsDlg::RouterThread(void* parg)
 			fRem = (double)(fRem * 60) - ulMin;
 			ULONG ulSec = fRem * 60;
 	
-			CString csFormat;
+			csFormat=_T("");
 			csFormat.Format(_T("%s %s %s\r\n\r\nRouter's Up Time\r\n%u days, %u hours, %u min, %u secs"),	csBrand,csModel,csDesc, ulDays, ulHour, ulMin, ulSec);
 
 			pDlg->SetRouterUpTime(csFormat);
@@ -733,7 +750,7 @@ void CCheckOpenPortsDlg::CallbackLANListener(const char* ipAddress, const char* 
 			CString csIPAddress;
 			char szIPAddress[32];
 
-
+			WCHAR* temp = NULL;
 			while (it != g_dlg->m_mConnected.end())
 			{
 				inet_ntop(AF_INET, (const void*)&(it->first), szIPAddress, sizeof(szIPAddress));
@@ -743,8 +760,12 @@ void CCheckOpenPortsDlg::CallbackLANListener(const char* ipAddress, const char* 
 					to_wstring(nRow + 1).c_str(), 0, 0, 0, 0);
 
 				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 1, csIPAddress);
-				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 2, convert_to_wstring(it->second[0].c_str()));
-				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 3, convert_to_wstring(it->second[1].c_str()));
+				temp = convert_to_wstring(it->second[0].c_str());
+				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 2, temp);
+				free(temp);
+				temp = convert_to_wstring(it->second[1].c_str());
+				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 3, temp);
+				free(temp);
 #else 
 				g_dlg->m_ctrlLANConnected.InsertItem(LVIF_TEXT | LVIF_STATE, nRow,
 					to_string(nRow + 1).c_str(), 0, 0, 0, 0);

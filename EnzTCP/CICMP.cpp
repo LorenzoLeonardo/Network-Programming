@@ -92,7 +92,7 @@ bool CICMP::CheckDevice(string ipAddress, string& hostname, string& sMacAddress)
         hints.ai_family = AF_INET;
         hints.ai_socktype = SOCK_RAW;
         hints.ai_protocol = IPPROTO_ICMP;
-        hints.ai_flags = AI_PASSIVE;
+        hints.ai_flags = AI_NUMERICSERV;
             
         iResult = getaddrinfo(localHostName.c_str(), NULL, &hints, &result);
         pSource = (IPAddr*)(result->ai_addr->sa_data+2);
@@ -123,16 +123,18 @@ bool CICMP::CheckDevice(string ipAddress, string& hostname, string& sMacAddress)
                     }
                 }
             }
+            
             bRet = true;
         }
         else
         {
             bRet = false;
         }
+        freeaddrinfo(result);
     }
     else
         bRet = false;
-
+    
     free(ReplyBuffer);
     IcmpCloseHandle(hIcmpFile);
     return bRet;

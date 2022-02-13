@@ -129,6 +129,7 @@ public:
 	}
 	afx_msg void OnBnClickedButtonPort();
 	string UnicodeToMultiByte(wstring& wstr);
+	wstring MultiByteToUnicode(string& wstr);
 	HANDLE Handle[MAX_PORT];
 	CIPAddressCtrl m_ctrlIPAddress;
 	CEdit m_ctrlResult;
@@ -196,6 +197,10 @@ public:
 	{
 		m_ctrlStaticRouterUpTime.SetWindowText(cs);
 	}
+	void SetSpeed(CString cs)
+	{
+		m_ctrlEditSpeed.SetWindowText(cs);
+	}
 private:
 
 	CStatic m_ctrlStaticRouterUpTime;
@@ -203,5 +208,5 @@ public:
 	CEdit m_ctrlEditPacketReport;
 	afx_msg void OnBnClickedButtonStartPacket();
 	afx_msg void OnBnClickedButtonStopPacket();
-	CEdit m_ctrlEditSpeed;
+	CStatic m_ctrlEditSpeed;
 };

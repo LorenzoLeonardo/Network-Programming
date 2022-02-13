@@ -21,6 +21,7 @@ BOOL APIENTRY DllMain(HMODULE hModule,
     switch (ul_reason_for_call)
     {
     case DLL_PROCESS_ATTACH:
+        break;
     case DLL_PROCESS_DETACH:
         if(g_pOpenPorts != NULL)
         {
@@ -217,9 +218,16 @@ bool ENZTCPLIBRARY_API StartPacketListener(FNCallbackPacketListener fnpPtr)
 {
     if (g_pPacketListener == NULL)
     {
-        g_pPacketListener = new CPacketListener(fnpPtr);
-        if (g_pPacketListener == NULL)
-            return false;
+        try
+        {
+            g_pPacketListener = new CPacketListener(fnpPtr);
+            if (g_pPacketListener == NULL)
+                return false;
+        }
+        catch (int nError)
+        {
+            return !(nError==INVALID_SOCKET);
+        }
     }
     if (g_pPacketListener->IsStopped())
         return g_pPacketListener->StartListening();

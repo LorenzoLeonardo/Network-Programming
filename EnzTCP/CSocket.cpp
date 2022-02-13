@@ -87,7 +87,7 @@ bool CSocket::GetDefaultGateway(char* szDefaultIPAddress)
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_RAW;
     hints.ai_protocol = IPPROTO_ICMP;
-    hints.ai_flags = AI_ALL;
+    hints.ai_flags = AI_CANONNAME;
 
     iResult = getaddrinfo("localhost", NULL, &hints, &result);
     if (iResult == 0)

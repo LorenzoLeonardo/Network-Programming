@@ -208,12 +208,13 @@ UINT ServerThreadFunc(LPVOID pParam)
 	//m_ServerHandle =
 	CEnzoChatServerDlg* dlg = (CEnzoChatServerDlg*)pParam;
 
-
-	HANDLE handle = pfnPtrOpenServer((const char*)convert_from_wstring(_T("0611")), NewClientConnection);
+	const char* temp = (const char*)convert_from_wstring(_T("0611"));
+	HANDLE handle = pfnPtrOpenServer(temp, NewClientConnection);
 
 	g_dlgPtr = dlg;
 	dlg->SetConnectionHandle(handle);
 	pfnPtrRunServer(handle);
+	free(temp);
 	return 0;
 }
 BOOL CEnzoChatServerDlg::OnInitDialog()
