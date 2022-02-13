@@ -83,6 +83,7 @@ protected:
 	static bool CallPacketListener(char* buffer, int nSize);
 
 	static unsigned __stdcall  RouterThread(void* parg);
+	static unsigned __stdcall  SpeedThread(void* parg);
 
 // Implementation
 protected:
@@ -109,6 +110,7 @@ protected:
 	CString m_csRouterBrand;
 	CString m_csRouterDescription;
 	bool m_bStopLANClicked;
+	ULONG m_ulDataSize;
 
 public:
 	HMODULE dll_handle;
@@ -116,6 +118,14 @@ public:
 	bool HasClickClose()
 	{
 		return m_bHasClickClose;
+	}
+	void SetDataSize(ULONG size)
+	{
+		m_ulDataSize = size;
+	}
+	ULONG GetDataSize()
+	{
+		return m_ulDataSize;
 	}
 	afx_msg void OnBnClickedButtonPort();
 	string UnicodeToMultiByte(wstring& wstr);
@@ -171,6 +181,7 @@ public:
 protected:
 	CEdit m_ctrlEditPollingTime;
 	HANDLE m_hThreadRouter;
+	HANDLE m_hThreadSpeed;
 public:
 	CButton m_ctrlBtnListen;
 	CButton m_ctrlBtnStopListening;
@@ -192,4 +203,5 @@ public:
 	CEdit m_ctrlEditPacketReport;
 	afx_msg void OnBnClickedButtonStartPacket();
 	afx_msg void OnBnClickedButtonStopPacket();
+	CEdit m_ctrlEditSpeed;
 };

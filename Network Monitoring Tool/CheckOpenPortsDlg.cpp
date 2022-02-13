@@ -134,6 +134,7 @@ void CCheckOpenPortsDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BUTTON_STOP_SEARCHINGPORTS, m_ctrlBtnStopSearchingPort);
 
 	DDX_Control(pDX, IDC_EDIT_PACKET_REPORT, m_ctrlEditPacketReport);
+	DDX_Control(pDX, IDC_EDIT_SPEED, m_ctrlEditSpeed);
 }
 
 BEGIN_MESSAGE_MAP(CCheckOpenPortsDlg, CDialogEx)
@@ -240,6 +241,7 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	g_dlg = this;
 
 	m_hThreadRouter = (HANDLE)_beginthreadex(NULL, 0, RouterThread, this, 0, NULL);
+	m_hThreadSpeed = (HANDLE)_beginthreadex(NULL, 0, SpeedThread, this, 0, NULL);
 	
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -591,6 +593,22 @@ void CCheckOpenPortsDlg::OnNMDblclkListLan(NMHDR* pNMHDR, LRESULT* pResult)
 		
 	}
 }
+unsigned __stdcall  CCheckOpenPortsDlg::SpeedThread(void* parg)
+{
+	CCheckOpenPortsDlg* pDlg = (CCheckOpenPortsDlg*)parg;
+
+	pDlg->SetDataSize(0);
+	while (!pDlg->HasClickClose())
+	{
+		ULONG prev = pDlg->GetDataSize();
+		Sleep(1000);
+		ULONG current = pDlg->GetDataSize();
+		CString cs;
+		cs.Format(_T("%f bytes/sec"),(float)(current - prev)/(float)1000);
+		pDlg->m_ctrlEditSpeed.SetWindowTextW(cs);
+		pDlg->SetDataSize(0);
+	}
+}
 
 // CCheckOpenPortsDlg message handlers
 unsigned __stdcall  CCheckOpenPortsDlg::RouterThread(void* parg)
@@ -830,6 +848,8 @@ bool CCheckOpenPortsDlg::CallPacketListener(char* buffer, int nSize)
 	IPV4_HDR* iphdr;
 	TCP_HDR* tcpheader;
 	UDP_HDR* udpheader;
+
+	g_dlg->SetDataSize(g_dlg->GetDataSize() + nSize);
 
 	csText = ProcessPacket(buffer,nSize);
 
