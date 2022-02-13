@@ -596,13 +596,15 @@ unsigned __stdcall  CCheckOpenPortsDlg::DownloadSpeedThread(void* parg)
 	while (!pDlg->HasClickClose())
 	{
 		timeCurrent = GetTickCount64();
+		current = pDlg->GetDownloadSize();
 		if ((timeCurrent - timePrev) >= 1000)
 		{
-			current = pDlg->GetDownloadSize();
 			cs.Format(_T("%.2f Kbps"), ((float)(current - prev) / (float)(timeCurrent - timePrev))*8);
 			pDlg->SetDownloadSpeedText(cs);
 			timePrev = timeCurrent;
-			prev = current;
+			
+			pDlg->SetDownloadSize(0);
+			prev = pDlg->GetDownloadSize();
 		}
 	}
 	return 0;
@@ -797,104 +799,84 @@ void CCheckOpenPortsDlg::CallBackEnumPort(char* ipAddress, int nPort, bool bIsop
 
 }
 
-CString ProcessPacket(unsigned char* Buffer, int Size)
-{
-	IPV4_HDR *iphdr = (IPV4_HDR*)Buffer;
-	CString cs;
-
-	switch (iphdr->ucIPProtocol) //Check the Protocol and do accordingly...
-	{
-	case 1: //ICMP Protocol
-		//++icmp;
-		cs = _T("ICMP : ");
-		break;
-
-	case 2: //IGMP Protocol
-		//++igmp;
-		cs = _T("IGMP : ");
-		break;
-
-	case 6: //TCP Protocol
-		//++tcp;
-		cs = _T("TCP : ");
-		break;
-
-	case 17: //UDP Protocol
-		//++udp;
-		cs = _T("UDP : ");
-		break;
-
-	default: //Some Other Protocol like ARP etc.
-		//++others;
-		break;
-	}
-	return cs;
-	//printf("TCP : %d UDP : %d ICMP : %d IGMP : %d Others : %d Total : %d\r", tcp, udp, icmp, igmp, others, total);
-}
 bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 {
-	CString csText = _T(""), csSrcPort = _T(""), csDestPort = _T(""), sourceIP, destIP;
+	CString csText = _T(""), csSrcPort = _T(""), csDestPort = _T(""), sourceIP, destIP, cs;
 	struct sockaddr_in source, dest;
 	int iphdrlen;
 	IPV4_HDR* iphdr;
 	TCP_HDR* tcpheader = NULL;
 	UDP_HDR* udpheader = NULL;
-	int nPort = 0;
+	int nPort = 0, nDataSize = 0;
 
 	iphdr = (IPV4_HDR*)buffer;
 	iphdrlen = iphdr->ucIPHeaderLen * 4;
 
-	if (iphdr->ucIPProtocol == 6)//TCP
+	switch (iphdr->ucIPProtocol) //Check the Protocol and do accordingly...
 	{
-		tcpheader = (TCP_HDR*)(buffer + iphdrlen);
-		csSrcPort = to_wstring(ntohs(tcpheader->usSourcePort)).c_str();
-		csDestPort = to_wstring(ntohs(tcpheader->usDestPort)).c_str();
-		nPort = ntohs(tcpheader->usSourcePort);
+		case 1: //ICMP 
+		{
+			csText = _T("ICMP : ");
+			break;
+		}
+		case 2: //IGMP 
+		{
+			csText = _T("IGMP : ");
+			break;
+		}
+		case 6: //TCP 
+		{
+			tcpheader = (TCP_HDR*)(buffer + iphdrlen);
+			csSrcPort = to_wstring(ntohs(tcpheader->usSourcePort)).c_str();
+			csDestPort = to_wstring(ntohs(tcpheader->usDestPort)).c_str();
+			nPort = ntohs(tcpheader->usSourcePort);
+			csText = _T("TCP : ");
+			break;
+		}
+		case 17: //UDP 
+		{
+			udpheader = (UDP_HDR*)(buffer + iphdrlen);
+			csSrcPort = to_wstring(ntohs(udpheader->usSourcePort)).c_str();
+			csDestPort = to_wstring(ntohs(udpheader->usDestPort)).c_str();
+			nPort = ntohs(udpheader->usSourcePort);
+			csText = _T("UDP : ");
+			break;
+		}
+		default: //Some Other Protocol
+		{
+			csText = _T("OTHERS : ");
+			break;
+		}
 	}
-	else if (iphdr->ucIPProtocol == 17)
-	{
-		udpheader = (UDP_HDR*)(buffer + iphdrlen);
-		csSrcPort = to_wstring(ntohs(udpheader->usSourcePort)).c_str();
-		csDestPort = to_wstring(ntohs(udpheader->usDestPort)).c_str();
-		nPort = ntohs(udpheader->usSourcePort);
-	}
-
-
-
-
 	memset(&source, 0, sizeof(source));
 	source.sin_addr.s_addr = iphdr->unSrcaddress;
 	memset(&dest, 0, sizeof(dest));
 	dest.sin_addr.s_addr = iphdr->unDestaddress;
-
-	csText = ProcessPacket(buffer, nSize);
-
+	
 	string sTemp = inet_ntoa(source.sin_addr);
 	sourceIP = g_dlg->MultiByteToUnicode(sTemp).c_str();
 	sTemp = inet_ntoa(dest.sin_addr);
 	destIP = g_dlg->MultiByteToUnicode(sTemp).c_str();
 
-	if (sourceIP.Compare(_T("192.168.0.101")) == 0)
-	{
-		g_dlg->SetDownloadSize(g_dlg->GetDownloadSize() + nSize);
-	}
-	//	csText += sourceIP + _T(":") + csSrcPort + _T(" -> ") + destIP + _T(":") + csDestPort + _T(" Size: ") + to_wstring(nSize).c_str() + _T(" bytes\r\n");
-	//	CString csTemp;
-	//	g_dlg->m_ctrlEditPacketReport.GetWindowText(csTemp);
-	//	long nLength = csTemp.GetLength();
-	//	if (nLength < 20000)
-	//	{
-	//		g_dlg->m_ctrlEditPacketReport.SetSel(0, 0);
-	//		g_dlg->m_ctrlEditPacketReport.ReplaceSel(csText);
-	//	}
-	//	else
-	//	{
-	//		CString csTemp;
-	//		g_dlg->m_ctrlEditPacketReport.GetWindowText(csTemp);
-	//		csTemp = csTemp.Left(csTemp.ReverseFind(_T('\r')));
-	//		g_dlg->m_ctrlEditPacketReport.SetWindowText(csTemp);
+	g_dlg->SetDownloadSize(g_dlg->GetDownloadSize() + nSize);
 
-	//	}
+	csText += sourceIP + _T(":") + csSrcPort + _T(" -> ") + destIP + _T(":") + csDestPort + _T(" Size: ") + to_wstring(nSize).c_str() + _T(" bytes\r\n");
+	CString csTemp;
+	g_dlg->m_ctrlEditPacketReport.GetWindowText(csTemp);
+	long nLength = csTemp.GetLength();
+	if (nLength < 5000)
+	{
+		g_dlg->m_ctrlEditPacketReport.SetSel(0, 0);
+		g_dlg->m_ctrlEditPacketReport.ReplaceSel(csText);
+	}
+	else
+	{
+		CString csTemp;
+		g_dlg->m_ctrlEditPacketReport.GetWindowText(csTemp);
+		csTemp = csTemp.Left(csTemp.ReverseFind(_T('\r')));
+		g_dlg->m_ctrlEditPacketReport.SetWindowText(csTemp);
+
+	}
 	
 
 	return true;

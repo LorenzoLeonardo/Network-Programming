@@ -34,58 +34,58 @@
 
 typedef struct _tIPV4HDR
 {
-	UCHAR ucIPHeaderLen : 4; // 4-bit header length (in 32-bit words) normally=5 (Means 20 Bytes may be 24 also)
-	UCHAR ucIPVersion : 4; // 4-bit IPv4 version
-	UCHAR ucIPTos; // IP type of service
-	USHORT usIPTotalLength; // Total length
-	USHORT usIPID; // Unique identifier
-	UCHAR ucIPFragOffset : 5; // Fragment offset field
+	UCHAR ucIPHeaderLen : 4; 
+	UCHAR ucIPVersion : 4; 
+	UCHAR ucIPTos; 
+	USHORT usIPTotalLength; 
+	USHORT usIPID; 
+	UCHAR ucIPFragOffset : 5; 
 	UCHAR ucIPMoreFragment : 1;
 	UCHAR ucIPDontFragment : 1;
 	UCHAR ucIPReservedZero : 1;
-	UCHAR ucIPFragOffset1; //fragment offset
-	UCHAR ucIPTTL; // Time to live
-	UCHAR ucIPProtocol; // Protocol(TCP,UDP etc)
-	USHORT usIPChecksum; // IP checksum
-	UINT unSrcaddress; // Source address
-	UINT unDestaddress; // Source address
+	UCHAR ucIPFragOffset1; 
+	UCHAR ucIPTTL; 
+	UCHAR ucIPProtocol; 
+	USHORT usIPChecksum;
+	UINT unSrcaddress; 
+	UINT unDestaddress; 
 } IPV4_HDR;
 
 typedef struct _tUDPHDR
 {
-	USHORT usSourcePort; // Source port no.
-	USHORT usDestPort; // Dest. port no.
-	USHORT usUDPLength; // Udp packet length
-	USHORT usUDPChecksum; // Udp checksum (optional)
+	USHORT usSourcePort; 
+	USHORT usDestPort; 
+	USHORT usUDPLength; 
+	USHORT usUDPChecksum;
 } UDP_HDR;
 
 // TCP header
 typedef struct _tTCPHDR
 {
-	USHORT usSourcePort; // source port
-	USHORT usDestPort; // destination port
-	UINT unSequence; // sequence number - 32 bits
-	UINT unAcknowledge; // acknowledgement number - 32 bits
-	UCHAR ucNS : 1; //Nonce Sum Flag Added in RFC 3540.
-	UCHAR ucReservedPart1 : 3; //according to rfc
-	UCHAR ucDataOffset : 4; /*The number of 32-bit words in the TCP header.	This indicates where the data begins.The length of the TCP header is always a multiple	of 32 bits.*/
-	UCHAR ucFIN : 1; //Finish Flag
-	UCHAR ucSYN : 1; //Synchronise Flag
-	UCHAR ucRST : 1; //Reset Flag
-	UCHAR ucPSH : 1; //Push Flag
-	UCHAR ucACK : 1; //Acknowledgement Flag
-	UCHAR ucURG : 1; //Urgent Flag
-	UCHAR ucECN : 1; //ECN-Echo Flag
-	UCHAR ucCWR : 1; //Congestion Window Reduced Flag
-	USHORT usWindow; // window
-	USHORT usChecksum; // checksum
-	USHORT usUrgentPointer; // urgent pointer
+	USHORT usSourcePort; 
+	USHORT usDestPort; 
+	UINT unSequence; 
+	UINT unAcknowledge; 
+	UCHAR ucNS : 1; 
+	UCHAR ucReservedPart1 : 3; 
+	UCHAR ucDataOffset : 4; 
+	UCHAR ucFIN : 1; 
+	UCHAR ucSYN : 1; 
+	UCHAR ucRST : 1;
+	UCHAR ucPSH : 1; 
+	UCHAR ucACK : 1; 
+	UCHAR ucURG : 1;
+	UCHAR ucECN : 1;
+	UCHAR ucCWR : 1;
+	USHORT usWindow;
+	USHORT usChecksum; 
+	USHORT usUrgentPointer;
 } TCP_HDR;
 
 typedef struct _tICMPHDR
 {
-	BYTE byType; // ICMP Error type
-	BYTE byCode; // Type sub code
+	BYTE byType; 
+	BYTE byCode; 
 	USHORT checksum;
 	USHORT id;
 	USHORT seq;
