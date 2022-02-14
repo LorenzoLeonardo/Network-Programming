@@ -6,7 +6,7 @@
 #include "framework.h"
 #include "CheckOpenPorts.h"
 #include "CheckOpenPortsDlg.h"
-
+#include <tlhelp32.h>
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -37,7 +37,53 @@ CCheckOpenPortsApp theApp;
 
 
 // CCheckOpenPortsApp initialization
+/*BOOL EnableWindowsPrivilege(WCHAR* Privilege)
+{
+	LUID luid = {};
+	TOKEN_PRIVILEGES tp;
+	HANDLE currentProcess = GetCurrentProcess();
+	HANDLE currentToken = {};
+	tp.PrivilegeCount = 1;
+	tp.Privileges[0].Luid = luid;
+	tp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+	if (!LookupPrivilegeValue(NULL, Privilege, &luid)) 
+		return FALSE;
+	if (!OpenProcessToken(currentProcess, TOKEN_ALL_ACCESS, &currentToken)) 
+		return FALSE;
+	if (!AdjustTokenPrivileges(currentToken, FALSE, &tp, sizeof(TOKEN_PRIVILEGES), (PTOKEN_PRIVILEGES)NULL, (PDWORD)NULL)) 
+		return FALSE;
+	return TRUE;
+}
+HANDLE GetAccessToken(DWORD pid)
+{
 
+	
+	HANDLE currentProcess = {};
+	HANDLE AccessToken = {};
+	DWORD LastError;
+
+	if (pid == 0)
+	{
+		currentProcess = GetCurrentProcess();
+	}
+	else
+	{
+		currentProcess = OpenProcess(PROCESS_QUERY_INFORMATION, TRUE, pid);
+		if (!currentProcess)
+		{
+			LastError = GetLastError();
+			wprintf(L"ERROR: OpenProcess(): %d\n", LastError);
+			return (HANDLE)NULL;
+		}
+	}
+	if (!OpenProcessToken(currentProcess, TOKEN_ASSIGN_PRIMARY | TOKEN_DUPLICATE | TOKEN_IMPERSONATE | TOKEN_QUERY, &AccessToken))
+	{
+		LastError = GetLastError();
+		wprintf(L"ERROR: OpenProcessToken(): %d\n", LastError);
+		return (HANDLE)NULL;
+	}
+	return AccessToken;
+}*/
 BOOL CCheckOpenPortsApp::InitInstance()
 {
 	// InitCommonControlsEx() is required on Windows XP if an application
@@ -52,7 +98,52 @@ BOOL CCheckOpenPortsApp::InitInstance()
 
 	CWinApp::InitInstance();
 
+	/*if (!EnableWindowsPrivilege(SE_ASSIGNPRIMARYTOKEN_NAME))
+	{
+		return FALSE;
+	}
+	PROCESSENTRY32 entry;
+	entry.dwSize = sizeof(PROCESSENTRY32);
 
+	HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, NULL);
+	DWORD dwID = 0;
+	if (Process32First(snapshot, &entry) == TRUE)
+	{
+		while (Process32Next(snapshot, &entry) == TRUE)
+		{
+			if (_wcsicmp(entry.szExeFile, L"explorer.exe") == 0)
+			{
+				HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, entry.th32ProcessID);
+				dwID = entry.th32ProcessID;
+
+				CloseHandle(hProcess);
+			}
+		}
+	}
+
+	CloseHandle(snapshot);
+	
+	HANDLE pToken = GetAccessToken(dwID);
+
+	//These are required to call DuplicateTokenEx.
+	SECURITY_IMPERSONATION_LEVEL seImpersonateLevel = SecurityImpersonation;
+	TOKEN_TYPE tokenType = TokenPrimary;
+	HANDLE pNewToken = new HANDLE;
+	if (!DuplicateTokenEx(pToken, MAXIMUM_ALLOWED, NULL, seImpersonateLevel, tokenType, &pNewToken))
+	{
+		DWORD LastError = GetLastError();
+		wprintf(L"ERROR: Could not duplicate process token [%d]\n", LastError);
+		return 1;
+	}
+	DWORD dwSessionId = GetCurrentProcessId();
+	
+	if (!SetTokenInformation(pNewToken, TokenSessionId, &dwSessionId, sizeof(dwSessionId)))
+	{
+		DWORD LastError = GetLastError();
+		wprintf(L"ERROR: Could not set token [%d]\n", LastError);
+		return 1;
+	}
+	delete pNewToken;*/
 	//AfxEnableControlContainer();
 
 	// Create the shell manager, in case the dialog contains

@@ -802,21 +802,13 @@ void CCheckOpenPortsDlg::CallBackEnumPort(char* ipAddress, int nPort, bool bIsop
 		{
 			mtx_enumPorts.lock();
 			CString csStr;
-#ifdef UNICODE
+
 			string sTemp = ipAddress;
-			TCHAR* wr = (TCHAR*)g_dlg->MultiByteToUnicode(sTemp).c_str();
-#else
-			TCHAR* wr = ipAddress;
-#endif
+		
 			_tstring wsLastError;
 			GetLastErrorMessageString(wsLastError, nLastError);
 			if (bIsopen)
-				csStr.Format(_T("%s %d is open.\r\n"), wr, nPort);
-			//	else
-			//		csStr.Format(_T("%s %d %s."), wr, nPort, wsLastError.c_str());
-#ifdef UNICODE
-			free(wr);
-#endif
+				csStr.Format(_T("%s %d is open.\r\n"), g_dlg->MultiByteToUnicode(sTemp).c_str(), nPort);
 
 			long nLength = g_dlg->m_ctrlResult.GetWindowTextLength();
 			g_dlg->m_ctrlResult.SetSel(0, 0);
