@@ -916,10 +916,11 @@ bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 	}
 	else if (ipFilter.Compare(sourceIP) == 0)
 	{
+		g_dlg->SetUploadSize(g_dlg->GetUploadSize() + nSize);
+
 		if (g_dlg->ShowPacketInfo())
 		{
-			g_dlg->SetUploadSize(g_dlg->GetUploadSize() + nSize);
-
+			
 			csText += sourceIP + _T(":") + csSrcPort + _T(" -> ") + destIP + _T(":") + csDestPort + _T(" Size: ") + to_wstring(nSize).c_str() + _T(" bytes\r\n");
 			CString csTemp;
 			g_dlg->m_ctrlEditPacketReportArea.GetWindowText(csTemp);
