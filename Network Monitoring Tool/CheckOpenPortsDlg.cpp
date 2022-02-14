@@ -112,6 +112,7 @@ void CCheckOpenPortsDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT_PACKET_REPORT, m_ctrlEditPacketReportArea);
 	DDX_Control(pDX, IDC_EDIT_SPEED_DOWN, m_ctrlEditDownloadSpeed);
 	DDX_Control(pDX, IDC_EDIT_SPEED_UP, m_ctrlEditUploadSpeed);
+	DDX_Control(pDX, IDC_BUTTON_SHOW_PACKETS, m_ctrlBtnShowPacketInfo);
 }
 
 BEGIN_MESSAGE_MAP(CCheckOpenPortsDlg, CDialogEx)
@@ -134,6 +135,7 @@ BEGIN_MESSAGE_MAP(CCheckOpenPortsDlg, CDialogEx)
 	ON_WM_CTLCOLOR()
 	ON_BN_CLICKED(IDC_BUTTON_START_PACKET, &CCheckOpenPortsDlg::OnBnClickedButtonStartPacket)
 	ON_BN_CLICKED(IDC_BUTTON_STOP_PACKET, &CCheckOpenPortsDlg::OnBnClickedButtonStopPacket)
+	ON_BN_CLICKED(IDC_BUTTON_SHOW_PACKETS, &CCheckOpenPortsDlg::OnBnClickedButtonShowPackets)
 END_MESSAGE_MAP()
 
 
@@ -220,7 +222,7 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	m_hThreadRouter = (HANDLE)_beginthreadex(NULL, 0, RouterThread, this, 0, NULL);
 	m_hThreadDownloadSpeed = (HANDLE)_beginthreadex(NULL, 0, DownloadSpeedThread, this, 0, NULL);
 	m_hThreadUpSpeed = (HANDLE)_beginthreadex(NULL, 0, UploadSpeedThread, this, 0, NULL);
-
+	m_bShowPacketInfo = true;
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
 
@@ -892,42 +894,48 @@ bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 	{
 		g_dlg->SetDownloadSize(g_dlg->GetDownloadSize() + nSize);
 
-		csText += sourceIP + _T(":") + csSrcPort + _T(" -> ") + destIP + _T(":") + csDestPort + _T(" Size: ") + to_wstring(nSize).c_str() + _T(" bytes\r\n");
-		CString csTemp;
-		g_dlg->m_ctrlEditPacketReportArea.GetWindowText(csTemp);
-		long nLength = csTemp.GetLength();
-		if (nLength < 5000)
+		if (g_dlg->ShowPacketInfo())
 		{
-			g_dlg->m_ctrlEditPacketReportArea.SetSel(0, 0);
-			g_dlg->m_ctrlEditPacketReportArea.ReplaceSel(csText);
-		}
-		else
-		{
+			csText += sourceIP + _T(":") + csSrcPort + _T(" -> ") + destIP + _T(":") + csDestPort + _T(" Size: ") + to_wstring(nSize).c_str() + _T(" bytes\r\n");
 			CString csTemp;
 			g_dlg->m_ctrlEditPacketReportArea.GetWindowText(csTemp);
-			csTemp = csTemp.Left(csTemp.ReverseFind(_T('\r')));
-			g_dlg->m_ctrlEditPacketReportArea.SetWindowText(csTemp);
+			long nLength = csTemp.GetLength();
+			if (nLength < 5000)
+			{
+				g_dlg->m_ctrlEditPacketReportArea.SetSel(0, 0);
+				g_dlg->m_ctrlEditPacketReportArea.ReplaceSel(csText);
+			}
+			else
+			{
+				CString csTemp;
+				g_dlg->m_ctrlEditPacketReportArea.GetWindowText(csTemp);
+				csTemp = csTemp.Left(csTemp.ReverseFind(_T('\r')));
+				g_dlg->m_ctrlEditPacketReportArea.SetWindowText(csTemp);
+			}
 		}
 	}
 	else if (ipFilter.Compare(sourceIP) == 0)
 	{
-		g_dlg->SetUploadSize(g_dlg->GetUploadSize() + nSize);
+		if (g_dlg->ShowPacketInfo())
+		{
+			g_dlg->SetUploadSize(g_dlg->GetUploadSize() + nSize);
 
-		csText += sourceIP + _T(":") + csSrcPort + _T(" -> ") + destIP + _T(":") + csDestPort + _T(" Size: ") + to_wstring(nSize).c_str() + _T(" bytes\r\n");
-		CString csTemp;
-		g_dlg->m_ctrlEditPacketReportArea.GetWindowText(csTemp);
-		long nLength = csTemp.GetLength();
-		if (nLength < 5000)
-		{
-			g_dlg->m_ctrlEditPacketReportArea.SetSel(0, 0);
-			g_dlg->m_ctrlEditPacketReportArea.ReplaceSel(csText);
-		}
-		else
-		{
+			csText += sourceIP + _T(":") + csSrcPort + _T(" -> ") + destIP + _T(":") + csDestPort + _T(" Size: ") + to_wstring(nSize).c_str() + _T(" bytes\r\n");
 			CString csTemp;
 			g_dlg->m_ctrlEditPacketReportArea.GetWindowText(csTemp);
-			csTemp = csTemp.Left(csTemp.ReverseFind(_T('\r')));
-			g_dlg->m_ctrlEditPacketReportArea.SetWindowText(csTemp);
+			long nLength = csTemp.GetLength();
+			if (nLength < 5000)
+			{
+				g_dlg->m_ctrlEditPacketReportArea.SetSel(0, 0);
+				g_dlg->m_ctrlEditPacketReportArea.ReplaceSel(csText);
+			}
+			else
+			{
+				CString csTemp;
+				g_dlg->m_ctrlEditPacketReportArea.GetWindowText(csTemp);
+				csTemp = csTemp.Left(csTemp.ReverseFind(_T('\r')));
+				g_dlg->m_ctrlEditPacketReportArea.SetWindowText(csTemp);
+			}
 		}
 	}
 	return true;
@@ -948,4 +956,22 @@ void CCheckOpenPortsDlg::OnBnClickedButtonStopPacket()
 	// TODO: Add your control notification handler code here
 	m_bStopPacketListener = true;
 	m_pfnPtrStopPacketListener();
+}
+
+
+void CCheckOpenPortsDlg::OnBnClickedButtonShowPackets()
+{
+	// TODO: Add your control notification handler code here
+	if (m_bShowPacketInfo)
+	{
+		m_ctrlBtnShowPacketInfo.SetWindowText(_T("Hide Packet Info"));
+		m_bShowPacketInfo = false;
+		m_ctrlEditPacketReportArea.ShowWindow(false);
+	}
+	else
+	{
+		m_ctrlBtnShowPacketInfo.SetWindowText(_T("Show Packet Info"));
+		m_bShowPacketInfo = true;
+		m_ctrlEditPacketReportArea.ShowWindow(true);
+	}
 }

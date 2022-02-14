@@ -212,9 +212,14 @@ public:
 	{
 		m_ctrlEditUploadSpeed.SetWindowText(cs);
 	}
+	bool ShowPacketInfo()
+	{
+		return m_bShowPacketInfo;
+	}
 private:
 
 	CStatic m_ctrlStaticRouterUpTime;
+	bool m_bShowPacketInfo;
 public:
 	CEdit m_ctrlEditPacketReportArea;
 	afx_msg void OnBnClickedButtonStartPacket();
@@ -223,4 +228,6 @@ public:
 	CEdit m_ctrlEditUploadSpeed;
 
 	CEdit m_ctrlEditPacketReportUpload;
+	CButton m_ctrlBtnShowPacketInfo;
+	afx_msg void OnBnClickedButtonShowPackets();
 };

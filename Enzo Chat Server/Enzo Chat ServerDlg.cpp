@@ -214,7 +214,7 @@ UINT ServerThreadFunc(LPVOID pParam)
 	g_dlgPtr = dlg;
 	dlg->SetConnectionHandle(handle);
 	pfnPtrRunServer(handle);
-	free(temp);
+	free((void*)temp);
 	return 0;
 }
 BOOL CEnzoChatServerDlg::OnInitDialog()
