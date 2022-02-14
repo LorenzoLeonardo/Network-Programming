@@ -33,8 +33,8 @@
 #define IDC_STATIC_OUTOCTETS            1019
 #define IDC_BUTTON_START_PACKET         1019
 #define IDC_BUTTON_STOP_PACKET          1020
-#define IDC_EDIT2                       1021
-#define IDC_EDIT_SPEED                  1021
+#define IDC_EDIT_SPEED_DOWN             1021
+#define IDC_EDIT_SPEED_UP               1022
 
 // Next default values for new objects
 // 

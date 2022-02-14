@@ -42,7 +42,6 @@ void CPacketListener::PollingThread(void* args)
 
 bool CPacketListener::StartListening()
 {
-
 	int	iResult = 0;
 	char szHostname[100];
 

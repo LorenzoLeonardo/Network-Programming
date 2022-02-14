@@ -82,7 +82,7 @@ protected:
 
 	static unsigned __stdcall  RouterThread(void* parg);
 	static unsigned __stdcall  DownloadSpeedThread(void* parg);
-
+	static unsigned __stdcall  UploadSpeedThread(void* parg);
 // Implementation
 protected:
 	HICON m_hIcon;
@@ -108,8 +108,8 @@ protected:
 	CString m_csRouterBrand;
 	CString m_csRouterDescription;
 	bool m_bStopLANClicked;
-	ULONG m_ulDataSize;
-
+	ULONG m_ulDataSizeDownload;
+	ULONG m_ulDataSizeUpload;
 public:
 	HMODULE dll_handle;
 	int m_nCurrentRowSelected;
@@ -119,11 +119,19 @@ public:
 	}
 	void SetDownloadSize(ULONG size)
 	{
-		m_ulDataSize = size;
+		m_ulDataSizeDownload = size;
+	}
+	void SetUploadSize(ULONG size)
+	{
+		m_ulDataSizeUpload = size;
 	}
 	ULONG GetDownloadSize()
 	{
-		return m_ulDataSize;
+		return m_ulDataSizeDownload;
+	}
+	ULONG GetUploadSize()
+	{
+		return m_ulDataSizeUpload;
 	}
 	afx_msg void OnBnClickedButtonPort();
 	inline string UnicodeToMultiByte(wstring& wstr);
@@ -181,6 +189,7 @@ protected:
 	CEdit m_ctrlEditPollingTime;
 	HANDLE m_hThreadRouter;
 	HANDLE m_hThreadDownloadSpeed;
+	HANDLE m_hThreadUpSpeed;
 public:
 	CButton m_ctrlBtnListen;
 	CButton m_ctrlBtnStopListening;
@@ -197,14 +206,21 @@ public:
 	}
 	void SetDownloadSpeedText(CString cs)
 	{
-		m_ctrlEditSpeed.SetWindowText(cs);
+		m_ctrlEditDownloadSpeed.SetWindowText(cs);
+	}
+	void SetUploadSpeedText(CString cs)
+	{
+		m_ctrlEditUploadSpeed.SetWindowText(cs);
 	}
 private:
 
 	CStatic m_ctrlStaticRouterUpTime;
 public:
-	CEdit m_ctrlEditPacketReport;
+	CEdit m_ctrlEditPacketReportDownload;
 	afx_msg void OnBnClickedButtonStartPacket();
 	afx_msg void OnBnClickedButtonStopPacket();
-	CStatic m_ctrlEditSpeed;
+	CStatic m_ctrlEditDownloadSpeed;
+	CStatic m_ctrlEditUploadSpeed;
+
+	CEdit m_ctrlEditPacketReportUpload;
 };
