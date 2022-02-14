@@ -109,8 +109,7 @@ void CCheckOpenPortsDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BUTTON_STOP_LAN, m_ctrlBtnStopListening);
 	DDX_Control(pDX, IDC_STATIC_UPTIME, m_ctrlStaticRouterUpTime);
 	DDX_Control(pDX, IDC_BUTTON_STOP_SEARCHINGPORTS, m_ctrlBtnStopSearchingPort);
-
-	DDX_Control(pDX, IDC_EDIT_PACKET_REPORT, m_ctrlEditPacketReportDownload);
+	DDX_Control(pDX, IDC_EDIT_PACKET_REPORT, m_ctrlEditPacketReportArea);
 	DDX_Control(pDX, IDC_EDIT_SPEED_DOWN, m_ctrlEditDownloadSpeed);
 	DDX_Control(pDX, IDC_EDIT_SPEED_UP, m_ctrlEditUploadSpeed);
 }
@@ -602,7 +601,7 @@ unsigned __stdcall  CCheckOpenPortsDlg::DownloadSpeedThread(void* parg)
 		current = pDlg->GetDownloadSize();
 		if ((timeCurrent - timePrev) >= 1000)
 		{
-			cs.Format(_T("%.2f Kbps"), ((float)(current - prev) / (float)(timeCurrent - timePrev))*8);
+			cs.Format(_T("Download: %.2f Kbps"), ((float)(current - prev) / (float)(timeCurrent - timePrev))*8);
 			pDlg->SetDownloadSpeedText(cs);
 			timePrev = timeCurrent;
 			
@@ -625,10 +624,10 @@ unsigned __stdcall  CCheckOpenPortsDlg::UploadSpeedThread(void* parg)
 	while (!pDlg->HasClickClose())
 	{
 		timeCurrent = GetTickCount64();
-		current = pDlg->GetDownloadSize();
+		current = pDlg->GetUploadSize();
 		if ((timeCurrent - timePrev) >= 1000)
 		{
-			cs.Format(_T("%.2f Kbps"), ((float)(current - prev) / (float)(timeCurrent - timePrev)) * 8);
+			cs.Format(_T("Upload: %.2f Kbps"), ((float)(current - prev) / (float)(timeCurrent - timePrev)) * 8);
 			pDlg->SetUploadSpeedText(cs);
 			timePrev = timeCurrent;
 
@@ -895,19 +894,19 @@ bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 
 		csText += sourceIP + _T(":") + csSrcPort + _T(" -> ") + destIP + _T(":") + csDestPort + _T(" Size: ") + to_wstring(nSize).c_str() + _T(" bytes\r\n");
 		CString csTemp;
-		g_dlg->m_ctrlEditPacketReportDownload.GetWindowText(csTemp);
+		g_dlg->m_ctrlEditPacketReportArea.GetWindowText(csTemp);
 		long nLength = csTemp.GetLength();
 		if (nLength < 5000)
 		{
-			g_dlg->m_ctrlEditPacketReportDownload.SetSel(0, 0);
-			g_dlg->m_ctrlEditPacketReportDownload.ReplaceSel(csText);
+			g_dlg->m_ctrlEditPacketReportArea.SetSel(0, 0);
+			g_dlg->m_ctrlEditPacketReportArea.ReplaceSel(csText);
 		}
 		else
 		{
 			CString csTemp;
-			g_dlg->m_ctrlEditPacketReportDownload.GetWindowText(csTemp);
+			g_dlg->m_ctrlEditPacketReportArea.GetWindowText(csTemp);
 			csTemp = csTemp.Left(csTemp.ReverseFind(_T('\r')));
-			g_dlg->m_ctrlEditPacketReportDownload.SetWindowText(csTemp);
+			g_dlg->m_ctrlEditPacketReportArea.SetWindowText(csTemp);
 		}
 	}
 	else if (ipFilter.Compare(sourceIP) == 0)
@@ -916,19 +915,19 @@ bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 
 		csText += sourceIP + _T(":") + csSrcPort + _T(" -> ") + destIP + _T(":") + csDestPort + _T(" Size: ") + to_wstring(nSize).c_str() + _T(" bytes\r\n");
 		CString csTemp;
-		g_dlg->m_ctrlEditPacketReportUpload.GetWindowText(csTemp);
+		g_dlg->m_ctrlEditPacketReportArea.GetWindowText(csTemp);
 		long nLength = csTemp.GetLength();
 		if (nLength < 5000)
 		{
-			g_dlg->m_ctrlEditPacketReportUpload.SetSel(0, 0);
-			g_dlg->m_ctrlEditPacketReportUpload.ReplaceSel(csText);
+			g_dlg->m_ctrlEditPacketReportArea.SetSel(0, 0);
+			g_dlg->m_ctrlEditPacketReportArea.ReplaceSel(csText);
 		}
 		else
 		{
 			CString csTemp;
-			g_dlg->m_ctrlEditPacketReportUpload.GetWindowText(csTemp);
+			g_dlg->m_ctrlEditPacketReportArea.GetWindowText(csTemp);
 			csTemp = csTemp.Left(csTemp.ReverseFind(_T('\r')));
-			g_dlg->m_ctrlEditPacketReportUpload.SetWindowText(csTemp);
+			g_dlg->m_ctrlEditPacketReportArea.SetWindowText(csTemp);
 		}
 	}
 	return true;

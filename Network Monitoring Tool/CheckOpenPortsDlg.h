@@ -216,11 +216,11 @@ private:
 
 	CStatic m_ctrlStaticRouterUpTime;
 public:
-	CEdit m_ctrlEditPacketReportDownload;
+	CEdit m_ctrlEditPacketReportArea;
 	afx_msg void OnBnClickedButtonStartPacket();
 	afx_msg void OnBnClickedButtonStopPacket();
-	CStatic m_ctrlEditDownloadSpeed;
-	CStatic m_ctrlEditUploadSpeed;
+	CEdit m_ctrlEditDownloadSpeed;
+	CEdit m_ctrlEditUploadSpeed;
 
 	CEdit m_ctrlEditPacketReportUpload;
 };
