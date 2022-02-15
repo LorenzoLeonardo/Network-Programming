@@ -17,6 +17,16 @@
 #define ICMP_TTL_EXPIRE 11
 
 
+typedef struct _tICMP_OPTIONS
+{
+    BYTE Ttl;
+    BYTE Tos;
+    BYTE Flags;
+    BYTE OptionsSize;
+    HANDLE OptionsData;
+}ICMP_OPTIONS;
+
+
 #pragma comment(lib, "iphlpapi.lib")
 using namespace std;
 
@@ -26,6 +36,7 @@ private:
 	WSADATA m_wsaData;
 	string m_HostName;
 	string m_HostIP;
+	bool Ping(HANDLE hIcmpFile, string sSrc, string sDest, IPAddr &, int);
 public:
 	CICMP();
 	~CICMP();

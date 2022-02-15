@@ -15,7 +15,8 @@
 
 int main()
 {
-
+    constexpr WORD payload_size = 1;
+    unsigned char payload[payload_size]{ 42 };
     // Declare and initialize variables
     PMIB_TCPTABLE pTcpTable;
     DWORD dwSize = 0;

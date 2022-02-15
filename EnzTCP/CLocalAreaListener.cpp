@@ -2,7 +2,6 @@
 #include "CLocalAreaListener.h"
 
 
-
 CLocalAreaListener* g_pCLocalAreaListener = NULL;
 
 CLocalAreaListener::CLocalAreaListener(const char* szStartingIPAddress, CallbackLocalAreaListener pFncPtr, int nPollingTimeMS)
