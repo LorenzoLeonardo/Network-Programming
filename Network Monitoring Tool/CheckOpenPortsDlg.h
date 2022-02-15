@@ -96,7 +96,7 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
 	bool m_bStopSearchingOpenPorts;
-	bool m_bIsRunning;
+	bool m_bLanStop;
 	vector<CString> m_vList;
 	CString m_IPAddress;
 	int m_nThread;
@@ -107,7 +107,6 @@ protected:
 	CString m_csRouterModel;
 	CString m_csRouterBrand;
 	CString m_csRouterDescription;
-	bool m_bStopLANClicked;
 	ULONG m_ulDataSizeDownload;
 	ULONG m_ulDataSizeUpload;
 public:
@@ -146,14 +145,20 @@ public:
 	{
 		return v_Thread;
 	}
-	void SetThreadRunning(bool b)
+	void SetLANStop(bool b)
 	{
-		m_bIsRunning = b;
-		if(!m_bIsRunning && m_bStopLANClicked)
-			::MessageBox(this->GetSafeHwnd(),_T("Listening from Local Area Network has stopped."),_T("Local Area Listener Stopped"), MB_ICONEXCLAMATION);
+		m_bLanStop = b;
+		if(m_bLanStop)
+			::MessageBox(this->GetSafeHwnd(), _T("Listening from Local Area Network has stopped."), _T("Local Area Listener Stopped"), MB_ICONEXCLAMATION);
+
 	}
 	void Increment();
-	bool IsStopped()
+	void SetStopSearchingOpenPort()
+	{
+		m_bStopSearchingOpenPorts = true;
+		::MessageBox(this->GetSafeHwnd(), _T("Done searching for open ports."), _T("Open Ports Checker"), MB_ICONEXCLAMATION);
+	}
+	bool IsSearchingOpenPortStopped()
 	{
 		return m_bStopSearchingOpenPorts;
 	}
@@ -161,9 +166,9 @@ public:
 	{
 		return m_bStopPacketListener;
 	}
-	bool IsThreadRunning()
+	bool IsLANStopped()
 	{
-		return m_bIsRunning;
+		return m_bLanStop;
 	}
 	CString GetIPAddress()
 	{
@@ -189,7 +194,7 @@ protected:
 	CEdit m_ctrlEditPollingTime;
 	HANDLE m_hThreadRouter;
 	HANDLE m_hThreadDownloadSpeed;
-	HANDLE m_hThreadUpSpeed;
+	HANDLE m_hThreadUploadSpeed;
 public:
 	CButton m_ctrlBtnListen;
 	CButton m_ctrlBtnStopListening;

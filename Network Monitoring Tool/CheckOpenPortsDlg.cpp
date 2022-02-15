@@ -180,9 +180,12 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 
 	// TODO: Add extra initialization here
 
-	m_bStopLANClicked = FALSE;
+
+
 	m_ctrlIPAddress.SetWindowText(_T("192.168.0.1"));
-	SetThreadRunning(false);
+
+	m_bStopSearchingOpenPorts = TRUE;
+	m_bLanStop = TRUE;
 	m_ctrlBtnStopSearchingPort.EnableWindow(false);
 	m_ctrlProgressStatus.ShowWindow(FALSE);
 	m_ctrlPortNum.SetWindowText(_T("80"));
@@ -223,7 +226,7 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 
 	m_hThreadRouter = (HANDLE)_beginthreadex(NULL, 0, RouterThread, this, 0, NULL);
 	m_hThreadDownloadSpeed = (HANDLE)_beginthreadex(NULL, 0, DownloadSpeedThread, this, 0, NULL);
-	m_hThreadUpSpeed = (HANDLE)_beginthreadex(NULL, 0, UploadSpeedThread, this, 0, NULL);
+	m_hThreadUploadSpeed = (HANDLE)_beginthreadex(NULL, 0, UploadSpeedThread, this, 0, NULL);
 	m_bShowPacketInfo = true;
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -345,22 +348,6 @@ void CCheckOpenPortsDlg::Increment()
 {
 	m_nThread++;
 	m_ctrlProgressStatus.SetPos(m_nThread);
-
-	if(m_nThread >= MAX_PORT)
-	{
-		m_ctrlIPAddress.EnableWindow(TRUE);
-		m_ctrlBtnCheckOpenPorts.EnableWindow(TRUE);
-		m_ctrlProgressStatus.ShowWindow(FALSE);
-	}
-	else
-	{
-		if (m_bStopSearchingOpenPorts)
-		{
-			m_ctrlIPAddress.EnableWindow(TRUE);
-			m_ctrlBtnCheckOpenPorts.EnableWindow(TRUE);
-			m_ctrlProgressStatus.ShowWindow(FALSE);
-		}
-	}
 }
 
 void CCheckOpenPortsDlg::OnBnClickedButtonPort()
@@ -385,9 +372,7 @@ void CCheckOpenPortsDlg::OnBnClickedButtonPort()
 
 void CCheckOpenPortsDlg::OnBnClickedButton2()
 {
-	m_bStopSearchingOpenPorts = true;
-	m_ctrlBtnStopSearchingPort.EnableWindow(false);
-	m_ctrlBtnCheckOpenPorts.EnableWindow(true);
+
 	m_pfnPtrStopSearchingOpenPorts();
 }
 
@@ -432,14 +417,15 @@ void CCheckOpenPortsDlg::OnClose()
 	m_pfnPtrStopPacketListener();
 	m_bHasClickClose = TRUE;
 
-	if (!m_bIsRunning)
+	if (IsLANStopped() && IsSearchingOpenPortStopped())
 	{
 		m_pfnPtrEndSNMP();
 		WaitForSingleObject(m_hThreadRouter, INFINITE);
 		WaitForSingleObject(m_hThreadDownloadSpeed, INFINITE);
+		WaitForSingleObject(m_hThreadUploadSpeed, INFINITE);
 		CloseHandle(m_hThreadRouter);
 		CloseHandle(m_hThreadDownloadSpeed);
-		CloseHandle(m_hThreadUpSpeed);
+		CloseHandle(m_hThreadUploadSpeed);
 		FreeLibrary(dll_handle);
 
 		CDialog::OnClose();
@@ -467,11 +453,10 @@ void CCheckOpenPortsDlg::OnBnClickedButtonListenLan()
 	CString csText;
 	CString csPollTime;
 
-	m_bStopLANClicked = FALSE;
 	m_ctrlBtnListen.EnableWindow(FALSE);
 	m_ctrlBtnStopListening.EnableWindow(TRUE);
 	m_vList.clear();
-	SetThreadRunning(true);
+	SetLANStop(false);
 	m_ctrlIPAddress.GetWindowText(csText);
 
 #ifdef UNICODE
@@ -513,7 +498,6 @@ void CCheckOpenPortsDlg::OnBnClickedButtonStopLan()
 	// TODO: Add your control notification handler code here
 	m_pfnPtrStopLocalAreaListening();
 	m_ctrlBtnStopListening.EnableWindow(FALSE);
-	m_bStopLANClicked = TRUE;
 }
 
 void CCheckOpenPortsDlg::OnNMClickListLan(NMHDR* pNMHDR, LRESULT* pResult)
@@ -795,7 +779,8 @@ void CCheckOpenPortsDlg::CallbackLANListener(const char* ipAddress, const char* 
 		{
 			g_dlg->m_ctrlBtnListen.EnableWindow(TRUE);
 			g_dlg->m_ctrlBtnStopListening.EnableWindow(FALSE);
-			g_dlg->SetThreadRunning(false);
+			g_dlg->SetLANStop(true);
+	
 		}
 	}
 	mtx_lanlistener.unlock();
@@ -806,24 +791,39 @@ void CCheckOpenPortsDlg::CallBackEnumPort(char* ipAddress, int nPort, bool bIsop
 	
 	if (ipAddress != NULL)
 	{
-		if (bIsopen)
+		
+		if(strcmp(ipAddress,"DONE") == 0)
+		{
+			g_dlg->m_ctrlIPAddress.EnableWindow(TRUE);
+			g_dlg->m_ctrlBtnCheckOpenPorts.EnableWindow(TRUE);
+			g_dlg->m_ctrlProgressStatus.ShowWindow(FALSE);
+			g_dlg->m_ctrlBtnStopSearchingPort.EnableWindow(false);
+			g_dlg->SetStopSearchingOpenPort();
+	
+		}
+		else
 		{
 			mtx_enumPorts.lock();
-			CString csStr;
-
-			string sTemp = ipAddress;
-		
-			_tstring wsLastError;
-			GetLastErrorMessageString(wsLastError, nLastError);
 			if (bIsopen)
-				csStr.Format(_T("%s %d is open.\r\n"), g_dlg->MultiByteToUnicode(sTemp).c_str(), nPort);
+			{
+				CString csStr;
 
-			long nLength = g_dlg->m_ctrlResult.GetWindowTextLength();
-			g_dlg->m_ctrlResult.SetSel(0, 0);
-			g_dlg->m_ctrlResult.ReplaceSel(csStr);
+				string sTemp = ipAddress;
+
+				_tstring wsLastError;
+				GetLastErrorMessageString(wsLastError, nLastError);
+				if (bIsopen)
+					csStr.Format(_T("%s %d is open.\r\n"), g_dlg->MultiByteToUnicode(sTemp).c_str(), nPort);
+
+				long nLength = g_dlg->m_ctrlResult.GetWindowTextLength();
+				g_dlg->m_ctrlResult.SetSel(0, 0);
+				g_dlg->m_ctrlResult.ReplaceSel(csStr);
+			
+			}
+			g_dlg->Increment();
 			mtx_enumPorts.unlock();
 		}
-		g_dlg->Increment();
+		
 	}
 
 }

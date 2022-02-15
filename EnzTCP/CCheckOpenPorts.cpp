@@ -72,7 +72,7 @@ void ThreadMonitorThreads(LPVOID pParam)
 	int nOuterLoopLimit = pCCheckOpenPorts->GetNumPorts() / 1000;
 	int i = 1;
 
-	for (int j = 0; j <= nOuterLoopLimit; j++)
+	for (int j = 0; j <= nOuterLoopLimit && !pCCheckOpenPorts->IsStopped(); j++)
 	{
 		for (; (i <= pCCheckOpenPorts->GetNumPorts()) && (i%(1000* (j+1))) && !pCCheckOpenPorts->IsStopped(); i++)
 		{
@@ -96,7 +96,7 @@ void ThreadMonitorThreads(LPVOID pParam)
 		}
 		pCCheckOpenPorts->GetThreads()->clear();
 	}
-
+	g_objPtrCCheckOpenPorts->m_pfnFindOpenPort((char*)"DONE", 0,true, 0);
 	return;
 }
 bool CCheckOpenPorts::IsPortOpen(string ipAddress, string port, int *pLastError)
