@@ -24,11 +24,14 @@ class CICMP
 {
 private:
 	WSADATA m_wsaData;
+	string m_HostName;
+	string m_HostIP;
 public:
 	CICMP();
 	~CICMP();
 
 	bool CheckDevice(string ipAddress, string& hostname, string& sMacAddress);
 	string GetHostName(string ipAddress);
+	int InitializeLocalIPAndHostname();
 };
 

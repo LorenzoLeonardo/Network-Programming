@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "CLocalAreaListener.h"
-#include "CICMP.h"
+
 
 
 CLocalAreaListener* g_pCLocalAreaListener = NULL;
@@ -13,11 +13,24 @@ CLocalAreaListener::CLocalAreaListener(const char* szStartingIPAddress, Callback
 	m_bHasStarted = false;
 	m_nPollingTimeMS = nPollingTimeMS;
 	m_bMainThreadStarted = FALSE;
+	m_objICMP = NULL;
+	try
+	{
+		m_objICMP = new CICMP();
+	}
+	catch (int nError)
+	{
+		throw nError;
+	}
 }
 
 CLocalAreaListener::~CLocalAreaListener()
 {
-	
+	if (m_objICMP != NULL)
+	{
+		delete m_objICMP;
+		m_objICMP = NULL;
+	}
 }
 map<thread*, int>* CLocalAreaListener::GetThreads()
 {
@@ -106,9 +119,5 @@ void CLocalAreaListener::Stop()
 }
 bool CLocalAreaListener::CheckIPDeviceConnected(string ipAddress,string &hostName, string &macAddress)
 {
-	CICMP* objICMP = new CICMP();
-	bool bRet = objICMP->CheckDevice(ipAddress, hostName, macAddress);
-	delete objICMP;
-
-	return bRet;
+	return 	m_objICMP->CheckDevice(ipAddress, hostName, macAddress);
 }

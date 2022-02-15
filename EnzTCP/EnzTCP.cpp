@@ -152,17 +152,25 @@ bool ENZTCPLIBRARY_API IsPortOpen(char* ipAddress, int nNumPorts, int *pnlastErr
    }
 }
 
-void ENZTCPLIBRARY_API StartLocalAreaListening(const char* ipAddress, CallbackLocalAreaListener fnpPtr, int nPollingTimeMS)
+bool ENZTCPLIBRARY_API StartLocalAreaListening(const char* ipAddress, CallbackLocalAreaListener fnpPtr, int nPollingTimeMS)
 {
-    if (g_pLocalAreaListener != NULL)
+    try
     {
-        delete g_pLocalAreaListener;
-        g_pLocalAreaListener = NULL;
+        if (g_pLocalAreaListener != NULL)
+        {
+            delete g_pLocalAreaListener;
+            g_pLocalAreaListener = NULL;
+        }
+        g_pLocalAreaListener = new CLocalAreaListener(ipAddress, fnpPtr, nPollingTimeMS);
+        if (g_pLocalAreaListener == NULL)
+            return false;
+        g_pLocalAreaListener->Start();
     }
-    g_pLocalAreaListener = new CLocalAreaListener(ipAddress, fnpPtr, nPollingTimeMS);
-    if (g_pLocalAreaListener == NULL)
-        return;
-    g_pLocalAreaListener->Start();
+    catch (int nError)
+    {
+        return nError == 0;
+    }
+    return true;
 }
 void ENZTCPLIBRARY_API StopLocalAreaListening()
 {

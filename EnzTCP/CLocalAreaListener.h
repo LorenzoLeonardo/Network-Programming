@@ -6,9 +6,9 @@
 #include <ws2tcpip.h>
 #include <iphlpapi.h>
 #include <mutex>
+#include "CICMP.h"
+
 using namespace std;
-
-
 
 typedef void (*CallbackLocalAreaListener)(const char* ipAddress, const char* hostName, const char* macAddress, bool bIsConnected);
 
@@ -18,7 +18,7 @@ public:
 	CLocalAreaListener(const char *szStartingIPAddress, CallbackLocalAreaListener pFncPtr, int nPollingTimesMS);
 	~CLocalAreaListener();
 	CallbackLocalAreaListener m_fnptrCallbackLocalAreaListener;
-
+	
 	void Start();
 	void Stop();
 	string GetStartingIPAddress();
@@ -48,6 +48,6 @@ private:
 	bool	m_bHasStarted;
 	int		m_nPollingTimeMS;
 	bool    m_bMainThreadStarted;
-
+	CICMP*	m_objICMP;
 
 };

@@ -3,15 +3,52 @@
 
 CICMP::CICMP()
 {
-    WSAStartup(MAKEWORD(2, 2), &m_wsaData);
+    int iResult = WSAStartup(MAKEWORD(2, 2), &m_wsaData);
+    if (iResult != 0)
+        throw iResult;
+
+    iResult = InitializeLocalIPAndHostname();
+    if (iResult !=0)
+        throw iResult;
 }
 CICMP::~CICMP()
 {
     WSACleanup();
 }
+int CICMP::InitializeLocalIPAndHostname()
+{
+    struct addrinfo* result = NULL, * ptr = NULL, hints;
+    int iResult = 0;
+    char hostname[NI_MAXHOST];
+    char ipAddress[INET_ADDRSTRLEN];
+
+    memset(hostname, 0, sizeof(hostname));
+    memset(ipAddress, 0, sizeof(ipAddress));
+    ZeroMemory(&hints, sizeof(hints));
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_RAW;
+    hints.ai_protocol = IPPROTO_ICMP;
+    hints.ai_flags = AI_ALL;
+
+    iResult = getaddrinfo("localhost", NULL, &hints, &result);
+    if (iResult != 0)
+        return iResult;
+    
+    iResult = getnameinfo(result->ai_addr, (socklen_t)result->ai_addrlen, hostname, NI_MAXHOST, NULL, 0, 0);
+    if (iResult != 0)
+        return iResult;
+    m_HostName = hostname;
+    iResult = getaddrinfo(hostname, NULL, &hints, &result);
+    if (iResult != 0)
+        return iResult;
+
+    inet_ntop(AF_INET, (const void*)(result->ai_addr->sa_data+2), ipAddress, sizeof(ipAddress));
+    m_HostIP = ipAddress;
+    
+    return iResult;
+}
 string CICMP::GetHostName(string ipAddress)
 {
-    
     int iResult = 0;
     char hostname[NI_MAXHOST];
     char servInfo[NI_MAXSERV];
@@ -39,10 +76,10 @@ string CICMP::GetHostName(string ipAddress)
 bool CICMP::CheckDevice(string ipAddress, string& hostname, string& sMacAddress)
 {
     HANDLE hIcmpFile;
-    
+    //struct hostent* remoteHost;
     unsigned long ipaddr = INADDR_NONE;
     DWORD dwRetVal = 0;
-    char SendData[32] = "Data Buffer";
+    char SendData[32];
     LPVOID ReplyBuffer = NULL;
     DWORD ReplySize = 0;
     bool bRet = false;
@@ -50,8 +87,9 @@ bool CICMP::CheckDevice(string ipAddress, string& hostname, string& sMacAddress)
     int iResult = 0;
     sMacAddress = "";
     // Validate the parameters
+    hostname = GetHostName(ipAddress);
 
-
+    memset(SendData, 0, sizeof(SendData));
     hIcmpFile = IcmpCreateFile();
     if (hIcmpFile == INVALID_HANDLE_VALUE)
           return false;
@@ -63,8 +101,7 @@ bool CICMP::CheckDevice(string ipAddress, string& hostname, string& sMacAddress)
         IcmpCloseHandle(hIcmpFile);
         return false;
     }
-   
-    hostname = GetHostName(ipAddress);
+    
     if(inet_pton(AF_INET, ipAddress.c_str(), &ipaddr)!=1)
     {
         free(ReplyBuffer);
@@ -72,39 +109,24 @@ bool CICMP::CheckDevice(string ipAddress, string& hostname, string& sMacAddress)
         return false;
     }
 
-    dwRetVal = IcmpSendEcho(hIcmpFile, ipaddr, (LPVOID)SendData, (WORD)sizeof(SendData), NULL, ReplyBuffer, ReplySize, 1000);
-    
+    dwRetVal = IcmpSendEcho(hIcmpFile, ipaddr, (LPVOID)SendData, (WORD)strlen(SendData), NULL, ReplyBuffer, ReplySize, 1000);
     if (dwRetVal != 0) 
     {
-        PICMP_ECHO_REPLY pEchoReply = (PICMP_ECHO_REPLY)ReplyBuffer;
-        ReplyAddr.S_un.S_addr = pEchoReply->Address;
-        IPAddr *pSource = 0;
-        
-        LPBYTE bPhysAddr;
-        
-        ULONG MacAddr[2];       /* for 6-byte hardware addresses */
+        ULONG MacAddr[2];
         ULONG PhysAddrLen = 6;
-
-        string localHostName = GetHostName("localhost");
-        struct addrinfo* result = NULL, * ptr = NULL, hints;
-
-        ZeroMemory(&hints, sizeof(hints));
-        hints.ai_family = AF_INET;
-        hints.ai_socktype = SOCK_RAW;
-        hints.ai_protocol = IPPROTO_ICMP;
-        hints.ai_flags = AI_NUMERICSERV;
-            
-        iResult = getaddrinfo(localHostName.c_str(), NULL, &hints, &result);
-        pSource = (IPAddr*)(result->ai_addr->sa_data+2);
+        IPAddr ipSource;
+        LPBYTE bPhysAddr;
+        PICMP_ECHO_REPLY pEchoReply = (PICMP_ECHO_REPLY)ReplyBuffer;
+  
+        ReplyAddr.S_un.S_addr = pEchoReply->Address;
+        inet_pton(AF_INET, m_HostIP.c_str(), &ipSource);
         
-        dwRetVal = SendARP(ReplyAddr.S_un.S_addr, *pSource, MacAddr, &PhysAddrLen);
-        
+        dwRetVal = SendARP(ReplyAddr.S_un.S_addr, ipSource, MacAddr, &PhysAddrLen);
         if (dwRetVal == NO_ERROR)
         {
             bPhysAddr = (BYTE*)&MacAddr;
             if (PhysAddrLen)
             {
-
                 char szMac[32];
                 memset(szMac, 0, sizeof(szMac));
                 for (int i = 0; i < 6; i++)
@@ -123,14 +145,12 @@ bool CICMP::CheckDevice(string ipAddress, string& hostname, string& sMacAddress)
                     }
                 }
             }
-            
             bRet = true;
         }
         else
         {
             bRet = false;
         }
-        freeaddrinfo(result);
     }
     else
         bRet = false;

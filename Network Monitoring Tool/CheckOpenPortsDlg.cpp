@@ -481,12 +481,18 @@ void CCheckOpenPortsDlg::OnBnClickedButtonListenLan()
 	if (csPollTime.IsEmpty())
 	{
 		m_ctrlEditPollingTime.SetWindowText(_T("1000"));
-		m_pfnPtrStartLocalAreaListening(str.c_str(), CallbackLANListener, 1000);
+		if (!m_pfnPtrStartLocalAreaListening(str.c_str(), CallbackLANListener, 1000))
+		{
+			AfxMessageBox(_T("Failed to start Local Area Listener."));
+		}
 	}
 	else
 	{
 		int nPollTime = _ttoi(csPollTime);
-		m_pfnPtrStartLocalAreaListening(str.c_str(), CallbackLANListener, nPollTime);
+		if (!m_pfnPtrStartLocalAreaListening(str.c_str(), CallbackLANListener, nPollTime))
+		{
+			AfxMessageBox(_T("Failed to start Local Area Listener."));
+		}
 	}
 #else
 	if (csPollTime.IsEmpty())

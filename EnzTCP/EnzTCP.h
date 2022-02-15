@@ -114,7 +114,7 @@ extern "C" ENZTCPLIBRARY_API	void		CloseClientConnection(HANDLE);
 extern "C" ENZTCPLIBRARY_API	void		EnumOpenPorts(char* ipAddress, int nNumPorts, FuncFindOpenPort);
 extern "C" ENZTCPLIBRARY_API	void		StopSearchingOpenPorts();
 extern "C" ENZTCPLIBRARY_API	bool		IsPortOpen(char* ipAddress, int nNumPorts, int* pnLastError);
-extern "C" ENZTCPLIBRARY_API	void        StartLocalAreaListening(const char* ipAddress, CallbackLocalAreaListener fnpPtr, int nPollingTimeMS);
+extern "C" ENZTCPLIBRARY_API	bool        StartLocalAreaListening(const char* ipAddress, CallbackLocalAreaListener fnpPtr, int nPollingTimeMS);
 extern "C" ENZTCPLIBRARY_API	void		StopLocalAreaListening();
 extern "C" ENZTCPLIBRARY_API	bool		StartSNMP(const char* szAgentIPAddress, const char* szCommunity, int nVersion, DWORD & dwLastError);
 extern "C" ENZTCPLIBRARY_API	smiVALUE	SNMPGet(const char* szOID, DWORD & dwLastError);
