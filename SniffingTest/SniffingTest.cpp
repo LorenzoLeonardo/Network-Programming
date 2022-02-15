@@ -109,6 +109,12 @@ ICMP_HDR* icmpheader;
 
 int main()
 {
+
+	IPV4_HDR hr;
+	memset(&hr, 0, sizeof(hr));
+	hr.ip_header_len = 0X0F;
+	hr.ip_version = 0X0A;
+
 	SOCKET sniffer;
 	struct in_addr addr;
 	int in;

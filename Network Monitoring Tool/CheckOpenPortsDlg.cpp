@@ -210,12 +210,14 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 		m_pfnPtrStopPacketListener = (FNStopPacketListener)GetProcAddress(dll_handle, "StopPacketListener");
 	}
 
-	LPCTSTR lpcRecHeader[] = { _T("No."), _T("IP Address"), _T("HostName"), _T("MAC Address") };
+	LPCTSTR lpcRecHeader[] = { _T("No."), _T("IP Address"), _T("HostName"), _T("MAC Address"), _T("Download Speed"), _T("Upload Speed")};
 	int nCol = 0;
 
 	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_FIXED_WIDTH, 30);
-	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_LEFT, 90);
-	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_LEFT, 90);
+	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_LEFT, 120);
+	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_LEFT, 120);
+	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_LEFT, 120);
+	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_LEFT, 120);
 	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_LEFT, 120);
 	g_dlg = this;
 
