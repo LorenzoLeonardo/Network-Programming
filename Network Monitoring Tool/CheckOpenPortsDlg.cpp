@@ -919,7 +919,7 @@ bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 			}
 		}
 	}
-	else if (ipFilter.Compare(sourceIP) == 0)
+	if (ipFilter.Compare(sourceIP) == 0)
 	{
 		g_dlg->SetUploadSize(g_dlg->GetUploadSize() + nSize);
 
