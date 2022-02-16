@@ -15,7 +15,8 @@
 #define ICMP_ECHOREQ 8   /* ICMP type: echo request */
 #define ICMP_DEST_UNREACH 3
 #define ICMP_TTL_EXPIRE 11
-
+#define SIZEOF_ICMP_ERROR 8
+#define SIZEOF_IO_STATUS_BLOCK 8
 
 typedef struct _tICMP_OPTIONS
 {

@@ -75,28 +75,56 @@ string CICMP::GetHostName(string ipAddress)
 }
 bool CICMP::Ping(HANDLE hIcmpFile,string sSrc, string sDest, IPAddr &dest, int TTL)
 {
-    IP_OPTION_INFORMATION icmpOptions;
+    IP_OPTION_INFORMATION icmpOptions=
+    {
+         255,         // Time To Live
+         0,           // Type Of Service
+         IP_FLAG_DF,  // IP header flags
+         0            // Size of options data
+    };
+    
     IPAddr src;
+    bool bRet = false;
 
-    icmpOptions.Ttl = TTL;
-    icmpOptions.Tos = 0;
-    icmpOptions.Flags = 0;
-    icmpOptions.OptionsSize = 0;
-    icmpOptions.OptionsData = 0;
-
+    DWORD dwReplySize = sizeof(ICMP_ECHO_REPLY) + SIZEOF_ICMP_ERROR + SIZEOF_IO_STATUS_BLOCK;
    
-    ICMP_ECHO_REPLY icmpReply;
-    string sData = "x";
-    icmpReply.Status = 0;
+    ICMP_ECHO_REPLY *icmpReply;
+    char sData[32] ="Data Send";
+
+    PVOID pDataReply = NULL;
+
+    pDataReply = malloc (dwReplySize);
+    
+    memset(pDataReply, 0, dwReplySize);
     inet_pton(AF_INET, sSrc.c_str(), &src);
     inet_pton(AF_INET, sDest.c_str(), &dest);
 
-    int iReplies = IcmpSendEcho2Ex(hIcmpFile, NULL, NULL,NULL, src, dest, (VOID*)sData.c_str(), (short)sData.length(), &icmpOptions, &icmpReply, sizeof(ICMP_ECHO_REPLY), TTL);
-  
-    if (icmpReply.Status == 0)
-        return false;
-    else
-        return true;
+    int iReplies = IcmpSendEcho2Ex(hIcmpFile, NULL, NULL,NULL, src, dest, (VOID*)sData, (short)strlen(sData), &icmpOptions, pDataReply, dwReplySize, TTL);
+    
+    icmpReply = (ICMP_ECHO_REPLY*)pDataReply;
+    if (iReplies != 0)
+    {
+        switch (icmpReply->Status)
+        {
+            case IP_SUCCESS:
+                bRet = true;
+                break;
+            case IP_DEST_HOST_UNREACHABLE:
+                bRet = false;
+                break;
+            case IP_DEST_NET_UNREACHABLE:
+                bRet = false;
+                break;
+            case IP_REQ_TIMED_OUT:
+                bRet = false;
+                break;
+            default:
+                bRet = false;
+                break;
+        }
+    }
+    free(pDataReply);
+    return bRet;
 }
 bool CICMP::CheckDevice(string ipAddress, string& hostname, string& sMacAddress)
 {
@@ -138,7 +166,7 @@ bool CICMP::CheckDevice(string ipAddress, string& hostname, string& sMacAddress)
     }
     IPAddr dest;
     //dwRetVal = IcmpSendEcho(hIcmpFile, ipaddr, (LPVOID)SendData, (WORD)strlen(SendData), NULL, ReplyBuffer, ReplySize, 500);
-    if (Ping(hIcmpFile, m_HostIP, ipAddress, dest, 1000))
+    if (Ping(hIcmpFile, m_HostIP, ipAddress, dest, 255))
     {
         ULONG MacAddr[2];
         ULONG PhysAddrLen = 6;
