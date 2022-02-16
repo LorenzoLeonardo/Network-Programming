@@ -235,4 +235,6 @@ public:
 	CEdit m_ctrlEditPacketReportUpload;
 	CButton m_ctrlBtnShowPacketInfo;
 	afx_msg void OnBnClickedButtonShowPackets();
+	CButton m_ctrlBtnListenPackets;
+	CButton m_ctrlBtnUnlistenPackets;
 };

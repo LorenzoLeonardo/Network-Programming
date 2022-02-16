@@ -113,6 +113,8 @@ void CCheckOpenPortsDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT_SPEED_DOWN, m_ctrlEditDownloadSpeed);
 	DDX_Control(pDX, IDC_EDIT_SPEED_UP, m_ctrlEditUploadSpeed);
 	DDX_Control(pDX, IDC_BUTTON_SHOW_PACKETS, m_ctrlBtnShowPacketInfo);
+	DDX_Control(pDX, IDC_BUTTON_START_PACKET, m_ctrlBtnListenPackets);
+	DDX_Control(pDX, IDC_BUTTON_STOP_PACKET, m_ctrlBtnUnlistenPackets);
 }
 
 BEGIN_MESSAGE_MAP(CCheckOpenPortsDlg, CDialogEx)
@@ -228,6 +230,9 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	m_hThreadDownloadSpeed = (HANDLE)_beginthreadex(NULL, 0, DownloadSpeedThread, this, 0, NULL);
 	m_hThreadUploadSpeed = (HANDLE)_beginthreadex(NULL, 0, UploadSpeedThread, this, 0, NULL);
 	m_bShowPacketInfo = true;
+	m_ctrlBtnListenPackets.EnableWindow(TRUE);
+	m_ctrlBtnUnlistenPackets.EnableWindow(FALSE);
+	OnBnClickedButtonListenLan();
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
 
@@ -945,9 +950,11 @@ void CCheckOpenPortsDlg::OnBnClickedButtonStartPacket()
 {
 	// TODO: Add your control notification handler code here
 	m_bStopPacketListener = false;
+	m_ctrlBtnListenPackets.EnableWindow(FALSE);
+	m_ctrlBtnUnlistenPackets.EnableWindow(TRUE);
 	if (!m_pfnPtrStartPacketListener(CallPacketListener))
 	{
-		AfxMessageBox(_T("Packet Listener failed to start. Please run the tool as Administrator."));
+		AfxMessageBox(_T("Packet Listener failed to start. Please run the tool as Administrator. TO run as administrator, right click on the executable file and click run as administrator."));
 	}
 }
 
@@ -957,6 +964,8 @@ void CCheckOpenPortsDlg::OnBnClickedButtonStopPacket()
 	// TODO: Add your control notification handler code here
 	m_bStopPacketListener = true;
 	m_pfnPtrStopPacketListener();
+	m_ctrlBtnListenPackets.EnableWindow(TRUE);
+	m_ctrlBtnUnlistenPackets.EnableWindow(FALSE);
 }
 
 
