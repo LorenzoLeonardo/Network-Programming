@@ -153,6 +153,10 @@ int CCheckOpenPortsDlg::OnCreate(LPCREATESTRUCT lpCreateStruct)
 }
 BOOL CCheckOpenPortsDlg::OnInitDialog()
 {
+	LPCTSTR lpcRecHeader[] = { _T("No."), _T("IP Address"), _T("HostName"), _T("MAC Address"), _T("Download Speed"), _T("Upload Speed") };
+	int nCol = 0;
+	char szDefaultGateWay[32];
+
 	CDialogEx::OnInitDialog();
 	
 	// Add "About..." menu item to system menu.
@@ -174,18 +178,14 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 			pSysMenu->AppendMenu(MF_STRING, IDM_ABOUTBOX, strAboutMenu);
 		}
 	}
-
+	::SetWindowTheme(GetDlgItem(IDC_STATIC_ROUTER_INFO)->GetSafeHwnd(), _T(""), _T(""));//To change text Color of Group Box
 	// Set the icon for this dialog.  The framework does this automatically
 	//  when the application's main window is not a dialog
 	SetIcon(m_hIcon, TRUE);			// Set big icon
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
 	// TODO: Add extra initialization here
-
-
-
-	m_ctrlIPAddress.SetWindowText(_T("192.168.0.1"));
-
+	g_dlg = this;
 	m_bStopSearchingOpenPorts = TRUE;
 	m_bLanStop = TRUE;
 	m_ctrlBtnStopSearchingPort.EnableWindow(false);
@@ -193,10 +193,6 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	m_ctrlPortNum.SetWindowText(_T("80"));
 	m_ctrlEditPollingTime.SetWindowText(_T("1000"));
 	m_ctrlBtnStopListening.EnableWindow(FALSE);
-
-	
-	::SetWindowTheme(GetDlgItem(IDC_STATIC_ROUTER_INFO)->GetSafeHwnd(), _T(""), _T(""));
-
 	m_ctrlLANConnected.SetExtendedStyle(LVS_EX_FLATSB | LVS_EX_HEADERDRAGDROP | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT);
 
 	dll_handle = LoadLibrary(_T("EnzTCP.dll"));
@@ -214,24 +210,24 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 		m_pfnPtrStartPacketListener = (FNStartPacketListener)GetProcAddress(dll_handle, "StartPacketListener");
 		m_pfnPtrStopPacketListener = (FNStopPacketListener)GetProcAddress(dll_handle, "StopPacketListener");
 	}
-
-	LPCTSTR lpcRecHeader[] = { _T("No."), _T("IP Address"), _T("HostName"), _T("MAC Address"), _T("Download Speed"), _T("Upload Speed")};
-	int nCol = 0;
-
 	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_FIXED_WIDTH, 30);
 	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_LEFT, 120);
 	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_LEFT, 120);
 	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_LEFT, 120);
 	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_LEFT, 120);
 	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_LEFT, 120);
-	g_dlg = this;
+	m_bShowPacketInfo = true;
+	m_ctrlBtnListenPackets.EnableWindow(TRUE);
+	m_ctrlBtnUnlistenPackets.EnableWindow(FALSE);
+	if (m_pfnPtrGetDefaultGateway(szDefaultGateWay))
+		m_ipFilter = szDefaultGateWay;
+	else
+		m_ipFilter = "127.0.0.1";
+	m_ctrlIPAddress.SetWindowText(m_ipFilter);
 
 	m_hThreadRouter = (HANDLE)_beginthreadex(NULL, 0, RouterThread, this, 0, NULL);
 	m_hThreadDownloadSpeed = (HANDLE)_beginthreadex(NULL, 0, DownloadSpeedThread, this, 0, NULL);
 	m_hThreadUploadSpeed = (HANDLE)_beginthreadex(NULL, 0, UploadSpeedThread, this, 0, NULL);
-	m_bShowPacketInfo = true;
-	m_ctrlBtnListenPackets.EnableWindow(TRUE);
-	m_ctrlBtnUnlistenPackets.EnableWindow(FALSE);
 	OnBnClickedButtonListenLan();
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -438,7 +434,7 @@ void CCheckOpenPortsDlg::OnClose()
 	else
 	{
 	//	m_bStopLANClicked = TRUE;
-		AfxMessageBox(_T("Application is still busy. Make sure all searching and listening has stopped."));
+		::MessageBox(this->GetSafeHwnd(), _T("Application is still busy. Make sure all listening activity has stopped."), _T("Network Monitoring Tool"), MB_ICONEXCLAMATION);
 	}
 }
 
@@ -472,17 +468,13 @@ void CCheckOpenPortsDlg::OnBnClickedButtonListenLan()
 	{
 		m_ctrlEditPollingTime.SetWindowText(_T("1000"));
 		if (!m_pfnPtrStartLocalAreaListening(str.c_str(), CallbackLANListener, 1000))
-		{
-			AfxMessageBox(_T("Failed to start Local Area Listener."));
-		}
+			::MessageBox(this->GetSafeHwnd(), _T("Failed to start Local Area Listener."), _T("Local Area Network Listener"), MB_ICONERROR);
 	}
 	else
 	{
 		int nPollTime = _ttoi(csPollTime);
 		if (!m_pfnPtrStartLocalAreaListening(str.c_str(), CallbackLANListener, nPollTime))
-		{
-			AfxMessageBox(_T("Failed to start Local Area Listener."));
-		}
+			::MessageBox(this->GetSafeHwnd(), _T("Failed to start Local Area Listener."), _T("Local Area Network Listener"), MB_ICONERROR);
 	}
 #else
 	if (csPollTime.IsEmpty())
@@ -516,8 +508,8 @@ void CCheckOpenPortsDlg::OnNMClickListLan(NMHDR* pNMHDR, LRESULT* pResult)
 	
 	if (pNMItemActivate->iItem > -1)
 	{
-		CString cs = m_ctrlLANConnected.GetItemText(m_nCurrentRowSelected, 1);
-		m_ctrlIPAddress.SetWindowText(cs);
+		m_ipFilter = m_ctrlLANConnected.GetItemText(m_nCurrentRowSelected, 1);
+		m_ctrlIPAddress.SetWindowText(m_ipFilter);
 	}
 }
 
@@ -591,7 +583,7 @@ unsigned __stdcall  CCheckOpenPortsDlg::DownloadSpeedThread(void* parg)
 	CString cs;
 	ULONG prev = 0, current = 0;
 	ULONGLONG timePrev = GetTickCount64(), timeCurrent;
-
+	float fDownSpeed = 0;
 	pDlg->SetDownloadSize(0);
 	prev = pDlg->GetDownloadSize();
 	while (!pDlg->HasClickClose())
@@ -600,7 +592,11 @@ unsigned __stdcall  CCheckOpenPortsDlg::DownloadSpeedThread(void* parg)
 		current = pDlg->GetDownloadSize();
 		if ((timeCurrent - timePrev) >= 1000)
 		{
-			cs.Format(_T("Download: %.2f Kbps"), ((float)(current - prev) / (float)(timeCurrent - timePrev))*8);
+			fDownSpeed = ((float)(current - prev) / (float)(timeCurrent - timePrev)) * 8;
+			if(fDownSpeed < 1000)
+				cs.Format(_T("Download: %.2f Kbps"), fDownSpeed);
+			else
+				cs.Format(_T("Download: %.2f Mbps"), fDownSpeed/1000);
 			pDlg->SetDownloadSpeedText(cs);
 			timePrev = timeCurrent;
 			
@@ -617,6 +613,7 @@ unsigned __stdcall  CCheckOpenPortsDlg::UploadSpeedThread(void* parg)
 	CString cs;
 	ULONG prev = 0, current = 0;
 	ULONGLONG timePrev = GetTickCount64(), timeCurrent;
+	float fUpSpeed = 0;
 
 	pDlg->SetUploadSize(0);
 	prev = pDlg->GetUploadSize();
@@ -626,7 +623,11 @@ unsigned __stdcall  CCheckOpenPortsDlg::UploadSpeedThread(void* parg)
 		current = pDlg->GetUploadSize();
 		if ((timeCurrent - timePrev) >= 1000)
 		{
-			cs.Format(_T("Upload: %.2f Kbps"), ((float)(current - prev) / (float)(timeCurrent - timePrev)) * 8);
+			fUpSpeed = ((float)(current - prev) / (float)(timeCurrent - timePrev)) * 8;
+			if (fUpSpeed < 1000)
+				cs.Format(_T("Upload: %.2f Kbps"), fUpSpeed);
+			else
+				cs.Format(_T("Upload: %.2f Mbps"), fUpSpeed / 1000);
 			pDlg->SetUploadSpeedText(cs);
 			timePrev = timeCurrent;
 
@@ -785,7 +786,6 @@ void CCheckOpenPortsDlg::CallbackLANListener(const char* ipAddress, const char* 
 			g_dlg->m_ctrlBtnListen.EnableWindow(TRUE);
 			g_dlg->m_ctrlBtnStopListening.EnableWindow(FALSE);
 			g_dlg->SetLANStop(true);
-	
 		}
 	}
 	mtx_lanlistener.unlock();
@@ -793,10 +793,8 @@ void CCheckOpenPortsDlg::CallbackLANListener(const char* ipAddress, const char* 
 
 void CCheckOpenPortsDlg::CallBackEnumPort(char* ipAddress, int nPort, bool bIsopen, int nLastError)
 {
-	
 	if (ipAddress != NULL)
 	{
-		
 		if(strcmp(ipAddress,"DONE") == 0)
 		{
 			g_dlg->m_ctrlIPAddress.EnableWindow(TRUE);
@@ -804,7 +802,6 @@ void CCheckOpenPortsDlg::CallBackEnumPort(char* ipAddress, int nPort, bool bIsop
 			g_dlg->m_ctrlProgressStatus.ShowWindow(FALSE);
 			g_dlg->m_ctrlBtnStopSearchingPort.EnableWindow(false);
 			g_dlg->SetStopSearchingOpenPort();
-	
 		}
 		else
 		{
@@ -823,42 +820,39 @@ void CCheckOpenPortsDlg::CallBackEnumPort(char* ipAddress, int nPort, bool bIsop
 				long nLength = g_dlg->m_ctrlResult.GetWindowTextLength();
 				g_dlg->m_ctrlResult.SetSel(0, 0);
 				g_dlg->m_ctrlResult.ReplaceSel(csStr);
-			
 			}
 			g_dlg->Increment();
 			mtx_enumPorts.unlock();
 		}
-		
 	}
-
 }
 
 bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 {
-	CString csText = _T(""), csSrcPort = _T(""), csDestPort = _T(""), sourceIP, destIP, cs;
+	CString csText, csSrcPort, csDestPort, sourceIP, destIP, cs, csTemp, ipFilter;
 	struct sockaddr_in source, dest;
-	int iphdrlen;
+	int iphdrlen = 0, nPort = 0, nDataSize = 0;
 	IPV4_HDR* iphdr;
 	TCP_HDR* tcpheader = NULL;
 	UDP_HDR* udpheader = NULL;
-	int nPort = 0, nDataSize = 0;
+	string sTemp;
 
 	iphdr = (IPV4_HDR*)buffer;
 	iphdrlen = iphdr->ucIPHeaderLen * 4;
 
-	switch (iphdr->ucIPProtocol) //Check the Protocol and do accordingly...
+	switch (iphdr->ucIPProtocol)
 	{
-		case 1: //ICMP 
+		case ICMP_PROTOCOL:
 		{
 			csText = _T("ICMP : ");
 			break;
 		}
-		case 2: //IGMP 
+		case IGMP_PROTOCOL:
 		{
 			csText = _T("IGMP : ");
 			break;
 		}
-		case 6: //TCP 
+		case TCP_PROTOCOL: 
 		{
 			tcpheader = (TCP_HDR*)(buffer + iphdrlen);
 			csSrcPort = to_wstring(ntohs(tcpheader->usSourcePort)).c_str();
@@ -867,7 +861,7 @@ bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 			csText = _T("TCP : ");
 			break;
 		}
-		case 17: //UDP 
+		case UDP_PROTOCOL:
 		{
 			udpheader = (UDP_HDR*)(buffer + iphdrlen);
 			csSrcPort = to_wstring(ntohs(udpheader->usSourcePort)).c_str();
@@ -876,7 +870,7 @@ bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 			csText = _T("UDP : ");
 			break;
 		}
-		default: //Some Other Protocol
+		default:
 		{
 			csText = _T("OTHERS : ");
 			break;
@@ -887,22 +881,17 @@ bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 	memset(&dest, 0, sizeof(dest));
 	dest.sin_addr.s_addr = iphdr->unDestaddress;
 	
-	string sTemp = inet_ntoa(source.sin_addr);
+	sTemp = inet_ntoa(source.sin_addr);
 	sourceIP = g_dlg->MultiByteToUnicode(sTemp).c_str();
 	sTemp = inet_ntoa(dest.sin_addr);
 	destIP = g_dlg->MultiByteToUnicode(sTemp).c_str();
-	CString ipFilter;
 
-	g_dlg->m_ctrlIPAddress.GetWindowText(ipFilter);
-
-	if (ipFilter.Compare(destIP) == 0)
+	if (g_dlg->GetIPFilterString().Compare(destIP) == 0)
 	{
 		g_dlg->SetDownloadSize(g_dlg->GetDownloadSize() + nSize);
-
 		if (g_dlg->ShowPacketInfo())
 		{
 			csText += sourceIP + _T(":") + csSrcPort + _T(" -> ") + destIP + _T(":") + csDestPort + _T(" Size: ") + to_wstring(nSize).c_str() + _T(" bytes\r\n");
-			CString csTemp;
 			g_dlg->m_ctrlEditPacketReportArea.GetWindowText(csTemp);
 			long nLength = csTemp.GetLength();
 			if (nLength < 5000)
@@ -912,22 +901,18 @@ bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 			}
 			else
 			{
-				CString csTemp;
 				g_dlg->m_ctrlEditPacketReportArea.GetWindowText(csTemp);
 				csTemp = csTemp.Left(csTemp.ReverseFind(_T('\r')));
 				g_dlg->m_ctrlEditPacketReportArea.SetWindowText(csTemp);
 			}
 		}
 	}
-	if (ipFilter.Compare(sourceIP) == 0)
+	if (g_dlg->GetIPFilterString().Compare(sourceIP) == 0)
 	{
 		g_dlg->SetUploadSize(g_dlg->GetUploadSize() + nSize);
-
 		if (g_dlg->ShowPacketInfo())
 		{
-			
 			csText += sourceIP + _T(":") + csSrcPort + _T(" -> ") + destIP + _T(":") + csDestPort + _T(" Size: ") + to_wstring(nSize).c_str() + _T(" bytes\r\n");
-			CString csTemp;
 			g_dlg->m_ctrlEditPacketReportArea.GetWindowText(csTemp);
 			long nLength = csTemp.GetLength();
 			if (nLength < 5000)
@@ -937,7 +922,6 @@ bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 			}
 			else
 			{
-				CString csTemp;
 				g_dlg->m_ctrlEditPacketReportArea.GetWindowText(csTemp);
 				csTemp = csTemp.Left(csTemp.ReverseFind(_T('\r')));
 				g_dlg->m_ctrlEditPacketReportArea.SetWindowText(csTemp);
@@ -954,7 +938,7 @@ void CCheckOpenPortsDlg::OnBnClickedButtonStartPacket()
 	m_ctrlBtnUnlistenPackets.EnableWindow(TRUE);
 	if (!m_pfnPtrStartPacketListener(CallPacketListener))
 	{
-		AfxMessageBox(_T("Packet Listener failed to start. Please run the tool as Administrator. TO run as administrator, right click on the executable file and click run as administrator."));
+		::MessageBox(this->GetSafeHwnd(), _T("Packet Listener failed to start. Please run the tool as Administrator. To run as administrator, right click on the executable file and click run as administrator."), _T("Run as Administrator"), MB_ICONEXCLAMATION);
 	}
 }
 

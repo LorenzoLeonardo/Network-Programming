@@ -24,6 +24,10 @@
 
 #define MAX_BUFFER_SIZE 1024
 #define SIO_RCVALL _WSAIOW(IOC_VENDOR,1)
+#define ICMP_PROTOCOL 1 
+#define IGMP_PROTOCOL 2
+#define TCP_PROTOCOL 6
+#define UDP_PROTOCOL 17
 
 #pragma comment(lib, "Ws2_32.lib")
 #pragma comment(lib, "Mswsock.lib")

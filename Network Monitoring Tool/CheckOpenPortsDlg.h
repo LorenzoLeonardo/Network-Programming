@@ -221,6 +221,10 @@ public:
 	{
 		return m_bShowPacketInfo;
 	}
+	CString GetIPFilterString()
+	{
+		return m_ipFilter;
+	}
 private:
 
 	CStatic m_ctrlStaticRouterUpTime;
@@ -237,4 +241,5 @@ public:
 	afx_msg void OnBnClickedButtonShowPackets();
 	CButton m_ctrlBtnListenPackets;
 	CButton m_ctrlBtnUnlistenPackets;
+	CString m_ipFilter;
 };
