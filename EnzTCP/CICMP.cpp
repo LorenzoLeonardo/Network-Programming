@@ -77,7 +77,7 @@ bool CICMP::Ping(HANDLE hIcmpFile,string sSrc, string sDest, IPAddr &dest, int T
 {
     IP_OPTION_INFORMATION icmpOptions=
     {
-         255,         // Time To Live
+         TTL,         // Time To Live
          0,           // Type Of Service
          IP_FLAG_DF,  // IP header flags
          0            // Size of options data
@@ -166,7 +166,7 @@ bool CICMP::CheckDevice(string ipAddress, string& hostname, string& sMacAddress)
     }
     IPAddr dest;
     //dwRetVal = IcmpSendEcho(hIcmpFile, ipaddr, (LPVOID)SendData, (WORD)strlen(SendData), NULL, ReplyBuffer, ReplySize, 500);
-    if (Ping(hIcmpFile, m_HostIP, ipAddress, dest, 255))
+    if (Ping(hIcmpFile, m_HostIP, ipAddress, dest, TIME_TO_LIVE))
     {
         ULONG MacAddr[2];
         ULONG PhysAddrLen = 6;
