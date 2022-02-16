@@ -73,11 +73,11 @@ string CICMP::GetHostName(string ipAddress)
     string sRet = hostname;
     return sRet;
 }
-bool CICMP::Ping(HANDLE hIcmpFile,string sSrc, string sDest, IPAddr &dest, int TTL)
+bool CICMP::Ping(HANDLE hIcmpFile,string sSrc, string sDest, IPAddr &dest, int nTTL)
 {
     IP_OPTION_INFORMATION icmpOptions=
     {
-         TTL,         // Time To Live
+         nTTL,         // Time To Live
          0,           // Type Of Service
          IP_FLAG_DF,  // IP header flags
          0            // Size of options data
@@ -94,36 +94,38 @@ bool CICMP::Ping(HANDLE hIcmpFile,string sSrc, string sDest, IPAddr &dest, int T
     PVOID pDataReply = NULL;
 
     pDataReply = malloc (dwReplySize);
-    
-    memset(pDataReply, 0, dwReplySize);
-    inet_pton(AF_INET, sSrc.c_str(), &src);
-    inet_pton(AF_INET, sDest.c_str(), &dest);
-
-    int iReplies = IcmpSendEcho2Ex(hIcmpFile, NULL, NULL,NULL, src, dest, (VOID*)sData, (short)strlen(sData), &icmpOptions, pDataReply, dwReplySize, TTL);
-    
-    icmpReply = (ICMP_ECHO_REPLY*)pDataReply;
-    if (iReplies != 0)
+    if (pDataReply != NULL)
     {
-        switch (icmpReply->Status)
+        memset(pDataReply, 0, dwReplySize);
+        inet_pton(AF_INET, sSrc.c_str(), &src);
+        inet_pton(AF_INET, sDest.c_str(), &dest);
+
+        int iReplies = IcmpSendEcho2Ex(hIcmpFile, NULL, NULL, NULL, src, dest, (VOID*)sData, (short)strlen(sData), &icmpOptions, pDataReply, dwReplySize, nTTL);
+
+        icmpReply = (ICMP_ECHO_REPLY*)pDataReply;
+        if (iReplies != 0)
         {
-            case IP_SUCCESS:
-                bRet = true;
-                break;
-            case IP_DEST_HOST_UNREACHABLE:
-                bRet = false;
-                break;
-            case IP_DEST_NET_UNREACHABLE:
-                bRet = false;
-                break;
-            case IP_REQ_TIMED_OUT:
-                bRet = false;
-                break;
-            default:
-                bRet = false;
-                break;
+            switch (icmpReply->Status)
+            {
+                case IP_SUCCESS:
+                    bRet = true;
+                    break;
+                case IP_DEST_HOST_UNREACHABLE:
+                    bRet = false;
+                    break;
+                case IP_DEST_NET_UNREACHABLE:
+                    bRet = false;
+                    break;
+                case IP_REQ_TIMED_OUT:
+                    bRet = false;
+                    break;
+                default:
+                    bRet = false;
+                    break;
+            }
         }
+        free(pDataReply);
     }
-    free(pDataReply);
     return bRet;
 }
 bool CICMP::CheckDevice(string ipAddress, string& hostname, string& sMacAddress)
