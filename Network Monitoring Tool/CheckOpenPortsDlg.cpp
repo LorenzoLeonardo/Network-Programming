@@ -973,14 +973,25 @@ void CCheckOpenPortsDlg::CallbackLANListener(const char* ipAddress, const char* 
 				mtx_packetlistenerUpload.unlock();
 				return;
 			}
-			g_dlg->m_mConnectedBefore = g_dlg->m_mConnected;
-			g_dlg->m_ctrlLANConnected.DeleteAllItems();
-
-			int col = 0;
 			map<ULONG, ENZ_CONNECTED_DEVICE_DETAILS>::iterator it = g_dlg->m_mConnectedBefore.begin();
+			int col = 0;
 			int nRow = 0;
 			WCHAR* temp = NULL;
 			CString format;
+
+			while (it != g_dlg->m_mConnectedBefore.end())
+			{
+				if (g_dlg->m_mConnected.find(it->first) != g_dlg->m_mConnected.end())
+				{
+					g_dlg->m_mConnected[it->first].m_lfDownloadSpeed = it->second.m_lfDownloadSpeed;
+					g_dlg->m_mConnected[it->first].m_lfUploadSpeed = it->second.m_lfUploadSpeed;
+				}
+				it++;
+			}
+			g_dlg->m_mConnectedBefore = g_dlg->m_mConnected;
+			g_dlg->m_ctrlLANConnected.DeleteAllItems();
+
+			it = g_dlg->m_mConnectedBefore.begin();
 			while (it != g_dlg->m_mConnectedBefore.end())
 			{
 #ifdef UNICODE
