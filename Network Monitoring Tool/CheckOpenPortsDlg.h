@@ -47,6 +47,15 @@ inline void GetLastErrorMessageString(_tstring& str, int nGetLastError);
 template <typename Map>
 inline bool key_compare(Map const& lhs, Map const& rhs);
 
+typedef struct _tOBJ
+{
+	ULONG m_ulDataSizeDownload;
+	ULONG m_ulDataSizeUpload;
+	double m_ulDownloadSpeed;
+	double m_ulUploadSpeed;
+	vector<CString> m_vIPHOSTMAC;//IP, Host, MAC
+}ENZ_CONNECTED_DEVICE_DETAILS;
+
 // CCheckOpenPortsDlg dialog
 class CCheckOpenPortsDlg : public CDialogEx
 {
@@ -60,6 +69,12 @@ public:
 	FNStartSNMP m_pfnPtrStartSNMP;
 	FNStartPacketListener m_pfnPtrStartPacketListener;
 	FNStopPacketListener m_pfnPtrStopPacketListener;
+	LPEnumOpenPorts m_pfnPtrEnumOpenPorts;
+	LPIsPortOpen m_pfnPtrIsPortOpen;
+	FNStartLocalAreaListening m_pfnPtrStartLocalAreaListening;
+	FNStopLocalAreaListening m_pfnPtrStopLocalAreaListening;
+	FNStopSearchingOpenPorts m_pfnPtrStopSearchingOpenPorts;
+
 // Dialog Data
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_CHECKOPENPORST_DIALOG };
@@ -68,33 +83,28 @@ public:
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV support
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
-	HBRUSH m_hBrushBackGround;
-	HBRUSH m_hBrushEditArea;
-	LPEnumOpenPorts m_pfnPtrEnumOpenPorts;
-	LPIsPortOpen m_pfnPtrIsPortOpen;
-	FNStartLocalAreaListening m_pfnPtrStartLocalAreaListening;
-	FNStopLocalAreaListening m_pfnPtrStopLocalAreaListening;
-	FNStopSearchingOpenPorts m_pfnPtrStopSearchingOpenPorts;
-
-	static void CallbackLANListener(const char* ipAddress, const char* hostName, const char* macAddress, bool bIsopen);
-	static void CallBackEnumPort(char* ipAddress, int nPort, bool bIsopen, int nLastError);
-	static bool CallPacketListener(unsigned char* buffer, int nSize);
-
-	static unsigned __stdcall  RouterThread(void* parg);
-	static unsigned __stdcall  DownloadSpeedThread(void* parg);
-	static unsigned __stdcall  UploadSpeedThread(void* parg);
-// Implementation
-protected:
-	HICON m_hIcon;
-
-	bool m_bStopPacketListener;
-	// Generated message map functions
-	virtual BOOL OnInitDialog();
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
 	afx_msg void OnPaint();
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
+
+	HBRUSH m_hBrushBackGround;
+	HBRUSH m_hBrushEditArea;
+	HICON m_hIcon;
+
+	static void CallbackLANListener(const char* ipAddress, const char* hostName, const char* macAddress, bool bIsopen);
+	static void CallBackEnumPort(char* ipAddress, int nPort, bool bIsopen, int nLastError);
+	static bool CallPacketListener(unsigned char* buffer, int nSize);
+	static unsigned __stdcall  RouterThread(void* parg);
+	static unsigned __stdcall  DownloadSpeedThread(void* parg);
+	static unsigned __stdcall  UploadSpeedThread(void* parg);
+
+
+	bool m_bStopPacketListener;
+	// Generated message map functions
+	virtual BOOL OnInitDialog();
+
 	bool m_bStopSearchingOpenPorts;
 	bool m_bLanStop;
 	vector<CString> m_vList;
@@ -139,8 +149,8 @@ public:
 	CIPAddressCtrl m_ctrlIPAddress;
 	CEdit m_ctrlResult;
 	CListCtrlCustom m_ctrlLANConnected;
-	map<ULONG, vector<string>> m_mConnected;
-	map<ULONG, vector<string>> m_mConnectedBefore;
+	map<ULONG, ENZ_CONNECTED_DEVICE_DETAILS> m_mConnected;
+	map<ULONG, ENZ_CONNECTED_DEVICE_DETAILS> m_mConnectedBefore;
 	vector<thread*> GetHandles()
 	{
 		return v_Thread;

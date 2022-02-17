@@ -33,10 +33,13 @@ inline void GetLastErrorMessageString(_tstring& str, int nGetLastError)
 }
 
 template <typename Map>
-inline bool key_compare(Map const& lhs, Map const& rhs) {
+inline bool key_compare(Map const& lhs, Map const& rhs) 
+{
 
 	auto pred = [](decltype(*lhs.begin()) a, decltype(a) b)
-	{ return a.first == b.first; };
+	{ 
+		return a.first == b.first; 
+	};
 
 	return lhs.size() == rhs.size()
 		&& std::equal(lhs.begin(), lhs.end(), rhs.begin(), pred);
@@ -727,12 +730,21 @@ void CCheckOpenPortsDlg::CallbackLANListener(const char* ipAddress, const char* 
 	if (bIsopen)
 	{
 		ULONG ipaddr;
+		CString csTemp;
+		ENZ_CONNECTED_DEVICE_DETAILS tDeviceDetails;
 
 		inet_pton(AF_INET, ipAddress, &ipaddr);
-		vector<string> vItem;
-		vItem.push_back(hostName);
-		vItem.push_back(macAddress);
-		g_dlg->m_mConnected[ipaddr] = vItem;
+		
+		memset(&tDeviceDetails, 0, sizeof(ENZ_CONNECTED_DEVICE_DETAILS));
+
+		
+		csTemp = (char*)ipAddress;
+		tDeviceDetails.m_vIPHOSTMAC.push_back(csTemp);
+		csTemp = (char*)hostName;
+		tDeviceDetails.m_vIPHOSTMAC.push_back(csTemp);
+		csTemp = (char*)macAddress;
+		tDeviceDetails.m_vIPHOSTMAC.push_back(csTemp);
+		g_dlg->m_mConnected[ipaddr] = tDeviceDetails;
 	}
 	else
 	{
@@ -748,30 +760,26 @@ void CCheckOpenPortsDlg::CallbackLANListener(const char* ipAddress, const char* 
 			g_dlg->m_ctrlLANConnected.DeleteAllItems();
 
 			int col = 0;
-			map<ULONG, vector<string>>::iterator it = g_dlg->m_mConnected.begin();
+			map<ULONG, ENZ_CONNECTED_DEVICE_DETAILS>::iterator it = g_dlg->m_mConnected.begin();
 			int nRow = 0;
-			CString csIPAddress;
-			char szIPAddress[32];
-
 			WCHAR* temp = NULL;
 			while (it != g_dlg->m_mConnected.end())
 			{
-				inet_ntop(AF_INET, (const void*)&(it->first), szIPAddress, sizeof(szIPAddress));
-				csIPAddress = szIPAddress;
+
 #ifdef UNICODE
 				g_dlg->m_ctrlLANConnected.InsertItem(LVIF_TEXT | LVIF_STATE, nRow,
 					to_wstring(nRow + 1).c_str(), 0, 0, 0, 0);
 
-				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 1, csIPAddress);
-				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 2, g_dlg->MultiByteToUnicode(it->second[0]).c_str());
-				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 3, g_dlg->MultiByteToUnicode(it->second[1]).c_str());
+				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 1, it->second.m_vIPHOSTMAC[0]);
+				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 2, it->second.m_vIPHOSTMAC[1]);
+				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 3, it->second.m_vIPHOSTMAC[2]);
 #else 
 				g_dlg->m_ctrlLANConnected.InsertItem(LVIF_TEXT | LVIF_STATE, nRow,
 					to_string(nRow + 1).c_str(), 0, 0, 0, 0);
 
-				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 1, csIPAddress);
-				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 2, it->second[0].c_str());
-				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 3, it->second[1].c_str());
+				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 1, it->second.m_vIPHOSTMAC[0]);
+				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 2, it->second.m_vIPHOSTMAC[1]);
+				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 3, it->second.m_vIPHOSTMAC[2]);
 #endif
 				it++;
 				nRow++;
