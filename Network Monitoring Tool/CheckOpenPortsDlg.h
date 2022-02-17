@@ -51,8 +51,8 @@ typedef struct _tOBJ
 {
 	ULONG m_ulDataSizeDownload;
 	ULONG m_ulDataSizeUpload;
-	double m_ulDownloadSpeed;
-	double m_ulUploadSpeed;
+	float m_lfDownloadSpeed;
+	float m_ulUploadSpeed;
 	vector<CString> m_vIPHOSTMAC;//IP, Host, MAC
 }ENZ_CONNECTED_DEVICE_DETAILS;
 
@@ -95,7 +95,7 @@ public:
 	CButton m_ctrlBtnListenPackets;
 	CButton m_ctrlBtnUnlistenPackets;
 	CString m_ipFilter;
-	DWORD   m_dwIPFilter;
+	ULONG   m_ulIPFilter;
 	CEdit m_ctrlPortNum;
 	CButton m_ctrlBtnListen;
 	CButton m_ctrlBtnStopListening;
@@ -112,17 +112,55 @@ public:
 	{
 		m_ulDataSizeDownload = size;
 	}
+
+	void SetDownloadSize(ULONG ulIPAdd, ULONG size)
+	{
+		if (!m_mConnected.empty())
+		{
+			if (m_mConnected.find(ulIPAdd) != m_mConnected.end())
+				m_mConnected[ulIPAdd].m_ulDataSizeDownload = size;
+		}
+	}
+
 	void SetUploadSize(ULONG size)
 	{
 		m_ulDataSizeUpload = size;
+	}
+
+	void SetUploadSize(ULONG ulIPAdd, ULONG size)
+	{
+		m_ulDataSizeUpload = size;
+		if (!m_mConnected.empty())
+		{
+			if(m_mConnected.find(ulIPAdd)!= m_mConnected.end())
+				m_mConnected[ulIPAdd].m_ulDataSizeUpload = size;
+		}
 	}
 	ULONG GetDownloadSize()
 	{
 		return m_ulDataSizeDownload;
 	}
+	ULONG GetDownloadSize(ULONG ulIPAdd)
+	{
+		if (!m_mConnected.empty())
+		{
+			if (m_mConnected.find(ulIPAdd) != m_mConnected.end())
+				return m_mConnected[ulIPAdd].m_ulDataSizeDownload;
+		}
+		return 0;
+	}
 	ULONG GetUploadSize()
 	{
 		return m_ulDataSizeUpload;
+	}
+	ULONG GetUploadSize(ULONG ulIPAdd)
+	{
+		if (!m_mConnected.empty())
+		{
+			if (m_mConnected.find(ulIPAdd) != m_mConnected.end())
+				return m_mConnected[ulIPAdd].m_ulDataSizeUpload;
+		}
+		return 0;
 	}
 	vector<thread*> GetHandles()
 	{
@@ -175,9 +213,9 @@ public:
 	{
 		return m_ipFilter;
 	}
-	DWORD GetIPFilterDWORD()
+	DWORD GetIPFilterULONG()
 	{
-		return m_dwIPFilter;
+		return m_ulIPFilter;
 	}
 
 protected:
@@ -201,7 +239,9 @@ protected:
 	CEdit m_ctrlEditPollingTime;
 	HANDLE m_hThreadRouter;
 	HANDLE m_hThreadDownloadSpeed;
+	HANDLE m_hThreadDownloadSpeedList;
 	HANDLE m_hThreadUploadSpeed;
+	HANDLE m_hThreadUploadSpeedList;
 	CButton m_ctrlBtnCheckOpenPorts;
 	CButton m_ctrlBtnStopSearchingPort;
 	CProgressCtrl m_ctrlProgressStatus;
@@ -237,6 +277,8 @@ protected:
 	static unsigned __stdcall  RouterThread(void* parg);
 	static unsigned __stdcall  DownloadSpeedThread(void* parg);
 	static unsigned __stdcall  UploadSpeedThread(void* parg);
+	static unsigned __stdcall  DownloadSpeedThreadList(void* parg);
+	static unsigned __stdcall  UploadSpeedThreadList(void* parg);
 	// Generated message map functions
 	virtual BOOL OnInitDialog();
 };
