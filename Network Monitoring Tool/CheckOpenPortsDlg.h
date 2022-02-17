@@ -30,6 +30,7 @@
 using namespace std;
 
 #define MAX_PORT 65535
+#define POLLING_TIME 500
 
 typedef  void(*LPEnumOpenPorts)(const char*, int, FuncFindOpenPort);
 typedef  bool(*LPIsPortOpen)(const char*, int, int*);
@@ -51,8 +52,8 @@ typedef struct _tOBJ
 {
 	ULONG m_ulDataSizeDownload;
 	ULONG m_ulDataSizeUpload;
-	float m_lfDownloadSpeed;
-	float m_lfUploadSpeed;
+	double m_lfDownloadSpeed;
+	double m_lfUploadSpeed;
 	vector<CString> m_vIPHOSTMAC;//IP, Host, MAC
 }ENZ_CONNECTED_DEVICE_DETAILS;
 
