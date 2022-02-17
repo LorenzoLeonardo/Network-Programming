@@ -79,49 +79,31 @@ public:
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_CHECKOPENPORST_DIALOG };
 #endif
-
-protected:
-	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV support
-	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
-	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
-	afx_msg void OnPaint();
-	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	afx_msg HCURSOR OnQueryDragIcon();
-	DECLARE_MESSAGE_MAP()
-
-	HBRUSH m_hBrushBackGround;
-	HBRUSH m_hBrushEditArea;
-	HICON m_hIcon;
-
-	static void CallbackLANListener(const char* ipAddress, const char* hostName, const char* macAddress, bool bIsopen);
-	static void CallBackEnumPort(char* ipAddress, int nPort, bool bIsopen, int nLastError);
-	static bool CallPacketListener(unsigned char* buffer, int nSize);
-	static unsigned __stdcall  RouterThread(void* parg);
-	static unsigned __stdcall  DownloadSpeedThread(void* parg);
-	static unsigned __stdcall  UploadSpeedThread(void* parg);
-
-
-	bool m_bStopPacketListener;
-	// Generated message map functions
-	virtual BOOL OnInitDialog();
-
-	bool m_bStopSearchingOpenPorts;
-	bool m_bLanStop;
-	vector<CString> m_vList;
-	CString m_IPAddress;
-	int m_nThread;
-	vector<thread*> v_Thread;
-	thread* m_tMonitor;
-	
-	bool m_bHasClickClose;
-	CString m_csRouterModel;
-	CString m_csRouterBrand;
-	CString m_csRouterDescription;
-	ULONG m_ulDataSizeDownload;
-	ULONG m_ulDataSizeUpload;
-public:
 	HMODULE dll_handle;
 	int m_nCurrentRowSelected;
+	HANDLE Handle[MAX_PORT];
+	CIPAddressCtrl m_ctrlIPAddress;
+	CEdit m_ctrlResult;
+	CListCtrlCustom m_ctrlLANConnected;
+	map<ULONG, ENZ_CONNECTED_DEVICE_DETAILS> m_mConnected;
+	map<ULONG, ENZ_CONNECTED_DEVICE_DETAILS> m_mConnectedBefore;
+	CEdit m_ctrlEditPacketReportArea;
+	CEdit m_ctrlEditDownloadSpeed;
+	CEdit m_ctrlEditUploadSpeed;
+	CEdit m_ctrlEditPacketReportUpload;
+	CButton m_ctrlBtnShowPacketInfo;
+	CButton m_ctrlBtnListenPackets;
+	CButton m_ctrlBtnUnlistenPackets;
+	CString m_ipFilter;
+	DWORD   m_dwIPFilter;
+	CEdit m_ctrlPortNum;
+	CButton m_ctrlBtnListen;
+	CButton m_ctrlBtnStopListening;
+
+	inline string UnicodeToMultiByte(wstring& wstr);
+	inline wstring MultiByteToUnicode(string& wstr);
+	void Increment();
+
 	bool HasClickClose()
 	{
 		return m_bHasClickClose;
@@ -142,15 +124,6 @@ public:
 	{
 		return m_ulDataSizeUpload;
 	}
-	afx_msg void OnBnClickedButtonPort();
-	inline string UnicodeToMultiByte(wstring& wstr);
-	inline wstring MultiByteToUnicode(string& wstr);
-	HANDLE Handle[MAX_PORT];
-	CIPAddressCtrl m_ctrlIPAddress;
-	CEdit m_ctrlResult;
-	CListCtrlCustom m_ctrlLANConnected;
-	map<ULONG, ENZ_CONNECTED_DEVICE_DETAILS> m_mConnected;
-	map<ULONG, ENZ_CONNECTED_DEVICE_DETAILS> m_mConnectedBefore;
 	vector<thread*> GetHandles()
 	{
 		return v_Thread;
@@ -158,11 +131,9 @@ public:
 	void SetLANStop(bool b)
 	{
 		m_bLanStop = b;
-		if(m_bLanStop)
+		if (m_bLanStop)
 			::MessageBox(this->GetSafeHwnd(), _T("Listening from Local Area Network has stopped."), _T("Local Area Listener Stopped"), MB_ICONEXCLAMATION);
-
 	}
-	void Increment();
 	void SetStopSearchingOpenPort()
 	{
 		m_bStopSearchingOpenPorts = true;
@@ -184,37 +155,6 @@ public:
 	{
 		return m_IPAddress;
 	}
-	afx_msg void OnBnClickedButton2();
-	CEdit m_ctrlPortNum;
-	afx_msg void OnBnClickedButtonCheckport();
-protected:
-	CProgressCtrl m_ctrlProgressStatus;
-public:
-	afx_msg void OnClose();
-protected:
-	CButton m_ctrlBtnCheckOpenPorts;
-	CButton m_ctrlBtnStopSearchingPort;
-public:
-	afx_msg void OnEnChangeEditArea();
-
-public:
-	afx_msg void OnBnClickedButtonListenLan();
-	afx_msg void OnBnClickedButtonStopLan();
-protected:
-	CEdit m_ctrlEditPollingTime;
-	HANDLE m_hThreadRouter;
-	HANDLE m_hThreadDownloadSpeed;
-	HANDLE m_hThreadUploadSpeed;
-public:
-	CButton m_ctrlBtnListen;
-	CButton m_ctrlBtnStopListening;
-	afx_msg void OnNMClickListLan(NMHDR* pNMHDR, LRESULT* pResult);
-	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
-	afx_msg void OnHdnItemKeyDownListLan(NMHDR* pNMHDR, LRESULT* pResult);
-	afx_msg void OnLvnKeydownListLan(NMHDR* pNMHDR, LRESULT* pResult);
-	afx_msg void OnNMDblclkListLan(NMHDR* pNMHDR, LRESULT* pResult);
-
-
 	void SetRouterUpTime(CString cs)
 	{
 		m_ctrlStaticRouterUpTime.SetWindowText(cs);
@@ -240,22 +180,63 @@ public:
 		return m_dwIPFilter;
 	}
 
-private:
-
+protected:
+	HBRUSH m_hBrushBackGround;
+	HBRUSH m_hBrushEditArea;
+	HICON m_hIcon;
+	bool m_bStopPacketListener;
+	bool m_bStopSearchingOpenPorts;
+	bool m_bLanStop;
+	vector<CString> m_vList;
+	CString m_IPAddress;
+	int m_nThread;
+	vector<thread*> v_Thread;
+	thread* m_tMonitor;
+	bool m_bHasClickClose;
+	CString m_csRouterModel;
+	CString m_csRouterBrand;
+	CString m_csRouterDescription;
+	ULONG m_ulDataSizeDownload;
+	ULONG m_ulDataSizeUpload;
+	CEdit m_ctrlEditPollingTime;
+	HANDLE m_hThreadRouter;
+	HANDLE m_hThreadDownloadSpeed;
+	HANDLE m_hThreadUploadSpeed;
+	CButton m_ctrlBtnCheckOpenPorts;
+	CButton m_ctrlBtnStopSearchingPort;
+	CProgressCtrl m_ctrlProgressStatus;
 	CStatic m_ctrlStaticRouterUpTime;
 	bool m_bShowPacketInfo;
-public:
-	CEdit m_ctrlEditPacketReportArea;
+
+	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV support
+	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
+	afx_msg void OnPaint();
+	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+	afx_msg HCURSOR OnQueryDragIcon();
+	afx_msg void OnBnClickedButtonStopSearchingOpenPorts();
+	afx_msg void OnBnClickedButtonCheckIfPortOpen();
+	afx_msg void OnBnClickedButtonPort();
+	afx_msg void OnClose();
+	afx_msg void OnEnChangeEditArea();
+	afx_msg void OnBnClickedButtonListenLan();
+	afx_msg void OnBnClickedButtonStopLan();
+	afx_msg void OnNMClickListLan(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
+	afx_msg void OnHdnItemKeyDownListLan(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnLvnKeydownListLan(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnNMDblclkListLan(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnBnClickedButtonStartPacket();
 	afx_msg void OnBnClickedButtonStopPacket();
-	CEdit m_ctrlEditDownloadSpeed;
-	CEdit m_ctrlEditUploadSpeed;
-
-	CEdit m_ctrlEditPacketReportUpload;
-	CButton m_ctrlBtnShowPacketInfo;
 	afx_msg void OnBnClickedButtonShowPackets();
-	CButton m_ctrlBtnListenPackets;
-	CButton m_ctrlBtnUnlistenPackets;
-	CString m_ipFilter;
-	DWORD   m_dwIPFilter;
+	DECLARE_MESSAGE_MAP()
+
+	static void CallbackLANListener(const char* ipAddress, const char* hostName, const char* macAddress, bool bIsopen);
+	static void CallBackEnumPort(char* ipAddress, int nPort, bool bIsopen, int nLastError);
+	static bool CallPacketListener(unsigned char* buffer, int nSize);
+	static unsigned __stdcall  RouterThread(void* parg);
+	static unsigned __stdcall  DownloadSpeedThread(void* parg);
+	static unsigned __stdcall  UploadSpeedThread(void* parg);
+	// Generated message map functions
+	virtual BOOL OnInitDialog();
 };

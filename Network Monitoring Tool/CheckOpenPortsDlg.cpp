@@ -89,6 +89,7 @@ CCheckOpenPortsDlg::CCheckOpenPortsDlg(CWnd* pParent /*=nullptr*/)
 	m_tMonitor = NULL;
 	m_nCurrentRowSelected = -1;
 	m_bHasClickClose = FALSE;
+	dll_handle = NULL;
 
 	m_hBrushBackGround = CreateSolidBrush(RGB(93, 107, 153));
 	m_hBrushEditArea = CreateSolidBrush(RGB(255, 255, 255));
@@ -125,8 +126,8 @@ BEGIN_MESSAGE_MAP(CCheckOpenPortsDlg, CDialogEx)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED(IDC_BUTTON_PORT, &CCheckOpenPortsDlg::OnBnClickedButtonPort)
-	ON_BN_CLICKED(IDC_BUTTON2, &CCheckOpenPortsDlg::OnBnClickedButton2)
-	ON_BN_CLICKED(IDC_BUTTON_CHECKPORT, &CCheckOpenPortsDlg::OnBnClickedButtonCheckport)
+	ON_BN_CLICKED(IDC_BUTTON2, &CCheckOpenPortsDlg::OnBnClickedButtonStopSearchingOpenPorts)
+	ON_BN_CLICKED(IDC_BUTTON_CHECKPORT, &CCheckOpenPortsDlg::OnBnClickedButtonCheckIfPortOpen)
 	ON_WM_CLOSE()
 	ON_EN_CHANGE(IDC_EDIT_AREA, &CCheckOpenPortsDlg::OnEnChangeEditArea)
 	ON_BN_CLICKED(IDC_BUTTON_LISTEN_LAN, &CCheckOpenPortsDlg::OnBnClickedButtonListenLan)
@@ -374,13 +375,13 @@ void CCheckOpenPortsDlg::OnBnClickedButtonPort()
 	
 }
 
-void CCheckOpenPortsDlg::OnBnClickedButton2()
+void CCheckOpenPortsDlg::OnBnClickedButtonStopSearchingOpenPorts()
 {
 
 	m_pfnPtrStopSearchingOpenPorts();
 }
 
-void CCheckOpenPortsDlg::OnBnClickedButtonCheckport()
+void CCheckOpenPortsDlg::OnBnClickedButtonCheckIfPortOpen()
 {
 	CString cs;
 	CString csPort;
