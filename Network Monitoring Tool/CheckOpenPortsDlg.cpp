@@ -437,12 +437,14 @@ void CCheckOpenPortsDlg::OnClose()
 		{
 			WaitForSingleObject(m_hThreadUploadSpeedList, INFINITE);
 			CloseHandle(m_hThreadUploadSpeedList);
+			m_hThreadUploadSpeedList = NULL;
 		}
 
 		if (m_hThreadDownloadSpeedList != NULL)
 		{
-			WaitForSingleObject(m_hThreadUploadSpeedList, INFINITE);
-			CloseHandle(m_hThreadUploadSpeedList);
+			WaitForSingleObject(m_hThreadDownloadSpeedList, INFINITE);
+			CloseHandle(m_hThreadDownloadSpeedList);
+			m_hThreadDownloadSpeedList = NULL;
 		}
 		FreeLibrary(dll_handle);
 
@@ -630,43 +632,46 @@ unsigned __stdcall  CCheckOpenPortsDlg::DownloadSpeedThreadList(void* parg)
 {
 	CCheckOpenPortsDlg* pDlg = (CCheckOpenPortsDlg*)parg;
 	map<ULONG, ULONG> mPrev, mCurrent;
-	ULONG Prev, Current;
 	ULONGLONG timePrev = GetTickCount64(), timeCurrent;
 	double fDownSpeed = 0;
 
-	
-	map<ULONG, ENZ_CONNECTED_DEVICE_DETAILS>::iterator it = pDlg->m_mConnected.begin();
-	while (it != pDlg->m_mConnected.end())
+	mtx_lanlistener.lock();
+	map<ULONG, ENZ_CONNECTED_DEVICE_DETAILS>::iterator it = pDlg->m_mConnectedBefore.begin();
+	while (it != pDlg->m_mConnectedBefore.end())
 	{
 		pDlg->SetDownloadSize(it->first, 0);
 		it++;
 	}
-	it = pDlg->m_mConnected.begin();
-	while (it != pDlg->m_mConnected.end())
+	it = pDlg->m_mConnectedBefore.begin();
+	while (it != pDlg->m_mConnectedBefore.end())
 	{
 		mPrev[it->first]= pDlg->GetDownloadSize(it->first);
 		it++;
 	}
+	mtx_lanlistener.unlock();
 	while (!pDlg->HasClickClose() && !pDlg->IsPacketStopped())
 	{
-		it = pDlg->m_mConnected.begin();
-		while (it != pDlg->m_mConnected.end())
+		mtx_lanlistener.lock();
+		it = pDlg->m_mConnectedBefore.begin();
+		while (it != pDlg->m_mConnectedBefore.end())
 		{
 			mCurrent[it->first] = pDlg->GetDownloadSize(it->first);
 			it++;
 		}
+		mtx_lanlistener.unlock();
 		timeCurrent = GetTickCount64();
 
 		if ((timeCurrent - timePrev) >= 1000)
 		{
-			map<ULONG, ENZ_CONNECTED_DEVICE_DETAILS>::iterator it = g_dlg->m_mConnected.begin();
+			mtx_lanlistener.lock();
+			map<ULONG, ENZ_CONNECTED_DEVICE_DETAILS>::iterator it = g_dlg->m_mConnectedBefore.begin();
 			int nRow = 0, col = 0;
 			WCHAR* temp = NULL;
 			
 			CString format;
 
-			it = pDlg->m_mConnected.begin();
-			while (it != pDlg->m_mConnected.end())
+			it = pDlg->m_mConnectedBefore.begin();
+			while (it != pDlg->m_mConnectedBefore.end())
 			{
 				LVFINDINFO lvFindInfo;
 				lvFindInfo.flags = LVFI_PARTIAL | LVFI_STRING;
@@ -703,18 +708,19 @@ unsigned __stdcall  CCheckOpenPortsDlg::DownloadSpeedThreadList(void* parg)
 				it++;
 			}
 			timePrev = timeCurrent;
-			it = pDlg->m_mConnected.begin();
-			while (it != pDlg->m_mConnected.end())
+			it = pDlg->m_mConnectedBefore.begin();
+			while (it != pDlg->m_mConnectedBefore.end())
 			{
 				pDlg->SetDownloadSize(it->first, 0);
 				it++;
 			}
-			it = pDlg->m_mConnected.begin();
-			while (it != pDlg->m_mConnected.end())
+			it = pDlg->m_mConnectedBefore.begin();
+			while (it != pDlg->m_mConnectedBefore.end())
 			{
 				mPrev[it->first] = pDlg->GetDownloadSize(it->first);
 				it++;
 			}
+			mtx_lanlistener.unlock();
 		}
 	}
 	return 0;
@@ -755,43 +761,46 @@ unsigned __stdcall  CCheckOpenPortsDlg::UploadSpeedThreadList(void* parg)
 {
 	CCheckOpenPortsDlg* pDlg = (CCheckOpenPortsDlg*)parg;
 	map<ULONG, ULONG> mPrev, mCurrent;
-	ULONG Prev, Current;
 	ULONGLONG timePrev = GetTickCount64(), timeCurrent;
 	double fDownSpeed = 0;
 
-
-	map<ULONG, ENZ_CONNECTED_DEVICE_DETAILS>::iterator it = pDlg->m_mConnected.begin();
-	while (it != pDlg->m_mConnected.end())
+	mtx_lanlistener.lock();
+	map<ULONG, ENZ_CONNECTED_DEVICE_DETAILS>::iterator it = pDlg->m_mConnectedBefore.begin();
+	while (it != pDlg->m_mConnectedBefore.end())
 	{
 		pDlg->SetUploadSize(it->first, 0);
 		it++;
 	}
-	it = pDlg->m_mConnected.begin();
-	while (it != pDlg->m_mConnected.end())
+	it = pDlg->m_mConnectedBefore.begin();
+	while (it != pDlg->m_mConnectedBefore.end())
 	{
 		mPrev[it->first] = pDlg->GetUploadSize(it->first);
 		it++;
 	}
+	mtx_lanlistener.unlock();
 	while (!pDlg->HasClickClose() && !pDlg->IsPacketStopped())
 	{
-		it = pDlg->m_mConnected.begin();
-		while (it != pDlg->m_mConnected.end())
+		mtx_lanlistener.lock();
+		it = pDlg->m_mConnectedBefore.begin();
+		while (it != pDlg->m_mConnectedBefore.end())
 		{
 			mCurrent[it->first] = pDlg->GetUploadSize(it->first);
 			it++;
 		}
+		mtx_lanlistener.unlock();
 		timeCurrent = GetTickCount64();
 
 		if ((timeCurrent - timePrev) >= 1000)
 		{
-			map<ULONG, ENZ_CONNECTED_DEVICE_DETAILS>::iterator it = g_dlg->m_mConnected.begin();
+			mtx_lanlistener.lock();
+			map<ULONG, ENZ_CONNECTED_DEVICE_DETAILS>::iterator it = g_dlg->m_mConnectedBefore.begin();
 			int nRow = 0, col = 0;
 			WCHAR* temp = NULL;
 
 			CString format;
 
-			it = pDlg->m_mConnected.begin();
-			while (it != pDlg->m_mConnected.end())
+			it = pDlg->m_mConnectedBefore.begin();
+			while (it != pDlg->m_mConnectedBefore.end())
 			{
 				LVFINDINFO lvFindInfo;
 				lvFindInfo.flags = LVFI_PARTIAL | LVFI_STRING;
@@ -828,18 +837,19 @@ unsigned __stdcall  CCheckOpenPortsDlg::UploadSpeedThreadList(void* parg)
 				it++;
 			}
 			timePrev = timeCurrent;
-			it = pDlg->m_mConnected.begin();
-			while (it != pDlg->m_mConnected.end())
+			it = pDlg->m_mConnectedBefore.begin();
+			while (it != pDlg->m_mConnectedBefore.end())
 			{
 				pDlg->SetUploadSize(it->first, 0);
 				it++;
 			}
-			it = pDlg->m_mConnected.begin();
-			while (it != pDlg->m_mConnected.end())
+			it = pDlg->m_mConnectedBefore.begin();
+			while (it != pDlg->m_mConnectedBefore.end())
 			{
 				mPrev[it->first] = pDlg->GetUploadSize(it->first);
 				it++;
 			}
+			mtx_lanlistener.unlock();
 		}
 	}
 	return 0;
@@ -955,6 +965,7 @@ void CCheckOpenPortsDlg::CallbackLANListener(const char* ipAddress, const char* 
 			if ((g_dlg->m_mConnected.size() == g_dlg->m_mConnectedBefore.size()) &&
 				key_compare(g_dlg->m_mConnected, g_dlg->m_mConnectedBefore))
 			{
+				g_dlg->m_mConnected.clear();
 				mtx_lanlistener.unlock();
 				return;
 			}
@@ -962,10 +973,10 @@ void CCheckOpenPortsDlg::CallbackLANListener(const char* ipAddress, const char* 
 			g_dlg->m_ctrlLANConnected.DeleteAllItems();
 
 			int col = 0;
-			map<ULONG, ENZ_CONNECTED_DEVICE_DETAILS>::iterator it = g_dlg->m_mConnected.begin();
+			map<ULONG, ENZ_CONNECTED_DEVICE_DETAILS>::iterator it = g_dlg->m_mConnectedBefore.begin();
 			int nRow = 0;
 			WCHAR* temp = NULL;
-			while (it != g_dlg->m_mConnected.end())
+			while (it != g_dlg->m_mConnectedBefore.end())
 			{
 #ifdef UNICODE
 				g_dlg->m_ctrlLANConnected.InsertItem(LVIF_TEXT | LVIF_STATE, nRow,
@@ -974,7 +985,6 @@ void CCheckOpenPortsDlg::CallbackLANListener(const char* ipAddress, const char* 
 				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 1, it->second.m_vIPHOSTMAC[0]);
 				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 2, it->second.m_vIPHOSTMAC[1]);
 				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 3, it->second.m_vIPHOSTMAC[2]);
-				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 4, to_wstring(it->second.m_lfDownloadSpeed).c_str());
 #else 
 				g_dlg->m_ctrlLANConnected.InsertItem(LVIF_TEXT | LVIF_STATE, nRow,
 					to_string(nRow + 1).c_str(), 0, 0, 0, 0);
@@ -982,17 +992,16 @@ void CCheckOpenPortsDlg::CallbackLANListener(const char* ipAddress, const char* 
 				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 1, it->second.m_vIPHOSTMAC[0]);
 				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 2, it->second.m_vIPHOSTMAC[1]);
 				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 3, it->second.m_vIPHOSTMAC[2]);
-				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 4, to_string(it->second.m_ulDownloadSpeed).c_str());
 #endif
 				it++;
 				nRow++;
 			}
-			if ((g_dlg->m_mConnected.size() - 1) < g_dlg->m_nCurrentRowSelected)
-				g_dlg->m_nCurrentRowSelected = (int)g_dlg->m_mConnected.size() - 1;
+			if ((g_dlg->m_mConnectedBefore.size() - 1) < g_dlg->m_nCurrentRowSelected)
+				g_dlg->m_nCurrentRowSelected = (int)g_dlg->m_mConnectedBefore.size() - 1;
 
 			g_dlg->m_ctrlLANConnected.SetItemState(g_dlg->m_nCurrentRowSelected, LVIS_SELECTED, LVIS_SELECTED);
 			g_dlg->m_ctrlLANConnected.SetFocus();
-			//g_dlg->m_mConnected.clear();
+			g_dlg->m_mConnected.clear();
 		}
 		else if (strcmp(ipAddress, "stop") == 0)
 		{

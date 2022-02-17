@@ -52,7 +52,7 @@ typedef struct _tOBJ
 	ULONG m_ulDataSizeDownload;
 	ULONG m_ulDataSizeUpload;
 	float m_lfDownloadSpeed;
-	float m_ulUploadSpeed;
+	float m_lfUploadSpeed;
 	vector<CString> m_vIPHOSTMAC;//IP, Host, MAC
 }ENZ_CONNECTED_DEVICE_DETAILS;
 
@@ -115,10 +115,10 @@ public:
 
 	void SetDownloadSize(ULONG ulIPAdd, ULONG size)
 	{
-		if (!m_mConnected.empty())
+		if (!m_mConnectedBefore.empty())
 		{
-			if (m_mConnected.find(ulIPAdd) != m_mConnected.end())
-				m_mConnected[ulIPAdd].m_ulDataSizeDownload = size;
+			if (m_mConnectedBefore.find(ulIPAdd) != m_mConnectedBefore.end())
+				m_mConnectedBefore[ulIPAdd].m_ulDataSizeDownload = size;
 		}
 	}
 
@@ -129,11 +129,10 @@ public:
 
 	void SetUploadSize(ULONG ulIPAdd, ULONG size)
 	{
-		m_ulDataSizeUpload = size;
-		if (!m_mConnected.empty())
+		if (!m_mConnectedBefore.empty())
 		{
-			if(m_mConnected.find(ulIPAdd)!= m_mConnected.end())
-				m_mConnected[ulIPAdd].m_ulDataSizeUpload = size;
+			if(m_mConnectedBefore.find(ulIPAdd)!= m_mConnectedBefore.end())
+				m_mConnectedBefore[ulIPAdd].m_ulDataSizeUpload = size;
 		}
 	}
 	ULONG GetDownloadSize()
@@ -142,10 +141,10 @@ public:
 	}
 	ULONG GetDownloadSize(ULONG ulIPAdd)
 	{
-		if (!m_mConnected.empty())
+		if (!m_mConnectedBefore.empty())
 		{
-			if (m_mConnected.find(ulIPAdd) != m_mConnected.end())
-				return m_mConnected[ulIPAdd].m_ulDataSizeDownload;
+			if (m_mConnectedBefore.find(ulIPAdd) != m_mConnectedBefore.end())
+				return m_mConnectedBefore[ulIPAdd].m_ulDataSizeDownload;
 		}
 		return 0;
 	}
@@ -155,10 +154,10 @@ public:
 	}
 	ULONG GetUploadSize(ULONG ulIPAdd)
 	{
-		if (!m_mConnected.empty())
+		if (!m_mConnectedBefore.empty())
 		{
-			if (m_mConnected.find(ulIPAdd) != m_mConnected.end())
-				return m_mConnected[ulIPAdd].m_ulDataSizeUpload;
+			if (m_mConnectedBefore.find(ulIPAdd) != m_mConnectedBefore.end())
+				return m_mConnectedBefore[ulIPAdd].m_ulDataSizeUpload;
 		}
 		return 0;
 	}
