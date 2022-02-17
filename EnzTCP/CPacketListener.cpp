@@ -28,7 +28,7 @@ void CPacketListener::PollingThread(void* args)
 		return;
 	do
 	{
-		nBytes = recvfrom(pListener->GetSocket(), pBuffer, 65536, 0, NULL, 0); //Eat as much as u can
+		nBytes = recvfrom(pListener->GetSocket(), pBuffer, 65536, 0, NULL, 0);
 		upBuffer = reinterpret_cast<unsigned char*> (pBuffer);
 		pListener->m_fnCallbackDisplay(upBuffer, nBytes);
 		memset(upBuffer, 0, 65536);

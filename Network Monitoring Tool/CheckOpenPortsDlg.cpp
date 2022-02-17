@@ -231,8 +231,8 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	m_ctrlIPAddress.SetWindowText(m_ipFilter);
 
 	m_hThreadRouter = (HANDLE)_beginthreadex(NULL, 0, RouterThread, this, 0, NULL);
-	m_hThreadDownloadSpeed = (HANDLE)_beginthreadex(NULL, 0, DownloadSpeedThread, this, 0, NULL);
-	m_hThreadUploadSpeed = (HANDLE)_beginthreadex(NULL, 0, UploadSpeedThread, this, 0, NULL);
+//	m_hThreadDownloadSpeed = (HANDLE)_beginthreadex(NULL, 0, DownloadSpeedThread, this, 0, NULL);
+//	m_hThreadUploadSpeed = (HANDLE)_beginthreadex(NULL, 0, UploadSpeedThread, this, 0, NULL);
 
 	OnBnClickedButtonListenLan();
 	return TRUE;  // return TRUE  unless you set the focus to a control
