@@ -225,6 +225,11 @@ public:
 	{
 		return m_ipFilter;
 	}
+	DWORD GetIPFilterDWORD()
+	{
+		return m_dwIPFilter;
+	}
+
 private:
 
 	CStatic m_ctrlStaticRouterUpTime;
@@ -242,4 +247,5 @@ public:
 	CButton m_ctrlBtnListenPackets;
 	CButton m_ctrlBtnUnlistenPackets;
 	CString m_ipFilter;
+	DWORD   m_dwIPFilter;
 };

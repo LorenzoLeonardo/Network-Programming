@@ -16,7 +16,7 @@ public :
 	CPacketListener(FNCallbackPacketListener fnPtr);
 	~CPacketListener();
 	
-	FNCallbackPacketListener m_fnCallback;
+	FNCallbackPacketListener m_fnCallbackDisplay;
 
 	static void PollingThread(void* args);
 	bool StartListening();

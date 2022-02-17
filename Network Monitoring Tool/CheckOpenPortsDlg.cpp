@@ -510,6 +510,8 @@ void CCheckOpenPortsDlg::OnNMClickListLan(NMHDR* pNMHDR, LRESULT* pResult)
 	{
 		m_ipFilter = m_ctrlLANConnected.GetItemText(m_nCurrentRowSelected, 1);
 		m_ctrlIPAddress.SetWindowText(m_ipFilter);
+		wstring temp = m_ipFilter.GetBuffer();
+ 		inet_pton(AF_INET, UnicodeToMultiByte(temp).c_str(), &m_dwIPFilter);
 	}
 }
 
@@ -830,8 +832,7 @@ void CCheckOpenPortsDlg::CallBackEnumPort(char* ipAddress, int nPort, bool bIsop
 bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 {
 	CString csText, csSrcPort, csDestPort, sourceIP, destIP, cs, csTemp, ipFilter;
-	struct sockaddr_in source, dest;
-	int iphdrlen = 0, nPort = 0, nDataSize = 0;
+	int iphdrlen = 0, nDataSize = 0;
 	IPV4_HDR* iphdr;
 	TCP_HDR* tcpheader = NULL;
 	UDP_HDR* udpheader = NULL;
@@ -840,53 +841,45 @@ bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 	iphdr = (IPV4_HDR*)buffer;
 	iphdrlen = iphdr->ucIPHeaderLen * 4;
 
-	switch (iphdr->ucIPProtocol)
+	if (g_dlg->ShowPacketInfo())
 	{
-		case ICMP_PROTOCOL:
+		switch (iphdr->ucIPProtocol)
 		{
-			csText = _T("ICMP : ");
-			break;
-		}
-		case IGMP_PROTOCOL:
-		{
-			csText = _T("IGMP : ");
-			break;
-		}
-		case TCP_PROTOCOL: 
-		{
-			tcpheader = (TCP_HDR*)(buffer + iphdrlen);
-			csSrcPort = to_wstring(ntohs(tcpheader->usSourcePort)).c_str();
-			csDestPort = to_wstring(ntohs(tcpheader->usDestPort)).c_str();
-			nPort = ntohs(tcpheader->usSourcePort);
-			csText = _T("TCP : ");
-			break;
-		}
-		case UDP_PROTOCOL:
-		{
-			udpheader = (UDP_HDR*)(buffer + iphdrlen);
-			csSrcPort = to_wstring(ntohs(udpheader->usSourcePort)).c_str();
-			csDestPort = to_wstring(ntohs(udpheader->usDestPort)).c_str();
-			nPort = ntohs(udpheader->usSourcePort);
-			csText = _T("UDP : ");
-			break;
-		}
-		default:
-		{
-			csText = _T("OTHERS : ");
-			break;
+			case ICMP_PROTOCOL:
+			{
+				csText = _T("ICMP : ");
+				break;
+			}
+			case IGMP_PROTOCOL:
+			{
+				csText = _T("IGMP : ");
+				break;
+			}
+			case TCP_PROTOCOL:
+			{
+				tcpheader = (TCP_HDR*)(buffer + iphdrlen);
+				csSrcPort = to_wstring(ntohs(tcpheader->usSourcePort)).c_str();
+				csDestPort = to_wstring(ntohs(tcpheader->usDestPort)).c_str();
+				csText = _T("TCP : ");
+				break;
+			}
+			case UDP_PROTOCOL:
+			{
+				udpheader = (UDP_HDR*)(buffer + iphdrlen);
+				csSrcPort = to_wstring(ntohs(udpheader->usSourcePort)).c_str();
+				csDestPort = to_wstring(ntohs(udpheader->usDestPort)).c_str();
+				csText = _T("UDP : ");
+				break;
+			}
+			default:
+			{
+				csText = _T("OTHERS : ");
+				break;
+			}
 		}
 	}
-	memset(&source, 0, sizeof(source));
-	source.sin_addr.s_addr = iphdr->unSrcaddress;
-	memset(&dest, 0, sizeof(dest));
-	dest.sin_addr.s_addr = iphdr->unDestaddress;
-	
-	sTemp = inet_ntoa(source.sin_addr);
-	sourceIP = g_dlg->MultiByteToUnicode(sTemp).c_str();
-	sTemp = inet_ntoa(dest.sin_addr);
-	destIP = g_dlg->MultiByteToUnicode(sTemp).c_str();
 
-	if (g_dlg->GetIPFilterString().Compare(destIP) == 0)
+	if (g_dlg->GetIPFilterDWORD() == (DWORD)iphdr->unDestaddress)
 	{
 		g_dlg->SetDownloadSize(g_dlg->GetDownloadSize() + nSize);
 		if (g_dlg->ShowPacketInfo())
@@ -907,7 +900,7 @@ bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 			}
 		}
 	}
-	if (g_dlg->GetIPFilterString().Compare(sourceIP) == 0)
+	if (g_dlg->GetIPFilterDWORD() == (DWORD)iphdr->unSrcaddress)
 	{
 		g_dlg->SetUploadSize(g_dlg->GetUploadSize() + nSize);
 		if (g_dlg->ShowPacketInfo())
@@ -937,9 +930,7 @@ void CCheckOpenPortsDlg::OnBnClickedButtonStartPacket()
 	m_ctrlBtnListenPackets.EnableWindow(FALSE);
 	m_ctrlBtnUnlistenPackets.EnableWindow(TRUE);
 	if (!m_pfnPtrStartPacketListener(CallPacketListener))
-	{
 		::MessageBox(this->GetSafeHwnd(), _T("Packet Listener failed to start. Please run the tool as Administrator. To run as administrator, right click on the executable file and click run as administrator."), _T("Run as Administrator"), MB_ICONEXCLAMATION);
-	}
 }
 
 
