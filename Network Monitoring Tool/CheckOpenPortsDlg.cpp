@@ -837,12 +837,19 @@ bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 	TCP_HDR* tcpheader = NULL;
 	UDP_HDR* udpheader = NULL;
 	string sTemp;
+	char sztemp[32];
+	memset(sztemp, 0, sizeof(sztemp));
 
 	iphdr = (IPV4_HDR*)buffer;
 	iphdrlen = iphdr->ucIPHeaderLen * 4;
 
 	if (g_dlg->ShowPacketInfo())
 	{
+		inet_ntop(AF_INET, (const void*)&iphdr->unDestaddress, sztemp, sizeof(sztemp));
+		destIP = sztemp;
+		inet_ntop(AF_INET, (const void*)&iphdr->unSrcaddress, sztemp, sizeof(sztemp));
+		sourceIP = sztemp;
+
 		switch (iphdr->ucIPProtocol)
 		{
 			case ICMP_PROTOCOL:
