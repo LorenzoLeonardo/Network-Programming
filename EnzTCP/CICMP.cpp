@@ -134,7 +134,7 @@ bool CICMP::CheckDeviceEx(string ipAddress, string& hostname, string& sMacAddres
     const char* lpdest = ipAddress.c_str();
     char* icmp_data = NULL, * recvbuf = NULL;
     struct sockaddr_in dest, from;
-    int iResult = 0, timeoutsend = 5000, timeoutrecv = 5000, fromlen = sizeof(from), datasize = 0;
+    int iResult = 0, timeoutsend = PING_TIMEOUT, timeoutrecv = PING_TIMEOUT, fromlen = sizeof(from), datasize = 0;
     struct hostent* hp = NULL;
     USHORT usSequenceNumber = atoi(ipAddress.substr(ipAddress.rfind('.', ipAddress.size()) + 1, ipAddress.size()).c_str());
     bool bRet = false;
@@ -285,7 +285,7 @@ bool CICMP::CheckDevice(string ipAddress, string& hostname, string& sMacAddress)
     }
     IPAddr dest;
     //dwRetVal = IcmpSendEcho(hIcmpFile, ipaddr, (LPVOID)SendData, (WORD)strlen(SendData), NULL, ReplyBuffer, ReplySize, 500);
-    if (Ping(hIcmpFile, m_HostIP, ipAddress, dest, TIME_TO_LIVE))
+    if (Ping(hIcmpFile, m_HostIP, ipAddress, dest, PING_TIMEOUT))
     {
         ULONG MacAddr[2];
         ULONG PhysAddrLen = 6;
