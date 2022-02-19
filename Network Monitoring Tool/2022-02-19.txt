@@ -1,0 +1,5 @@
+2022-02-19 20:54:12	CICMP::CheckDevice(): SendARP(192.168.0.105) Error:67
+2022-02-19 20:54:26	CICMP::CheckDevice(): SendARP(192.168.0.105) Error:67
+2022-02-19 20:54:31	CICMP::CheckDevice(): SendARP(192.168.0.172) Error:67
+2022-02-19 20:55:20	CICMP::CheckDevice(): SendARP(192.168.0.105) Error:67
+2022-02-19 20:55:25	CICMP::CheckDevice(): SendARP(192.168.0.107) Error:67
