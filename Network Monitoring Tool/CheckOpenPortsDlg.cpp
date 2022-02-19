@@ -158,7 +158,7 @@ int CCheckOpenPortsDlg::OnCreate(LPCREATESTRUCT lpCreateStruct)
 }
 BOOL CCheckOpenPortsDlg::OnInitDialog()
 {
-	LPCTSTR lpcRecHeader[] = { _T("No."), _T("IP Address"), _T("HostName"), _T("MAC Address"), _T("Download Speed"), _T("Upload Speed") };
+	LPCTSTR lpcRecHeader[] = { _T("No."), _T("IP Address"), _T("HostName"), _T("MAC Address"), _T("Download Speed"),  _T("Max Download Speed"),_T("Upload Speed"),_T("Max Upload Speed") };
 	int nCol = 0;
 	char szDefaultGateWay[32];
 
@@ -216,12 +216,14 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 		m_pfnPtrStopPacketListener = (FNStopPacketListener)GetProcAddress(dll_handle, "StopPacketListener");
 	}
 	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_FIXED_WIDTH, 30);
+	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_LEFT, 90);
+	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_LEFT, 90);
+	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_LEFT, 0);
+	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_LEFT, 100);
 	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_LEFT, 120);
+	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_LEFT, 100);
 	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_LEFT, 120);
-	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_LEFT, 120);
-	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_LEFT, 120);
-	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_LEFT, 120);
-	m_bShowPacketInfo = true;
+
 	m_ctrlBtnListenPackets.EnableWindow(TRUE);
 	m_ctrlBtnUnlistenPackets.EnableWindow(FALSE);
 	if (m_pfnPtrGetDefaultGateway(szDefaultGateWay))
@@ -233,7 +235,8 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	m_hThreadRouter = (HANDLE)_beginthreadex(NULL, 0, RouterThread, this, 0, NULL);
 //	m_hThreadDownloadSpeed = (HANDLE)_beginthreadex(NULL, 0, DownloadSpeedThread, this, 0, NULL);
 //	m_hThreadUploadSpeed = (HANDLE)_beginthreadex(NULL, 0, UploadSpeedThread, this, 0, NULL);
-
+	m_bShowPacketInfo = true;
+	OnBnClickedButtonShowPackets();
 	OnBnClickedButtonListenLan();
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -698,12 +701,25 @@ unsigned __stdcall  CCheckOpenPortsDlg::DownloadSpeedThreadList(void* parg)
 				{
 					fDownSpeed = ((double)(mCurrent[it->first] - mPrev[it->first]) / (double)(timeCurrent - timePrev)) * 8;
 					pDlg->m_mConnectedBefore[it->first].m_lfDownloadSpeed = fDownSpeed;
+
+					if (pDlg->m_mConnectedBefore[it->first].m_lfMaxDownloadSpeed < fDownSpeed)
+						pDlg->m_mConnectedBefore[it->first].m_lfMaxDownloadSpeed = fDownSpeed;
+
 					if(fDownSpeed <= 1000)
 						format.Format(_T("%.2f Kbps"), fDownSpeed);
 					else
 						format.Format(_T("%.2f Mbps"), fDownSpeed/1000);
 					lvItem.iItem = findResult;
 					lvItem.iSubItem = 4;
+					lvItem.pszText = format.GetBuffer();
+					g_dlg->m_ctrlLANConnected.SetItem(&lvItem);
+
+					if (pDlg->m_mConnectedBefore[it->first].m_lfMaxDownloadSpeed <= 1000)
+						format.Format(_T("%.2f Kbps"), pDlg->m_mConnectedBefore[it->first].m_lfMaxDownloadSpeed);
+					else
+						format.Format(_T("%.2f Mbps"), pDlg->m_mConnectedBefore[it->first].m_lfMaxDownloadSpeed / 1000);
+					lvItem.iItem = findResult;
+					lvItem.iSubItem = 5;
 					lvItem.pszText = format.GetBuffer();
 					g_dlg->m_ctrlLANConnected.SetItem(&lvItem);
 				}
@@ -829,12 +845,25 @@ unsigned __stdcall  CCheckOpenPortsDlg::UploadSpeedThreadList(void* parg)
 				{
 					fUpSpeed = ((double)(mCurrent[it->first] - mPrev[it->first]) / (double)(timeCurrent - timePrev)) * 8;
 					pDlg->m_mConnectedBefore[it->first].m_lfUploadSpeed = fUpSpeed;
+					
+					if (pDlg->m_mConnectedBefore[it->first].m_lfMaxUploadSpeed < fUpSpeed)
+					pDlg->m_mConnectedBefore[it->first].m_lfMaxUploadSpeed = fUpSpeed;
+
 					if (fUpSpeed <= 1000)
 						format.Format(_T("%.2f Kbps"), fUpSpeed);
 					else
 						format.Format(_T("%.2f Mbps"), fUpSpeed / 1000);
 					lvItem.iItem = findResult;
-					lvItem.iSubItem = 5;
+					lvItem.iSubItem = 6;
+					lvItem.pszText = format.GetBuffer();
+					g_dlg->m_ctrlLANConnected.SetItem(&lvItem);
+
+					if (pDlg->m_mConnectedBefore[it->first].m_lfMaxUploadSpeed <= 1000)
+						format.Format(_T("%.2f Kbps"), pDlg->m_mConnectedBefore[it->first].m_lfMaxUploadSpeed);
+					else
+						format.Format(_T("%.2f Mbps"), pDlg->m_mConnectedBefore[it->first].m_lfMaxUploadSpeed / 1000);
+					lvItem.iItem = findResult;
+					lvItem.iSubItem = 7;
 					lvItem.pszText = format.GetBuffer();
 					g_dlg->m_ctrlLANConnected.SetItem(&lvItem);
 				}
@@ -923,11 +952,11 @@ unsigned __stdcall  CCheckOpenPortsDlg::RouterThread(void* parg)
 				break;
 			}
 			ULONG ulDays = value.value.uNumber / 8640000;
-			double fRem = remainder(value.value.uNumber / (double)8640000, (double)8640000) - ulDays;
+			float fRem = remainder(value.value.uNumber / (float)8640000, (float)8640000) - ulDays;
 			ULONG ulHour = fRem * 24;
-			fRem = (double)(fRem * 24) - ulHour;
+			fRem = (float)(fRem * 24) - ulHour;
 			ULONG ulMin = fRem * 60;
-			fRem = (double)(fRem * 60) - ulMin;
+			fRem = (float)(fRem * 60) - ulMin;
 			ULONG ulSec = fRem * 60;
 	
 			csFormat=_T("");
@@ -989,6 +1018,8 @@ void CCheckOpenPortsDlg::CallbackLANListener(const char* ipAddress, const char* 
 				{
 					g_dlg->m_mConnected[it->first].m_lfDownloadSpeed = it->second.m_lfDownloadSpeed;
 					g_dlg->m_mConnected[it->first].m_lfUploadSpeed = it->second.m_lfUploadSpeed;
+					g_dlg->m_mConnected[it->first].m_lfMaxDownloadSpeed = it->second.m_lfMaxDownloadSpeed;
+					g_dlg->m_mConnected[it->first].m_lfMaxUploadSpeed = it->second.m_lfMaxUploadSpeed;
 				}
 				it++;
 			}
@@ -1005,17 +1036,30 @@ void CCheckOpenPortsDlg::CallbackLANListener(const char* ipAddress, const char* 
 				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 1, it->second.m_vIPHOSTMAC[0]);
 				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 2, it->second.m_vIPHOSTMAC[1]);
 				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 3, it->second.m_vIPHOSTMAC[2]);
+
 				if (it->second.m_lfDownloadSpeed <= 1000)
 					format.Format(_T("%.2f Kbps"), it->second.m_lfDownloadSpeed);
 				else
 					format.Format(_T("%.2f Mbps"), it->second.m_lfDownloadSpeed / 1000);
 				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 4, format);
 
+				if (it->second.m_lfMaxDownloadSpeed <= 1000)
+					format.Format(_T("%.2f Kbps"), it->second.m_lfMaxDownloadSpeed);
+				else
+					format.Format(_T("%.2f Mbps"), it->second.m_lfMaxDownloadSpeed / 1000);
+				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 5, format);
+
 				if (it->second.m_lfUploadSpeed <= 1000)
 					format.Format(_T("%.2f Kbps"), it->second.m_lfUploadSpeed);
 				else
 					format.Format(_T("%.2f Mbps"), it->second.m_lfUploadSpeed / 1000);
-				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 5, format);
+				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 6, format);
+
+				if (it->second.m_lfMaxUploadSpeed <= 1000)
+					format.Format(_T("%.2f Kbps"), it->second.m_lfMaxUploadSpeed);
+				else
+					format.Format(_T("%.2f Mbps"), it->second.m_lfMaxUploadSpeed / 1000);
+				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 7, format);
 #else 
 				g_dlg->m_ctrlLANConnected.InsertItem(LVIF_TEXT | LVIF_STATE, nRow,
 					to_string(nRow + 1).c_str(), 0, 0, 0, 0);

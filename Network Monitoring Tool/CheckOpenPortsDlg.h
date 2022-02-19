@@ -54,6 +54,8 @@ typedef struct _tOBJ
 	ULONG m_ulDataSizeUpload;
 	double m_lfDownloadSpeed;
 	double m_lfUploadSpeed;
+	double m_lfMaxDownloadSpeed;
+	double m_lfMaxUploadSpeed;
 	vector<CString> m_vIPHOSTMAC;//IP, Host, MAC
 }ENZ_CONNECTED_DEVICE_DETAILS;
 
