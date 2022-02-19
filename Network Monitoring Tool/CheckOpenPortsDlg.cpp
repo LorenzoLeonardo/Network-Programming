@@ -238,6 +238,7 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	m_bShowPacketInfo = true;
 	OnBnClickedButtonShowPackets();
 	OnBnClickedButtonListenLan();
+	OnBnClickedButtonStartPacket();
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
 
