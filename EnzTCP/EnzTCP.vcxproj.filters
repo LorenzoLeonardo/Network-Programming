@@ -54,6 +54,9 @@
     <ClInclude Include="CPacketListener.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="DebugLog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">

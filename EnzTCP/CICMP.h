@@ -15,7 +15,7 @@
 #define ICMP_ECHO 8   /* ICMP type: echo request */
 #define SIZEOF_ICMP_ERROR 8
 #define SIZEOF_IO_STATUS_BLOCK 8
-#define PING_TIMEOUT 10000
+#define PING_TIMEOUT 1000
 #define ICMP_MIN 8 // Minimum 8-byte ICMP packet (header)
 #define MAX_PACKET       65536
 typedef struct _tICMP_OPTIONS

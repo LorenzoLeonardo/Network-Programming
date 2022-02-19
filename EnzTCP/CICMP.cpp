@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "CICMP.h"
+#include "DebugLog.h"
 
 CICMP::CICMP()
 {
@@ -143,25 +144,34 @@ bool CICMP::CheckDeviceEx(string ipAddress, string& hostname, string& sMacAddres
 
     icmp_data = (char*)malloc(MAX_PACKET);
     if (!icmp_data)
+    {
+        DEBUG_LOG("CICMP::CheckDeviceEx() icmp_data -> Out of memory.");
         return bRet;
+    }
     memset((void*)icmp_data, 0, MAX_PACKET);
 
     recvbuf = (char*)malloc(MAX_PACKET);
     if (!recvbuf)
+    {
+        DEBUG_LOG("CICMP::CheckDeviceEx() recvbuf -> Out of memory.");
         return bRet;
+    }
     memset((void*)recvbuf, 0, MAX_PACKET);
 
     sockRaw = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
     if (sockRaw == INVALID_SOCKET)
+    {
+        DEBUG_LOG("CICMP::CheckDeviceEx(): socket -> Invalid Socket.");
         goto CLEANPUP;
+    }
 
-    iResult = setsockopt(sockRaw, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeoutsend, sizeof(timeoutsend));
-    if (iResult == SOCKET_ERROR)
-        goto CLEANPUP;
+   // iResult = setsockopt(sockRaw, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeoutsend, sizeof(timeoutsend));
+   // if (iResult == SOCKET_ERROR)
+   //     goto CLEANPUP;
 
-    iResult = setsockopt(sockRaw, SOL_SOCKET, SO_SNDTIMEO, (char*)&timeoutrecv, sizeof(timeoutrecv));
-    if (iResult == SOCKET_ERROR)
-        goto CLEANPUP;
+   // iResult = setsockopt(sockRaw, SOL_SOCKET, SO_SNDTIMEO, (char*)&timeoutrecv, sizeof(timeoutrecv));
+   // if (iResult == SOCKET_ERROR)
+    //    goto CLEANPUP;
 
     memset(&dest, 0, sizeof(dest));
     dest.sin_family = AF_INET;
@@ -185,11 +195,17 @@ bool CICMP::CheckDeviceEx(string ipAddress, string& hostname, string& sMacAddres
     iResult = sendto(sockRaw, icmp_data, datasize, 0,
         (struct sockaddr*)&dest, sizeof(dest));
     if (iResult == SOCKET_ERROR)
+    {
+        DEBUG_LOG("CICMP::CheckDeviceEx(): sendto -> Socket Error." + to_string(WSAGetLastError()));
         goto CLEANPUP;
+    }
 
     iResult = recvfrom(sockRaw, recvbuf, MAX_PACKET, 0, (struct sockaddr*)&from, &fromlen);
     if (iResult == SOCKET_ERROR)
+    {
+        DEBUG_LOG("CICMP::CheckDeviceEx(): recvfrom -> Socket Error. " + to_string(WSAGetLastError()));
         goto CLEANPUP;
+    }
     else
     {
         if (DecodeICMPHeader(usSequenceNumber, recvbuf, iResult, &from))
@@ -199,7 +215,7 @@ bool CICMP::CheckDeviceEx(string ipAddress, string& hostname, string& sMacAddres
             IPAddr ipSource;
             LPBYTE bPhysAddr;
             DWORD dwRetVal;
-           
+
             inet_pton(AF_INET, m_HostIP.c_str(), &ipSource);
 
             dwRetVal = SendARP(from.sin_addr.S_un.S_addr, ipSource, MacAddr, &PhysAddrLen);
@@ -230,8 +246,20 @@ bool CICMP::CheckDeviceEx(string ipAddress, string& hostname, string& sMacAddres
             }
             else
             {
+                char szIP[32];
+                inet_ntop(AF_INET, &from.sin_addr.S_un.S_addr, szIP, sizeof(szIP));
+                string sIP(szIP);
+                DEBUG_LOG("CICMP::CheckDeviceEx(): SendARP -> Error. " + sIP);
                 bRet = false;
             }
+        }
+        else
+        {
+            char szIP[32];
+            inet_ntop(AF_INET, &from.sin_addr.S_un.S_addr, szIP, sizeof(szIP));
+            string sIP(szIP);
+            DEBUG_LOG("CICMP::CheckDeviceEx(): DecodeICMPHeader() - false " + sIP);
+            bRet = false;
         }
     }
 
@@ -296,7 +324,7 @@ bool CICMP::CheckDevice(string ipAddress, string& hostname, string& sMacAddress)
         ReplyAddr.S_un.S_addr = pEchoReply->Address;
         inet_pton(AF_INET, m_HostIP.c_str(), &ipSource);
         
-        dwRetVal = SendARP(dest, ipSource, MacAddr, &PhysAddrLen);
+        dwRetVal = SendARP(ipaddr, ipSource, MacAddr, &PhysAddrLen);
         if (dwRetVal == NO_ERROR)
         {
             bPhysAddr = (BYTE*)&MacAddr;
@@ -324,6 +352,11 @@ bool CICMP::CheckDevice(string ipAddress, string& hostname, string& sMacAddress)
         }
         else
         {
+            char szIP[32];
+            inet_ntop(AF_INET, &ipaddr, szIP, sizeof(szIP));
+            string sIP(szIP);
+
+            DEBUG_LOG("CICMP::CheckDevice(): SendARP("+ sIP +") Error:"+to_string(dwRetVal));
             bRet = false;
         }
     }
@@ -380,16 +413,24 @@ bool CICMP::DecodeICMPHeader(USHORT usSeq, char* buf, int bytes, struct sockaddr
 
 
     if (bytes < iphdrlen + ICMP_MIN)
-        return false;
+    {
+        DEBUG_LOG("CICMP::DecodeICMPHeader(): bytes < iphdrlen + ICMP_MIN.");
+        return true;
+    }
 
     icmphdr = (ICMP_HDR*)(buf + iphdrlen);
 
     if (icmphdr->byType != ICMP_ECHOREPLY)
+    {
         return false;
+    }
 
 
     if (icmphdr->usID != (USHORT)GetCurrentProcessId())
+    {
+        DEBUG_LOG("CICMP::DecodeICMPHeader(): icmphdr->usID != (USHORT)GetCurrentProcessId().");
         return false;
+    }
 
 
     if (icmphdr->usSeq == usSeq)

@@ -160,6 +160,7 @@
     <ClInclude Include="CSocketClient.h" />
     <ClInclude Include="CSocketServer.h" />
     <ClInclude Include="CTCPListener.h" />
+    <ClInclude Include="DebugLog.h" />
     <ClInclude Include="EnzTCP.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="pch.h" />

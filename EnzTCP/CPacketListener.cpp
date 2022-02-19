@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "CPacketListener.h"
-
+#include "DebugLog.h"
 
 CPacketListener::CPacketListener(FNCallbackPacketListener fnPtr)
 {
