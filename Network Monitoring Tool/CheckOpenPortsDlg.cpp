@@ -652,6 +652,7 @@ unsigned __stdcall  CCheckOpenPortsDlg::DownloadSpeedThreadList(void* parg)
 	mtx_packetlistenerDownload.unlock();
 	while (!pDlg->HasClickClose() && !pDlg->IsPacketStopped())
 	{
+		timeCurrent = GetTickCount64();
 		mtx_packetlistenerDownload.lock();
 		it = pDlg->m_mConnectedBefore.begin();
 		while (it != pDlg->m_mConnectedBefore.end())
@@ -660,7 +661,7 @@ unsigned __stdcall  CCheckOpenPortsDlg::DownloadSpeedThreadList(void* parg)
 			it++;
 		}
 		mtx_packetlistenerDownload.unlock();
-		timeCurrent = GetTickCount64();
+		
 
 		if ((timeCurrent - timePrev) >= POLLING_TIME)
 		{
@@ -708,7 +709,7 @@ unsigned __stdcall  CCheckOpenPortsDlg::DownloadSpeedThreadList(void* parg)
 				}
 				it++;
 			}
-			timePrev = timeCurrent;
+			
 			it = pDlg->m_mConnectedBefore.begin();
 			while (it != pDlg->m_mConnectedBefore.end())
 			{
@@ -722,6 +723,7 @@ unsigned __stdcall  CCheckOpenPortsDlg::DownloadSpeedThreadList(void* parg)
 				it++;
 			}
 			mtx_packetlistenerDownload.unlock();
+			timePrev = GetTickCount64();
 		}
 	}
 	return 0;
@@ -781,6 +783,7 @@ unsigned __stdcall  CCheckOpenPortsDlg::UploadSpeedThreadList(void* parg)
 	mtx_packetlistenerUpload.unlock();
 	while (!pDlg->HasClickClose() && !pDlg->IsPacketStopped())
 	{
+		timeCurrent = GetTickCount64();
 		mtx_packetlistenerUpload.lock();
 		it = pDlg->m_mConnectedBefore.begin();
 		while (it != pDlg->m_mConnectedBefore.end())
@@ -789,7 +792,7 @@ unsigned __stdcall  CCheckOpenPortsDlg::UploadSpeedThreadList(void* parg)
 			it++;
 		}
 		mtx_packetlistenerUpload.unlock();
-		timeCurrent = GetTickCount64();
+		
 
 		if ((timeCurrent - timePrev) >= POLLING_TIME)
 		{
@@ -837,7 +840,7 @@ unsigned __stdcall  CCheckOpenPortsDlg::UploadSpeedThreadList(void* parg)
 				}
 				it++;
 			}
-			timePrev = timeCurrent;
+			
 			it = pDlg->m_mConnectedBefore.begin();
 			while (it != pDlg->m_mConnectedBefore.end())
 			{
@@ -851,6 +854,7 @@ unsigned __stdcall  CCheckOpenPortsDlg::UploadSpeedThreadList(void* parg)
 				it++;
 			}
 			mtx_packetlistenerUpload.unlock();
+			timePrev = GetTickCount64();
 		}
 	}
 	return 0;
@@ -1136,7 +1140,7 @@ bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 	}
 	
 	g_dlg->SetDownloadSize(iphdr->unDestaddress, g_dlg->GetDownloadSize(iphdr->unDestaddress) + nSize);
-	g_dlg->SetUploadSize(iphdr->unDestaddress, g_dlg->GetUploadSize(iphdr->unSrcaddress) + nSize);
+	g_dlg->SetUploadSize(iphdr->unSrcaddress, g_dlg->GetUploadSize(iphdr->unSrcaddress) + nSize);
 
 	if (g_dlg->GetIPFilterULONG() == iphdr->unDestaddress)
 	{
@@ -1180,6 +1184,7 @@ bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 			}
 		}
 	}
+
 	return true;
 }
 void CCheckOpenPortsDlg::OnBnClickedButtonStartPacket()
