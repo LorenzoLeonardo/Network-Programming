@@ -71,5 +71,17 @@
     <Image Include="res\bitmap1.bmp">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="C:\Users\loren\Downloads\Square44x44Logo.targetsize-256.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="c:\users\loren\downloads\bitmap3.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="C:\Users\loren\Downloads\581d10ac536ec78395c6667491304b08.ico\android-icon-72x72.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="C:\Users\loren\Downloads\android-icon-72x72.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>
