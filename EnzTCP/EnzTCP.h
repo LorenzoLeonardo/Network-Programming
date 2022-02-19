@@ -90,9 +90,10 @@ typedef struct _tICMPHDR
 {
 	BYTE byType; 
 	BYTE byCode; 
-	USHORT checksum;
-	USHORT id;
-	USHORT seq;
+	USHORT usChecksum;
+	USHORT usID;
+	USHORT usSeq;
+	ULONG  ulTimeStamp;
 } ICMP_HDR;
 
 class  ISocket

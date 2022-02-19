@@ -128,6 +128,123 @@ bool CICMP::Ping(HANDLE hIcmpFile,string sSrc, string sDest, IPAddr &dest, int n
     }
     return bRet;
 }
+bool CICMP::CheckDeviceEx(string ipAddress, string& hostname, string& sMacAddress)
+{
+    SOCKET sockRaw;
+    const char* lpdest = ipAddress.c_str();
+    char* icmp_data = NULL, * recvbuf = NULL;
+    struct sockaddr_in dest, from;
+    int iResult = 0, timeoutsend = 5000, timeoutrecv = 5000, fromlen = sizeof(from), datasize = 0;
+    struct hostent* hp = NULL;
+    USHORT usSequenceNumber = atoi(ipAddress.substr(ipAddress.rfind('.', ipAddress.size()) + 1, ipAddress.size()).c_str());
+    bool bRet = false;
+
+    hostname = GetHostName(ipAddress);
+
+    icmp_data = (char*)malloc(MAX_PACKET);
+    if (!icmp_data)
+        return bRet;
+    memset((void*)icmp_data, 0, MAX_PACKET);
+
+    recvbuf = (char*)malloc(MAX_PACKET);
+    if (!recvbuf)
+        return bRet;
+    memset((void*)recvbuf, 0, MAX_PACKET);
+
+    sockRaw = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+    if (sockRaw == INVALID_SOCKET)
+        goto CLEANPUP;
+
+    iResult = setsockopt(sockRaw, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeoutsend, sizeof(timeoutsend));
+    if (iResult == SOCKET_ERROR)
+        goto CLEANPUP;
+
+    iResult = setsockopt(sockRaw, SOL_SOCKET, SO_SNDTIMEO, (char*)&timeoutrecv, sizeof(timeoutrecv));
+    if (iResult == SOCKET_ERROR)
+        goto CLEANPUP;
+
+    memset(&dest, 0, sizeof(dest));
+    dest.sin_family = AF_INET;
+    if ((dest.sin_addr.s_addr = inet_addr(lpdest)) == INADDR_NONE)
+    {
+        if ((hp = gethostbyname(lpdest)) != NULL)
+        {
+            memcpy(&(dest.sin_addr), hp->h_addr, hp->h_length);
+            dest.sin_family = hp->h_addrtype;
+        }
+    }
+    datasize += sizeof(ICMP_HDR);
+
+    FillICMPData(icmp_data, datasize);
+
+    ((ICMP_HDR*)icmp_data)->byType = ICMP_ECHO;
+    ((ICMP_HDR*)icmp_data)->ulTimeStamp = GetTickCount();
+    ((ICMP_HDR*)icmp_data)->usSeq = usSequenceNumber;
+    ((ICMP_HDR*)icmp_data)->usChecksum = CheckSum((USHORT*)icmp_data, datasize);
+
+    iResult = sendto(sockRaw, icmp_data, datasize, 0,
+        (struct sockaddr*)&dest, sizeof(dest));
+    if (iResult == SOCKET_ERROR)
+        goto CLEANPUP;
+
+    iResult = recvfrom(sockRaw, recvbuf, MAX_PACKET, 0, (struct sockaddr*)&from, &fromlen);
+    if (iResult == SOCKET_ERROR)
+        goto CLEANPUP;
+    else
+    {
+        if (DecodeICMPHeader(usSequenceNumber, recvbuf, iResult, &from))
+        {
+            ULONG MacAddr[2];
+            ULONG PhysAddrLen = 6;
+            IPAddr ipSource;
+            LPBYTE bPhysAddr;
+            DWORD dwRetVal;
+           
+            inet_pton(AF_INET, m_HostIP.c_str(), &ipSource);
+
+            dwRetVal = SendARP(from.sin_addr.S_un.S_addr, ipSource, MacAddr, &PhysAddrLen);
+            if (dwRetVal == NO_ERROR)
+            {
+                bPhysAddr = (BYTE*)&MacAddr;
+                if (PhysAddrLen)
+                {
+                    char szMac[32];
+                    memset(szMac, 0, sizeof(szMac));
+                    for (int i = 0; i < 6; i++)
+                    {
+                        if (i < 5)
+                        {
+                            memset(szMac, 0, sizeof(szMac));
+                            sprintf_s(szMac, sizeof(szMac), "%02X-", bPhysAddr[i]);
+                            sMacAddress += szMac;
+                        }
+                        else
+                        {
+                            memset(szMac, 0, sizeof(szMac));
+                            sprintf_s(szMac, sizeof(szMac), "%02X", bPhysAddr[i]);
+                            sMacAddress += szMac;
+                        }
+                    }
+                }
+                bRet = true;
+            }
+            else
+            {
+                bRet = false;
+            }
+        }
+    }
+
+CLEANPUP:
+    if (sockRaw != INVALID_SOCKET)
+        closesocket(sockRaw);
+    free(recvbuf);
+    free(icmp_data);
+    recvbuf = NULL;
+    icmp_data = NULL;
+
+    return bRet;
+}
 bool CICMP::CheckDevice(string ipAddress, string& hostname, string& sMacAddress)
 {
     HANDLE hIcmpFile;
@@ -216,4 +333,69 @@ bool CICMP::CheckDevice(string ipAddress, string& hostname, string& sMacAddress)
     free(ReplyBuffer);
     IcmpCloseHandle(hIcmpFile);
     return bRet;
+}
+void CICMP::FillICMPData(char* icmp_data, int datasize)
+{
+    ICMP_HDR* icmp_hdr = NULL;
+    char* datapart = NULL;
+
+    icmp_hdr = (ICMP_HDR*)icmp_data;
+    icmp_hdr->byType = ICMP_ECHO;
+    icmp_hdr->byCode = 0;
+    icmp_hdr->usID = (USHORT)GetCurrentProcessId();
+    icmp_hdr->usChecksum = 0;
+    icmp_hdr->usSeq = 0;
+
+    datapart = icmp_data + sizeof(ICMP_HDR);
+
+    memset(datapart, 'E', datasize - sizeof(ICMP_HDR));
+}
+
+USHORT CICMP::CheckSum(USHORT* buffer, int size)
+{
+    unsigned long cksum = 0;
+
+    while (size > 1)
+    {
+        cksum += *buffer++;
+        size -= sizeof(USHORT);
+    }
+    if (size)
+    {
+        cksum += *(UCHAR*)buffer;
+    }
+    cksum = (cksum >> 16) + (cksum & 0xffff);
+    cksum += (cksum >> 16);
+    return (USHORT)(~cksum);
+}
+
+bool CICMP::DecodeICMPHeader(USHORT usSeq, char* buf, int bytes, struct sockaddr_in* from)
+{
+    IPV4_HDR* iphdr = NULL;
+    ICMP_HDR* icmphdr = NULL;
+    unsigned short  iphdrlen;
+
+    iphdr = (IPV4_HDR*)buf;
+    iphdrlen = iphdr->ucIPHeaderLen * 4;
+
+
+    if (bytes < iphdrlen + ICMP_MIN)
+        return false;
+
+    icmphdr = (ICMP_HDR*)(buf + iphdrlen);
+
+    if (icmphdr->byType != ICMP_ECHOREPLY)
+        return false;
+
+
+    if (icmphdr->usID != (USHORT)GetCurrentProcessId())
+        return false;
+
+
+    if (icmphdr->usSeq == usSeq)
+    {
+        return true;
+    }
+
+    return false;
 }

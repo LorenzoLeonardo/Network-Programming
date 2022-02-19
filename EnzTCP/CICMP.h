@@ -12,13 +12,12 @@
 
 /* ICMP types */
 #define ICMP_ECHOREPLY 0 /* ICMP type: echo reply */
-#define ICMP_ECHOREQ 8   /* ICMP type: echo request */
-#define ICMP_DEST_UNREACH 3
-#define ICMP_TTL_EXPIRE 11
+#define ICMP_ECHO 8   /* ICMP type: echo request */
 #define SIZEOF_ICMP_ERROR 8
 #define SIZEOF_IO_STATUS_BLOCK 8
 #define TIME_TO_LIVE 3000
-
+#define ICMP_MIN 8 // Minimum 8-byte ICMP packet (header)
+#define MAX_PACKET       65536
 typedef struct _tICMP_OPTIONS
 {
     BYTE Ttl;
@@ -38,13 +37,19 @@ private:
 	WSADATA m_wsaData;
 	string m_HostName;
 	string m_HostIP;
+
 	bool Ping(HANDLE hIcmpFile, string sSrc, string sDest, IPAddr &, int);
+	void FillICMPData(char* icmp_data, int datasize);
+	USHORT CheckSum(USHORT* buffer, int size);
+	bool DecodeICMPHeader(USHORT usSeq, char* buf, int bytes, struct sockaddr_in* from);
 public:
 	CICMP();
 	~CICMP();
 
 	bool CheckDevice(string ipAddress, string& hostname, string& sMacAddress);
+	bool CheckDeviceEx(string ipAddress, string& hostname, string& sMacAddress);
 	string GetHostName(string ipAddress);
 	int InitializeLocalIPAndHostname();
+
 };
 

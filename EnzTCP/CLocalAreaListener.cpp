@@ -118,5 +118,5 @@ void CLocalAreaListener::Stop()
 }
 bool CLocalAreaListener::CheckIPDeviceConnected(string ipAddress,string &hostName, string &macAddress)
 {
-	return 	m_objICMP->CheckDevice(ipAddress, hostName, macAddress);
+	return 	m_objICMP->CheckDeviceEx(ipAddress, hostName, macAddress);
 }
