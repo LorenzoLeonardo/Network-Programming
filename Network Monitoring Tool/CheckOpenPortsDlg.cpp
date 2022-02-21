@@ -120,6 +120,7 @@ void CCheckOpenPortsDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BUTTON_SHOW_PACKETS, m_ctrlBtnShowPacketInfo);
 	DDX_Control(pDX, IDC_BUTTON_START_PACKET, m_ctrlBtnListenPackets);
 	DDX_Control(pDX, IDC_BUTTON_STOP_PACKET, m_ctrlBtnUnlistenPackets);
+	DDX_Control(pDX, IDC_STATIC_PICTURE, m_ctrlStaticLogo);
 }
 
 BEGIN_MESSAGE_MAP(CCheckOpenPortsDlg, CDialogEx)
@@ -143,6 +144,8 @@ BEGIN_MESSAGE_MAP(CCheckOpenPortsDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_START_PACKET, &CCheckOpenPortsDlg::OnBnClickedButtonStartPacket)
 	ON_BN_CLICKED(IDC_BUTTON_STOP_PACKET, &CCheckOpenPortsDlg::OnBnClickedButtonStopPacket)
 	ON_BN_CLICKED(IDC_BUTTON_SHOW_PACKETS, &CCheckOpenPortsDlg::OnBnClickedButtonShowPackets)
+	ON_WM_MOUSEMOVE()
+	ON_WM_LBUTTONDOWN()
 END_MESSAGE_MAP()
 
 
@@ -239,6 +242,8 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	OnBnClickedButtonShowPackets();
 	OnBnClickedButtonListenLan();
 	OnBnClickedButtonStartPacket();
+
+
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
 
@@ -1284,4 +1289,53 @@ void CCheckOpenPortsDlg::OnBnClickedButtonShowPackets()
 		m_bShowPacketInfo = true;
 		m_ctrlEditPacketReportArea.ShowWindow(true);
 	}
+}
+
+
+void CCheckOpenPortsDlg::OnMouseMove(UINT nFlags, CPoint point)
+{
+	// TODO: Add your message handler code here and/or call default
+	RECT rect,rectDlg,translatedRect;
+	this->GetWindowRect(&rectDlg);
+	m_ctrlStaticLogo.GetWindowRect(&rect);
+	m_ctrlStaticLogo.GetClientRect(&translatedRect);
+
+	translatedRect.left = rect.left - rectDlg.left - 10;
+	translatedRect.top = rect.top - rectDlg.top - 30;
+	translatedRect.right = rect.right - rectDlg.left - 10;
+	translatedRect.bottom = rect.bottom - rectDlg.top - 30;
+
+	if ((translatedRect.left <= (point.x)) && ((point.x) <= translatedRect.right) &&
+		((translatedRect.top) <= point.y) && (point.y <= (translatedRect.bottom)))
+	{
+		SetCursor(LoadCursor(NULL, IDC_HAND));
+	}
+	else
+	{
+		SetCursor(LoadCursor(NULL, IDC_ARROW));
+	}
+	CDialogEx::OnMouseMove(nFlags, point);
+}
+
+
+void CCheckOpenPortsDlg::OnLButtonDown(UINT nFlags, CPoint point)
+{
+	// TODO: Add your message handler code here and/or call default
+	RECT rect, rectDlg, translatedRect;
+	this->GetWindowRect(&rectDlg);
+	m_ctrlStaticLogo.GetWindowRect(&rect);
+	m_ctrlStaticLogo.GetClientRect(&translatedRect);
+
+	translatedRect.left = rect.left - rectDlg.left - 10;
+	translatedRect.top = rect.top - rectDlg.top - 30;
+	translatedRect.right = rect.right - rectDlg.left - 10;
+	translatedRect.bottom = rect.bottom - rectDlg.top - 30;
+
+	if ((translatedRect.left <= (point.x)) && ((point.x) <= translatedRect.right) &&
+		((translatedRect.top) <= point.y) && (point.y <= (translatedRect.bottom)))
+	{
+		ShellExecute(NULL, _T("open"), _T("https://m.me/Lorenzo.Leonardo.92"), NULL, NULL, SW_SHOWNORMAL);
+	}
+	
+	CDialogEx::OnLButtonDown(nFlags, point);
 }

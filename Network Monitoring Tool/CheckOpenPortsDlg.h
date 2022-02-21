@@ -283,4 +283,8 @@ protected:
 	static unsigned __stdcall  UploadSpeedThreadList(void* parg);
 	// Generated message map functions
 	virtual BOOL OnInitDialog();
+public:
+	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
+	CStatic m_ctrlStaticLogo;
+	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 };
