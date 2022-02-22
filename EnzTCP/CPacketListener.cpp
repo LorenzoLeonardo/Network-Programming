@@ -108,3 +108,10 @@ void CPacketListener::StopListening()
 {
 	m_bIsStopped = true;
 }
+void CPacketListener::WaitToEndThreads()
+{
+	if (m_threadListening != NULL)
+	{
+		m_threadListening->join();
+	}
+}

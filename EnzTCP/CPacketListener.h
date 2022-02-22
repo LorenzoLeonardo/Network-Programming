@@ -20,6 +20,7 @@ public :
 
 	static void PollingThread(void* args);
 	bool StartListening();
+	void WaitToEndThreads();
 	void StopListening();
 	bool IsStopped()
 	{
