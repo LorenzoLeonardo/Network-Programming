@@ -146,6 +146,7 @@ BEGIN_MESSAGE_MAP(CCheckOpenPortsDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_SHOW_PACKETS, &CCheckOpenPortsDlg::OnBnClickedButtonShowPackets)
 	ON_WM_MOUSEMOVE()
 	ON_WM_LBUTTONDOWN()
+	ON_WM_MOVE()
 END_MESSAGE_MAP()
 
 
@@ -1291,22 +1292,26 @@ void CCheckOpenPortsDlg::OnBnClickedButtonShowPackets()
 	{
 		m_ctrlBtnShowPacketInfo.SetWindowText(_T("Hide Packet Info"));
 		m_bShowPacketInfo = false;
-		m_ctrlEditPacketReportArea.ShowWindow(true);
+		//m_ctrlEditPacketReportArea.ShowWindow(true);
 
 		if (m_pmodeless)
+		{
 			m_pmodeless->SetForegroundWindow();
+		}
 		else
 		{
 			m_pmodeless = new CPacketInfoDlg(this);
 			m_pmodeless->Create(CPacketInfoDlg::IDD, GetDesktopWindow());
 			m_pmodeless->ShowWindow(SW_SHOW);
 		}
+
+		m_pmodeless->GetClientRect(&m_rectModeless);
 	}
 	else
 	{
 		m_ctrlBtnShowPacketInfo.SetWindowText(_T("Show Packet Info"));
 		m_bShowPacketInfo = true;
-		m_ctrlEditPacketReportArea.ShowWindow(false);
+		//m_ctrlEditPacketReportArea.ShowWindow(false);
 		if (m_pmodeless)
 			m_pmodeless->OnBnClickedCancel();
 	}
@@ -1359,4 +1364,18 @@ void CCheckOpenPortsDlg::OnLButtonDown(UINT nFlags, CPoint point)
 	}
 	
 	CDialogEx::OnLButtonDown(nFlags, point);
+}
+
+
+void CCheckOpenPortsDlg::OnMove(int x, int y)
+{
+	CDialogEx::OnMove(x, y);
+
+	if (m_pmodeless)
+	{
+		RECT  rectParent;
+		GetClientRect(&rectParent);
+		m_pmodeless->MoveWindow(x + rectParent.right+8, y-30, m_rectModeless.right + 15, m_rectModeless.bottom+38);
+		// TODO: Add your message handler code here
+	}
 }

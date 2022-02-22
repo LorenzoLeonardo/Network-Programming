@@ -15,10 +15,14 @@ CPacketInfoDlg::CPacketInfoDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(CPacketInfoDlg::IDD, pParent)
 {
 	m_pParent = pParent;
+	m_hBrushBackGround = CreateSolidBrush(RGB(93, 107, 153));
+	m_hBrushEditArea = CreateSolidBrush(RGB(255, 255, 255));
 }
 
 CPacketInfoDlg::~CPacketInfoDlg()
 {
+	DeleteObject(m_hBrushBackGround);
+	DeleteObject(m_hBrushEditArea);
 }
 
 void CPacketInfoDlg::DoDataExchange(CDataExchange* pDX)
@@ -29,6 +33,7 @@ void CPacketInfoDlg::DoDataExchange(CDataExchange* pDX)
 
 
 BEGIN_MESSAGE_MAP(CPacketInfoDlg, CDialogEx)
+	ON_WM_CTLCOLOR()
 END_MESSAGE_MAP()
 
 
@@ -87,7 +92,7 @@ BOOL CPacketInfoDlg::OnInitDialog()
 	RECT rect, thisRect;
 	m_pParent->GetWindowRect(&rect);
 	GetClientRect(&thisRect);
-	MoveWindow(rect.right-8,rect.top, thisRect.right, thisRect.bottom);
+	MoveWindow(rect.right,rect.top, thisRect.right+15, thisRect.bottom+40);
 
 
 	m_bThisObjDeleted = false;
@@ -105,4 +110,29 @@ unsigned __stdcall  CPacketInfoDlg::PacketInfoThread(void* parg)
 		pDlg->UpdatePacketInfo(_T(""));
 	}
 	return 0;
+}
+
+HBRUSH CPacketInfoDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+{
+	HBRUSH hbr = CDialogEx::OnCtlColor(pDC, pWnd, nCtlColor);
+
+	switch (nCtlColor)
+	{
+		case CTLCOLOR_DLG:
+		{
+			//pDC->SetTextColor(ENZO_COLOR_WHITE);
+			pDC->SetBkColor(RGB(64, 86, 141));
+			//pDC->SetBkMode(TRANSPARENT);
+			return m_hBrushBackGround;
+		}
+		case CTLCOLOR_EDIT:
+		{
+			pDC->SetBkColor(RGB(255, 255, 255));
+			return m_hBrushEditArea;
+			//pDC->SetBkMode(TRANSPARENT);
+		}
+		default:
+		return CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
+	}
+	return hbr;
 }

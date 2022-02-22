@@ -30,7 +30,11 @@ protected:
 	CEdit m_ctrlEditPacketReportArea;
 	CString m_csPacketInfo;
 	HANDLE m_hPacketInfoThread;
+	HBRUSH 	m_hBrushBackGround;
+	HBRUSH	m_hBrushEditArea;
 	bool m_bThisObjDeleted;
 	virtual BOOL OnInitDialog();
 	static unsigned __stdcall  PacketInfoThread(void* parg);
+public:
+	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 };

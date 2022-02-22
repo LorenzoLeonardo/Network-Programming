@@ -103,7 +103,7 @@ public:
 	CEdit m_ctrlPortNum;
 	CButton m_ctrlBtnListen;
 	CButton m_ctrlBtnStopListening;
-
+	RECT m_rectModeless;
 	inline string UnicodeToMultiByte(wstring& wstr);
 	inline wstring MultiByteToUnicode(string& wstr);
 	void Increment();
@@ -288,4 +288,5 @@ public:
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	CStatic m_ctrlStaticLogo;
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
+	afx_msg void OnMove(int x, int y);
 };
