@@ -15,6 +15,11 @@ CPacketListener::CPacketListener(FNCallbackPacketListener fnPtr)
 }
 CPacketListener::~CPacketListener()
 {
+	if (ioctlsocket)
+	{
+		delete m_threadListening;
+		m_threadListening = NULL;
+	}
 	WSACleanup();
 }
 void CPacketListener::PollingThread(void* args)
@@ -79,6 +84,7 @@ bool CPacketListener::StartListening()
 	
 	
 	int nInput = 1;
+	
 	if (WSAIoctl(m_socket, SIO_RCVALL, &nInput, sizeof(nInput), 0, 0, (LPDWORD)&iResult, 0, 0) == SOCKET_ERROR)
 	{
 		freeaddrinfo(result);
