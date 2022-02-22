@@ -58,6 +58,8 @@ typedef struct _tOBJ
 	double m_lfMaxDownloadSpeed;
 	double m_lfMaxUploadSpeed;
 	vector<CString> m_vIPHOSTMAC;//IP, Host, MAC
+	HANDLE m_hDownloadThread;
+	HANDLE m_hUploadThread;
 }ENZ_CONNECTED_DEVICE_DETAILS;
 
 // CCheckOpenPortsDlg dialog
@@ -246,11 +248,13 @@ protected:
 	HANDLE m_hThreadDownloadSpeedList;
 	HANDLE m_hThreadUploadSpeed;
 	HANDLE m_hThreadUploadSpeedList;
+	HANDLE m_hThreadList[3];
 	CButton m_ctrlBtnCheckOpenPorts;
 	CButton m_ctrlBtnStopSearchingPort;
 	CProgressCtrl m_ctrlProgressStatus;
 	CStatic m_ctrlStaticRouterUpTime;
 	bool m_bShowPacketInfo;
+	bool m_bOnCloseWasCalled;
 
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV support
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);

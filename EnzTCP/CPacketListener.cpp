@@ -15,7 +15,8 @@ CPacketListener::CPacketListener(FNCallbackPacketListener fnPtr)
 }
 CPacketListener::~CPacketListener()
 {
-	if (ioctlsocket)
+	m_threadListening->join();
+	if (m_threadListening)
 	{
 		delete m_threadListening;
 		m_threadListening = NULL;
@@ -60,7 +61,10 @@ bool CPacketListener::StartListening()
 		return false;
 
 	if (gethostname(szHostname, sizeof(szHostname)) == SOCKET_ERROR)
+	{
+		closesocket(m_socket);
 		return false;
+	}
 
 	struct addrinfo* result = NULL, * ptr = NULL, hints;
 
@@ -73,12 +77,16 @@ bool CPacketListener::StartListening()
 	iResult = getaddrinfo(szHostname, NULL, &hints, &result);
 
 	if (iResult != NULL)
+	{
+		closesocket(m_socket);
 		return false;
+	}
 
 	iResult = bind(m_socket, result->ai_addr, (int)result->ai_addrlen);
 	if (iResult == SOCKET_ERROR)
 	{
 		freeaddrinfo(result);
+		closesocket(m_socket);
 		return false;
 	}
 	
@@ -88,6 +96,7 @@ bool CPacketListener::StartListening()
 	if (WSAIoctl(m_socket, SIO_RCVALL, &nInput, sizeof(nInput), 0, 0, (LPDWORD)&iResult, 0, 0) == SOCKET_ERROR)
 	{
 		freeaddrinfo(result);
+		closesocket(m_socket);
 		return false;
 	}
 	

@@ -50,10 +50,11 @@ int CICMP::InitializeLocalIPAndHostname()
 }
 string CICMP::GetHostName(string ipAddress)
 {
-    int iResult = 0;
+    /*int iResult = 0;
     char hostname[NI_MAXHOST];
     char servInfo[NI_MAXSERV];
-
+    struct sockaddr_in saGNI;
+    struct sockaddr_in sa;
     struct addrinfo* result = NULL, * ptr = NULL, hints;
 
     ZeroMemory(&hints, sizeof(hints));
@@ -64,12 +65,34 @@ string CICMP::GetHostName(string ipAddress)
 
     iResult = getaddrinfo(ipAddress.c_str(), NULL, &hints, &result);
     if (iResult != 0)
-       return "";
+       return "";*/
+
+   /* inet_pton(AF_INET, ipAddress.c_str(), &(sa.sin_addr));
+
+    saGNI.sin_family = AF_INET;
+    saGNI.sin_addr.s_addr = sa.sin_addr.s_addr;
+    saGNI.sin_port = htons(27015);
 
     memset(hostname, 0, sizeof(hostname));
-    iResult = getnameinfo(result->ai_addr, (socklen_t)result->ai_addrlen, hostname, NI_MAXHOST, servInfo, NI_MAXSERV, NI_NAMEREQD);
+    iResult = getnameinfo((struct sockaddr *)&saGNI, sizeof(struct sockaddr_in), hostname, NI_MAXHOST, servInfo, NI_MAXSERV, NI_NOFQDN);
     if (iResult != 0)
-        return "";
+        return "";*/
+
+    struct sockaddr_in sa;
+    inet_pton(AF_INET, ipAddress.c_str(), &(sa.sin_addr));
+
+    struct sockaddr_in saGNI;
+    char hostname[NI_MAXHOST];
+    char servInfo[NI_MAXSERV];
+    u_short port = 27015;
+    saGNI.sin_family = AF_INET;
+    saGNI.sin_addr.s_addr = sa.sin_addr.s_addr;
+    saGNI.sin_port = htons(port);
+
+    DWORD dwRetval = getnameinfo((struct sockaddr*)&saGNI,
+        sizeof(struct sockaddr),
+        hostname,
+        NI_MAXHOST, servInfo, NI_MAXSERV, NI_NUMERICSERV);
 
     string sRet = hostname;
     return sRet;

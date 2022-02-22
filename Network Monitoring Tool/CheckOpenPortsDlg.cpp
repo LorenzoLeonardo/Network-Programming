@@ -82,6 +82,7 @@ mutex mtx_enumPorts;
 mutex mtx_lanlistener;
 mutex mtx_packetlistenerDownload;
 mutex mtx_packetlistenerUpload;
+mutex mtx_clearthreads;
 
 CCheckOpenPortsDlg::CCheckOpenPortsDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_CHECKOPENPORST_DIALOG, pParent)
@@ -92,6 +93,12 @@ CCheckOpenPortsDlg::CCheckOpenPortsDlg(CWnd* pParent /*=nullptr*/)
 	m_bHasClickClose = FALSE;
 	dll_handle = NULL;
 
+	m_hThreadDownloadSpeed = NULL;
+	m_hThreadDownloadSpeedList = NULL;
+	m_hThreadRouter = NULL;
+	m_hThreadUploadSpeed = NULL;
+	m_hThreadUploadSpeedList = NULL;
+	m_bOnCloseWasCalled = false;
 	m_hBrushBackGround = CreateSolidBrush(RGB(93, 107, 153));
 	m_hBrushEditArea = CreateSolidBrush(RGB(255, 255, 255));
 }
@@ -163,35 +170,48 @@ int CCheckOpenPortsDlg::OnCreate(LPCREATESTRUCT lpCreateStruct)
 }
 LRESULT CCheckOpenPortsDlg::OnClearThreads(WPARAM wParam, LPARAM lParam)
 {
-	if (m_hThreadRouter)
+	WaitForMultipleObjects(3, m_hThreadList, TRUE, INFINITE);
+	/*if (m_hThreadRouter)
 	{
 		WaitForSingleObject(m_hThreadRouter, INFINITE);
 		CloseHandle(m_hThreadRouter);
+		m_hThreadRouter = NULL;
 	}
-	if (m_hThreadDownloadSpeed)
-	{
-		WaitForSingleObject(m_hThreadDownloadSpeed, INFINITE);
-		CloseHandle(m_hThreadDownloadSpeed);
-	}
+
 	if (m_hThreadDownloadSpeedList)
 	{
 		WaitForSingleObject(m_hThreadDownloadSpeedList, INFINITE);
 		CloseHandle(m_hThreadDownloadSpeedList);
+		m_hThreadDownloadSpeedList = NULL;
 	}
-	if (m_hThreadUploadSpeed)
-	{
-		WaitForSingleObject(m_hThreadUploadSpeed, INFINITE);
-		CloseHandle(m_hThreadUploadSpeed);
-	}
+
 	if (m_hThreadUploadSpeedList)
 	{
 		WaitForSingleObject(m_hThreadUploadSpeedList, INFINITE);
 		CloseHandle(m_hThreadUploadSpeedList);
+		m_hThreadUploadSpeedList = NULL;
+	}*/
+
+
+	if (!m_bOnCloseWasCalled)
+	{
+		m_bOnCloseWasCalled = true;
+
+		for (int i = 0; i < 3; i++)
+		{
+			CloseHandle(m_hThreadList[i]);
+			m_hThreadUploadSpeedList = NULL;
+			m_hThreadRouter = NULL;
+			m_hThreadDownloadSpeedList = NULL;
+		}
+
+		if (dll_handle)
+		{
+			FreeLibrary(dll_handle);
+			dll_handle = NULL;
+		}
+		OnOK();
 	}
-	
-	if(dll_handle)
-		FreeLibrary(dll_handle);
-	OnOK();
 	return 0;
 }
 
@@ -272,6 +292,7 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	m_ctrlIPAddress.SetWindowText(m_ipFilter);
 
 	m_hThreadRouter = (HANDLE)_beginthreadex(NULL, 0, RouterThread, this, 0, NULL);
+	m_hThreadList[0] = m_hThreadRouter;
 //	m_hThreadDownloadSpeed = (HANDLE)_beginthreadex(NULL, 0, DownloadSpeedThread, this, 0, NULL);
 //	m_hThreadUploadSpeed = (HANDLE)_beginthreadex(NULL, 0, UploadSpeedThread, this, 0, NULL);
 	m_bShowPacketInfo = false;
@@ -463,11 +484,19 @@ void CCheckOpenPortsDlg::OnBnClickedButtonCheckIfPortOpen()
 void CCheckOpenPortsDlg::OnClose()
 {
 	// TODO: Add your message handler code here and/or call default
-	m_pfnPtrStopLocalAreaListening();
-	m_pfnPtrStopSearchingOpenPorts();
-	m_pfnPtrStopPacketListener();
-	m_pfnPtrEndSNMP();
-	m_bHasClickClose = TRUE;
+	if (!m_bHasClickClose)
+	{
+		m_pfnPtrStopLocalAreaListening();
+		m_pfnPtrStopSearchingOpenPorts();
+		m_pfnPtrStopPacketListener();
+		m_pfnPtrEndSNMP();
+		m_bHasClickClose = TRUE;
+	}
+	else
+	{
+		CDialog::OnClose();
+		//OnOK();
+	}
 
 /*	if (IsLANStopped() && IsSearchingOpenPortStopped())
 	{
@@ -1269,6 +1298,9 @@ void CCheckOpenPortsDlg::OnBnClickedButtonStartPacket()
 	
 	m_hThreadDownloadSpeedList = (HANDLE)_beginthreadex(NULL, 0, DownloadSpeedThreadList, this, 0, NULL);
 	m_hThreadUploadSpeedList = (HANDLE)_beginthreadex(NULL, 0, UploadSpeedThreadList, this, 0, NULL);
+
+	m_hThreadList[1] = m_hThreadDownloadSpeedList;
+	m_hThreadList[2] = m_hThreadUploadSpeedList;
 }
 
 
