@@ -191,7 +191,7 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	//  when the application's main window is not a dialog
 	SetIcon(m_hIcon, TRUE);			// Set big icon
 	SetIcon(m_hIcon, FALSE);		// Set small icon
-
+	m_pmodeless = NULL;
 	// TODO: Add extra initialization here
 	g_dlg = this;
 	m_bStopSearchingOpenPorts = TRUE;
@@ -238,7 +238,7 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	m_hThreadRouter = (HANDLE)_beginthreadex(NULL, 0, RouterThread, this, 0, NULL);
 //	m_hThreadDownloadSpeed = (HANDLE)_beginthreadex(NULL, 0, DownloadSpeedThread, this, 0, NULL);
 //	m_hThreadUploadSpeed = (HANDLE)_beginthreadex(NULL, 0, UploadSpeedThread, this, 0, NULL);
-	m_bShowPacketInfo = true;
+	m_bShowPacketInfo = false;
 	OnBnClickedButtonShowPackets();
 	OnBnClickedButtonListenLan();
 	OnBnClickedButtonStartPacket();
@@ -1138,7 +1138,7 @@ void CCheckOpenPortsDlg::CallBackEnumPort(char* ipAddress, int nPort, bool bIsop
 
 bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 {
-	CString csText, csSrcPort, csDestPort, sourceIP, destIP, cs, csTemp, ipFilter;
+	CString csText, csSrcPort, csDestPort, sourceIP, destIP, cs, csTemp, ipFilter, csReport;
 	int iphdrlen = 0, nDataSize = 0;
 	IPV4_HDR* iphdr;
 	TCP_HDR* tcpheader = NULL;
@@ -1150,7 +1150,7 @@ bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 	iphdr = (IPV4_HDR*)buffer;
 	iphdrlen = iphdr->ucIPHeaderLen * 4;
 	
-	if (g_dlg->ShowPacketInfo())
+	if (!g_dlg->ShowPacketInfo())
 	{
 		inet_ntop(AF_INET, (const void*)&iphdr->unDestaddress, sztemp, sizeof(sztemp));
 		destIP = sztemp;
@@ -1199,9 +1199,14 @@ bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 	if (g_dlg->GetIPFilterULONG() == iphdr->unDestaddress)
 	{
 		g_dlg->SetDownloadSize(g_dlg->GetDownloadSize() + nSize);
-		if (g_dlg->ShowPacketInfo())
+		if (!g_dlg->ShowPacketInfo())
 		{
-			csText += sourceIP + _T(":") + csSrcPort + _T(" -> ") + destIP + _T(":") + csDestPort + _T(" Size: ") + to_wstring(nSize).c_str() + _T(" bytes\r\n");
+			csReport = sourceIP + _T(":") + csSrcPort + _T(" -> ") + destIP + _T(":") + csDestPort + _T(" Size: ") + to_wstring(nSize).c_str() + _T(" bytes\r\n");
+			
+			if (g_dlg->m_pmodeless)
+				g_dlg->m_pmodeless->UpdatePacketInfo(csReport);
+
+			/*csText += csReport;
 			g_dlg->m_ctrlEditPacketReportArea.GetWindowText(csTemp);
 			long nLength = csTemp.GetLength();
 			if (nLength < 5000)
@@ -1214,15 +1219,20 @@ bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 				g_dlg->m_ctrlEditPacketReportArea.GetWindowText(csTemp);
 				csTemp = csTemp.Left(csTemp.ReverseFind(_T('\r')));
 				g_dlg->m_ctrlEditPacketReportArea.SetWindowText(csTemp);
-			}
+			}*/
 		}
 	}
 	if (g_dlg->GetIPFilterULONG() == iphdr->unSrcaddress)
 	{
 		g_dlg->SetUploadSize(g_dlg->GetUploadSize() + nSize);
-		if (g_dlg->ShowPacketInfo())
+		if (!g_dlg->ShowPacketInfo())
 		{
-			csText += sourceIP + _T(":") + csSrcPort + _T(" -> ") + destIP + _T(":") + csDestPort + _T(" Size: ") + to_wstring(nSize).c_str() + _T(" bytes\r\n");
+			csReport = sourceIP + _T(":") + csSrcPort + _T(" -> ") + destIP + _T(":") + csDestPort + _T(" Size: ") + to_wstring(nSize).c_str() + _T(" bytes\r\n");
+			
+			if(g_dlg->m_pmodeless)
+				g_dlg->m_pmodeless->UpdatePacketInfo(csReport);
+
+			/*csText += csReport;
 			g_dlg->m_ctrlEditPacketReportArea.GetWindowText(csTemp);
 			long nLength = csTemp.GetLength();
 			if (nLength < 5000)
@@ -1235,7 +1245,7 @@ bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 				g_dlg->m_ctrlEditPacketReportArea.GetWindowText(csTemp);
 				csTemp = csTemp.Left(csTemp.ReverseFind(_T('\r')));
 				g_dlg->m_ctrlEditPacketReportArea.SetWindowText(csTemp);
-			}
+			}*/
 		}
 	}
 
@@ -1281,13 +1291,24 @@ void CCheckOpenPortsDlg::OnBnClickedButtonShowPackets()
 	{
 		m_ctrlBtnShowPacketInfo.SetWindowText(_T("Hide Packet Info"));
 		m_bShowPacketInfo = false;
-		m_ctrlEditPacketReportArea.ShowWindow(false);
+		m_ctrlEditPacketReportArea.ShowWindow(true);
+
+		if (m_pmodeless)
+			m_pmodeless->SetForegroundWindow();
+		else
+		{
+			m_pmodeless = new CPacketInfoDlg(this);
+			m_pmodeless->Create(CPacketInfoDlg::IDD, GetDesktopWindow());
+			m_pmodeless->ShowWindow(SW_SHOW);
+		}
 	}
 	else
 	{
 		m_ctrlBtnShowPacketInfo.SetWindowText(_T("Show Packet Info"));
 		m_bShowPacketInfo = true;
-		m_ctrlEditPacketReportArea.ShowWindow(true);
+		m_ctrlEditPacketReportArea.ShowWindow(false);
+		if (m_pmodeless)
+			m_pmodeless->OnBnClickedCancel();
 	}
 }
 

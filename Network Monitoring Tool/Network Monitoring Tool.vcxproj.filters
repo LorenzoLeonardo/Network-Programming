@@ -39,6 +39,9 @@
     <ClInclude Include="..\EnzTCP\EnzTCP.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="CPacketInfoDlg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CheckOpenPorts.cpp">
@@ -51,6 +54,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="CListCtrlCustom.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CPacketInfoDlg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

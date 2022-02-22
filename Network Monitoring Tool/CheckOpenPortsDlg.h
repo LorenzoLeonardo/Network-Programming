@@ -17,7 +17,7 @@
 #include <map>
 #include <cmath>
 #include "CListCtrlCustom.h"
-
+#include "CPacketInfoDlg.h"
 
 #ifndef _tstring
 #ifdef UNICODE
@@ -78,6 +78,7 @@ public:
 	FNStopLocalAreaListening m_pfnPtrStopLocalAreaListening;
 	FNStopSearchingOpenPorts m_pfnPtrStopSearchingOpenPorts;
 
+	CPacketInfoDlg* m_pmodeless;
 // Dialog Data
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_CHECKOPENPORST_DIALOG };
