@@ -25,6 +25,7 @@ CLocalAreaListener::CLocalAreaListener(const char* szStartingIPAddress, Callback
 
 CLocalAreaListener::~CLocalAreaListener()
 {
+	WaitToEndThreads();
 	if (m_objICMP != NULL)
 	{
 		delete m_objICMP;
@@ -108,7 +109,7 @@ void CLocalAreaListener::Start()
 			m_threadMain = NULL;
 		}
 		m_threadMain = new thread(MainThread, this);
-		m_threadMain->detach();
+		//m_threadMain->detach();
 	}
 }
 
@@ -119,4 +120,11 @@ void CLocalAreaListener::Stop()
 bool CLocalAreaListener::CheckIPDeviceConnected(string ipAddress,string &hostName, string &macAddress)
 {
 	return 	m_objICMP->CheckDevice(ipAddress, hostName, macAddress);
+}
+void CLocalAreaListener::WaitToEndThreads()
+{
+	if (m_threadMain != NULL)
+	{
+		m_threadMain->join();
+	}
 }

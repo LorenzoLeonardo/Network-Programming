@@ -30,6 +30,7 @@ BOOL APIENTRY DllMain(HMODULE hModule,
         }
         if (g_pLocalAreaListener != NULL)
         {
+  
             delete g_pLocalAreaListener;
             g_pLocalAreaListener = NULL;
         }
