@@ -92,7 +92,7 @@ BOOL CPacketInfoDlg::OnInitDialog()
 	RECT rect, thisRect;
 	m_pParent->GetWindowRect(&rect);
 	GetClientRect(&thisRect);
-	MoveWindow(rect.right,rect.top, thisRect.right+15, thisRect.bottom+40);
+	MoveWindow(rect.right-8,rect.top+32, thisRect.right, thisRect.bottom);
 
 
 	m_bThisObjDeleted = false;

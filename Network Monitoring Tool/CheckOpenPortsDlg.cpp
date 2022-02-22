@@ -147,6 +147,7 @@ BEGIN_MESSAGE_MAP(CCheckOpenPortsDlg, CDialogEx)
 	ON_WM_MOUSEMOVE()
 	ON_WM_LBUTTONDOWN()
 	ON_WM_MOVE()
+	ON_MESSAGE(WM_CLEAR_TREADS, OnClearThreads)
 END_MESSAGE_MAP()
 
 
@@ -160,6 +161,40 @@ int CCheckOpenPortsDlg::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 	return 0;
 }
+LRESULT CCheckOpenPortsDlg::OnClearThreads(WPARAM wParam, LPARAM lParam)
+{
+	if (m_hThreadRouter)
+	{
+		WaitForSingleObject(m_hThreadRouter, INFINITE);
+		CloseHandle(m_hThreadRouter);
+	}
+	if (m_hThreadDownloadSpeed)
+	{
+		WaitForSingleObject(m_hThreadDownloadSpeed, INFINITE);
+		CloseHandle(m_hThreadDownloadSpeed);
+	}
+	if (m_hThreadDownloadSpeedList)
+	{
+		WaitForSingleObject(m_hThreadDownloadSpeedList, INFINITE);
+		CloseHandle(m_hThreadDownloadSpeedList);
+	}
+	if (m_hThreadUploadSpeed)
+	{
+		WaitForSingleObject(m_hThreadUploadSpeed, INFINITE);
+		CloseHandle(m_hThreadUploadSpeed);
+	}
+	if (m_hThreadUploadSpeedList)
+	{
+		WaitForSingleObject(m_hThreadUploadSpeedList, INFINITE);
+		CloseHandle(m_hThreadUploadSpeedList);
+	}
+	
+	if(dll_handle)
+		FreeLibrary(dll_handle);
+	OnOK();
+	return 0;
+}
+
 BOOL CCheckOpenPortsDlg::OnInitDialog()
 {
 	LPCTSTR lpcRecHeader[] = { _T("No."), _T("IP Address"), _T("HostName"), _T("MAC Address"), _T("Download Speed"), _T("Upload Speed"),  _T("Max Download Speed"), _T("Max Upload Speed") };
@@ -389,7 +424,6 @@ void CCheckOpenPortsDlg::OnBnClickedButtonPort()
 
 void CCheckOpenPortsDlg::OnBnClickedButtonStopSearchingOpenPorts()
 {
-
 	m_pfnPtrStopSearchingOpenPorts();
 }
 
@@ -432,11 +466,12 @@ void CCheckOpenPortsDlg::OnClose()
 	m_pfnPtrStopLocalAreaListening();
 	m_pfnPtrStopSearchingOpenPorts();
 	m_pfnPtrStopPacketListener();
+	m_pfnPtrEndSNMP();
 	m_bHasClickClose = TRUE;
 
-	if (IsLANStopped() && IsSearchingOpenPortStopped())
+/*	if (IsLANStopped() && IsSearchingOpenPortStopped())
 	{
-		m_pfnPtrEndSNMP();
+		
 		WaitForSingleObject(m_hThreadRouter, INFINITE);
 		WaitForSingleObject(m_hThreadDownloadSpeed, INFINITE);
 		WaitForSingleObject(m_hThreadUploadSpeed, INFINITE);
@@ -465,7 +500,7 @@ void CCheckOpenPortsDlg::OnClose()
 	{
 	//	m_bStopLANClicked = TRUE;
 		::MessageBox(this->GetSafeHwnd(), _T("Application is still busy. Make sure all listening activity has stopped."), _T("Network Monitoring Tool"), MB_ICONEXCLAMATION);
-	}
+	}*/
 }
 
 void CCheckOpenPortsDlg::OnEnChangeEditArea()
@@ -637,6 +672,7 @@ unsigned __stdcall  CCheckOpenPortsDlg::DownloadSpeedThread(void* parg)
 			prev = pDlg->GetDownloadSize();
 		}
 	}
+	::PostMessage(pDlg->GetSafeHwnd(), WM_CLEAR_TREADS, 0, 0);
 	return 0;
 }
 unsigned __stdcall  CCheckOpenPortsDlg::DownloadSpeedThreadList(void* parg)
@@ -749,6 +785,7 @@ unsigned __stdcall  CCheckOpenPortsDlg::DownloadSpeedThreadList(void* parg)
 			timePrev = GetTickCount64();
 		}
 	}
+	::PostMessage(pDlg->GetSafeHwnd(), WM_CLEAR_TREADS, 0, 0);
 	return 0;
 }
 
@@ -780,6 +817,7 @@ unsigned __stdcall  CCheckOpenPortsDlg::UploadSpeedThread(void* parg)
 			prev = pDlg->GetUploadSize();
 		}
 	}
+	::PostMessage(pDlg->GetSafeHwnd(), WM_CLEAR_TREADS, 0, 0);
 	return 0;
 }
 
@@ -893,6 +931,7 @@ unsigned __stdcall  CCheckOpenPortsDlg::UploadSpeedThreadList(void* parg)
 			timePrev = GetTickCount64();
 		}
 	}
+	::PostMessage(pDlg->GetSafeHwnd(), WM_CLEAR_TREADS, 0, 0);
 	return 0;
 }
 // CCheckOpenPortsDlg message handlers
@@ -973,6 +1012,7 @@ unsigned __stdcall  CCheckOpenPortsDlg::RouterThread(void* parg)
 			Sleep(500);
 		}
 	}
+	::PostMessage(pDlg->GetSafeHwnd(), WM_CLEAR_TREADS, 0, 0);
 	return 0;
 }
 
@@ -1146,8 +1186,8 @@ bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 	UDP_HDR* udpheader = NULL;
 	string sTemp;
 	char sztemp[32];
-	memset(sztemp, 0, sizeof(sztemp));
 
+	memset(sztemp, 0, sizeof(sztemp));
 	iphdr = (IPV4_HDR*)buffer;
 	iphdrlen = iphdr->ucIPHeaderLen * 4;
 	
@@ -1193,7 +1233,6 @@ bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 			}
 		}
 	}
-	
 	g_dlg->SetDownloadSize(iphdr->unDestaddress, g_dlg->GetDownloadSize(iphdr->unDestaddress) + nSize);
 	g_dlg->SetUploadSize(iphdr->unSrcaddress, g_dlg->GetUploadSize(iphdr->unSrcaddress) + nSize);
 
@@ -1202,25 +1241,9 @@ bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 		g_dlg->SetDownloadSize(g_dlg->GetDownloadSize() + nSize);
 		if (!g_dlg->ShowPacketInfo())
 		{
-			csReport = sourceIP + _T(":") + csSrcPort + _T(" -> ") + destIP + _T(":") + csDestPort + _T(" Size: ") + to_wstring(nSize).c_str() + _T(" bytes\r\n");
-			
+			csReport = csText + sourceIP + _T(":") + csSrcPort + _T(" -> ") + destIP + _T(":") + csDestPort + _T(" Size: ") + to_wstring(nSize).c_str() + _T(" bytes\r\n");
 			if (g_dlg->m_pmodeless)
 				g_dlg->m_pmodeless->UpdatePacketInfo(csReport);
-
-			/*csText += csReport;
-			g_dlg->m_ctrlEditPacketReportArea.GetWindowText(csTemp);
-			long nLength = csTemp.GetLength();
-			if (nLength < 5000)
-			{
-				g_dlg->m_ctrlEditPacketReportArea.SetSel(0, 0);
-				g_dlg->m_ctrlEditPacketReportArea.ReplaceSel(csText);
-			}
-			else
-			{
-				g_dlg->m_ctrlEditPacketReportArea.GetWindowText(csTemp);
-				csTemp = csTemp.Left(csTemp.ReverseFind(_T('\r')));
-				g_dlg->m_ctrlEditPacketReportArea.SetWindowText(csTemp);
-			}*/
 		}
 	}
 	if (g_dlg->GetIPFilterULONG() == iphdr->unSrcaddress)
@@ -1228,28 +1251,11 @@ bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 		g_dlg->SetUploadSize(g_dlg->GetUploadSize() + nSize);
 		if (!g_dlg->ShowPacketInfo())
 		{
-			csReport = sourceIP + _T(":") + csSrcPort + _T(" -> ") + destIP + _T(":") + csDestPort + _T(" Size: ") + to_wstring(nSize).c_str() + _T(" bytes\r\n");
-			
+			csReport = csText + sourceIP + _T(":") + csSrcPort + _T(" -> ") + destIP + _T(":") + csDestPort + _T(" Size: ") + to_wstring(nSize).c_str() + _T(" bytes\r\n");
 			if(g_dlg->m_pmodeless)
 				g_dlg->m_pmodeless->UpdatePacketInfo(csReport);
-
-			/*csText += csReport;
-			g_dlg->m_ctrlEditPacketReportArea.GetWindowText(csTemp);
-			long nLength = csTemp.GetLength();
-			if (nLength < 5000)
-			{
-				g_dlg->m_ctrlEditPacketReportArea.SetSel(0, 0);
-				g_dlg->m_ctrlEditPacketReportArea.ReplaceSel(csText);
-			}
-			else
-			{
-				g_dlg->m_ctrlEditPacketReportArea.GetWindowText(csTemp);
-				csTemp = csTemp.Left(csTemp.ReverseFind(_T('\r')));
-				g_dlg->m_ctrlEditPacketReportArea.SetWindowText(csTemp);
-			}*/
 		}
 	}
-
 	return true;
 }
 void CCheckOpenPortsDlg::OnBnClickedButtonStartPacket()
@@ -1273,7 +1279,6 @@ void CCheckOpenPortsDlg::OnBnClickedButtonStopPacket()
 	m_pfnPtrStopPacketListener();
 	m_ctrlBtnListenPackets.EnableWindow(TRUE);
 	m_ctrlBtnUnlistenPackets.EnableWindow(FALSE);
-
 
 	WaitForSingleObject(m_hThreadUploadSpeedList, INFINITE);
 	WaitForSingleObject(m_hThreadDownloadSpeedList, INFINITE);
@@ -1375,7 +1380,7 @@ void CCheckOpenPortsDlg::OnMove(int x, int y)
 	{
 		RECT  rectParent;
 		GetClientRect(&rectParent);
-		m_pmodeless->MoveWindow(x + rectParent.right+8, y-30, m_rectModeless.right + 15, m_rectModeless.bottom+38);
+		m_pmodeless->MoveWindow(x + rectParent.right, y, m_rectModeless.right, m_rectModeless.bottom+3);
 		// TODO: Add your message handler code here
 	}
 }
