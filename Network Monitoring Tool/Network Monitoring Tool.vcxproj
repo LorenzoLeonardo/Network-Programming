@@ -186,6 +186,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\EnzTCP\EnzTCP.h" />
+    <ClInclude Include="CDeviceConnected.h" />
     <ClInclude Include="CheckOpenPorts.h" />
     <ClInclude Include="CheckOpenPortsDlg.h" />
     <ClInclude Include="CListCtrlCustom.h" />
@@ -196,6 +197,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CDeviceConnected.cpp" />
     <ClCompile Include="CheckOpenPorts.cpp" />
     <ClCompile Include="CheckOpenPortsDlg.cpp" />
     <ClCompile Include="CListCtrlCustom.cpp" />

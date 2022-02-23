@@ -18,6 +18,7 @@
 #include <cmath>
 #include "CListCtrlCustom.h"
 #include "CPacketInfoDlg.h"
+#include "CDeviceConnected.h"
 
 #ifndef _tstring
 #ifdef UNICODE
@@ -30,7 +31,7 @@
 using namespace std;
 
 #define MAX_PORT 65535
-#define POLLING_TIME 500
+
 #define WM_CLEAR_TREADS WM_USER + 1
 
 typedef  void(*LPEnumOpenPorts)(const char*, int, FuncFindOpenPort);
@@ -58,7 +59,13 @@ typedef struct _tOBJ
 	double m_lfMaxDownloadSpeed;
 	double m_lfMaxUploadSpeed;
 	vector<CString> m_vIPHOSTMAC;//IP, Host, MAC
+	HANDLE m_hThreadDownload;
+	HANDLE m_hThreadUpload;
+	HANDLE m_eventDownload;
+	HANDLE m_eventUpload;
 }ENZ_CONNECTED_DEVICE_DETAILS;
+
+
 
 // CCheckOpenPortsDlg dialog
 class CCheckOpenPortsDlg : public CDialogEx
@@ -90,8 +97,8 @@ public:
 	CIPAddressCtrl m_ctrlIPAddress;
 	CEdit m_ctrlResult;
 	CListCtrlCustom m_ctrlLANConnected;
-	map<ULONG, ENZ_CONNECTED_DEVICE_DETAILS> m_mConnected;
-	map<ULONG, ENZ_CONNECTED_DEVICE_DETAILS> m_mConnectedBefore;
+	map<ULONG, CDeviceConnected*> m_mConnected;
+	map<ULONG, CDeviceConnected*> m_mConnectedBefore;
 	CEdit m_ctrlEditPacketReportArea;
 	CEdit m_ctrlEditDownloadSpeed;
 	CEdit m_ctrlEditUploadSpeed;
@@ -120,11 +127,13 @@ public:
 
 	void SetDownloadSize(ULONG ulIPAdd, ULONG size)
 	{
+		
 		if (!m_mConnectedBefore.empty())
 		{
 			if (m_mConnectedBefore.find(ulIPAdd) != m_mConnectedBefore.end())
-				m_mConnectedBefore[ulIPAdd].m_ulDataSizeDownload = size;
+				m_mConnectedBefore[ulIPAdd]->m_ulDataSizeDownload = size;
 		}
+	
 	}
 
 	void SetUploadSize(ULONG size)
@@ -134,11 +143,13 @@ public:
 
 	void SetUploadSize(ULONG ulIPAdd, ULONG size)
 	{
+		
 		if (!m_mConnectedBefore.empty())
 		{
 			if(m_mConnectedBefore.find(ulIPAdd)!= m_mConnectedBefore.end())
-				m_mConnectedBefore[ulIPAdd].m_ulDataSizeUpload = size;
+				m_mConnectedBefore[ulIPAdd]->m_ulDataSizeUpload = size;
 		}
+		
 	}
 	ULONG GetDownloadSize()
 	{
@@ -146,12 +157,15 @@ public:
 	}
 	ULONG GetDownloadSize(ULONG ulIPAdd)
 	{
+		
+		ULONG ulSize = 0;
 		if (!m_mConnectedBefore.empty())
 		{
 			if (m_mConnectedBefore.find(ulIPAdd) != m_mConnectedBefore.end())
-				return m_mConnectedBefore[ulIPAdd].m_ulDataSizeDownload;
+				ulSize = m_mConnectedBefore[ulIPAdd]->m_ulDataSizeDownload;
 		}
-		return 0;
+		
+		return ulSize;
 	}
 	ULONG GetUploadSize()
 	{
@@ -159,12 +173,15 @@ public:
 	}
 	ULONG GetUploadSize(ULONG ulIPAdd)
 	{
+		
+		ULONG ulSize = 0;
 		if (!m_mConnectedBefore.empty())
 		{
 			if (m_mConnectedBefore.find(ulIPAdd) != m_mConnectedBefore.end())
-				return m_mConnectedBefore[ulIPAdd].m_ulDataSizeUpload;
+				ulSize = m_mConnectedBefore[ulIPAdd]->m_ulDataSizeUpload;
 		}
-		return 0;
+		
+		return ulSize;
 	}
 	vector<thread*> GetHandles()
 	{
@@ -278,16 +295,19 @@ protected:
 	afx_msg void OnBnClickedButtonStopPacket();
 	afx_msg void OnBnClickedButtonShowPackets();
 	afx_msg LRESULT OnClearThreads(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnUpdateDownloadSpeed(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnUpdateUploadSpeed(WPARAM wParam, LPARAM lParam);
 	DECLARE_MESSAGE_MAP()
 
 	static void CallbackLANListener(const char* ipAddress, const char* hostName, const char* macAddress, bool bIsopen);
 	static void CallBackEnumPort(char* ipAddress, int nPort, bool bIsopen, int nLastError);
 	static bool CallPacketListener(unsigned char* buffer, int nSize);
+	
 	static unsigned __stdcall  RouterThread(void* parg);
-	static unsigned __stdcall  DownloadSpeedThread(void* parg);
-	static unsigned __stdcall  UploadSpeedThread(void* parg);
-	static unsigned __stdcall  DownloadSpeedThreadList(void* parg);
-	static unsigned __stdcall  UploadSpeedThreadList(void* parg);
+	//static unsigned __stdcall  DownloadSpeedThread(void* parg);
+	//static unsigned __stdcall  UploadSpeedThread(void* parg);
+	//static unsigned __stdcall  DownloadSpeedThreadList(void* parg);
+	//static unsigned __stdcall  UploadSpeedThreadList(void* parg);
 	static unsigned __stdcall  LANListenerThread(void* parg);
 	static unsigned __stdcall  PacketListenerThread(void* parg);
 	// Generated message map functions
