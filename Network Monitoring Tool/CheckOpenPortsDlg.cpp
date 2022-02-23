@@ -1256,7 +1256,7 @@ void CCheckOpenPortsDlg::CallbackLANListener(const char* ipAddress, const char* 
 		ULONG ipaddr;
 		CString csTemp;
 		inet_pton(AF_INET, ipAddress, &ipaddr);
-		if (g_dlg->m_mConnectedBefore.find(ipaddr) == g_dlg->m_mConnectedBefore.end())
+		if ((g_dlg->m_mConnectedBefore.find(ipaddr) == g_dlg->m_mConnectedBefore.end()) && strlen(ipAddress))
 		{
 		
 			CDeviceConnected tDeviceDetails;
@@ -1311,6 +1311,7 @@ void CCheckOpenPortsDlg::CallbackLANListener(const char* ipAddress, const char* 
 			it = g_dlg->m_mConnectedBefore.begin();
 			while (it != g_dlg->m_mConnectedBefore.end())
 			{
+				nRow = g_dlg->m_ctrlLANConnected.GetItemCount();
 				if (!g_dlg->IsInTheList(it->second.m_szIPAddress))
 				{
 					g_dlg->m_ctrlLANConnected.InsertItem(LVIF_TEXT | LVIF_STATE, nRow,
@@ -1351,7 +1352,7 @@ void CCheckOpenPortsDlg::CallbackLANListener(const char* ipAddress, const char* 
 				}
 
 				it++;
-				nRow++;
+				//nRow++;
 			}
 			if ((g_dlg->m_mConnectedBefore.size() - 1) < g_dlg->m_nCurrentRowSelected)
 				g_dlg->m_nCurrentRowSelected = (int)g_dlg->m_mConnectedBefore.size() - 1;
