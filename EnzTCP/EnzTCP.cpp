@@ -6,7 +6,7 @@
 #include "CLocalAreaListener.h"
 #include "CSNMP.h"
 #include "CPacketListener.h"
-
+#include "DebugLog.h"
 CCheckOpenPorts* g_pOpenPorts = NULL;
 CLocalAreaListener* g_pLocalAreaListener = NULL;
 CPacketListener* g_pPacketListener = NULL;
@@ -21,6 +21,7 @@ BOOL APIENTRY DllMain(HMODULE hModule,
     switch (ul_reason_for_call)
     {
     case DLL_PROCESS_ATTACH:
+        DEBUG_LOG("Application Started");
         break;
     case DLL_PROCESS_DETACH:
         if(g_pOpenPorts != NULL)
@@ -44,6 +45,7 @@ BOOL APIENTRY DllMain(HMODULE hModule,
             delete g_SNMP;
             g_SNMP = NULL;
         }
+        DEBUG_LOG("Application Ended");
         break;
     }
     return TRUE;
@@ -246,5 +248,7 @@ bool ENZTCPLIBRARY_API StartPacketListener(FNCallbackPacketListener fnpPtr)
 void ENZTCPLIBRARY_API StopPacketListener()
 {
     if (g_pPacketListener != NULL)
+    {
         g_pPacketListener->StopListening();
+    }
 }

@@ -98,6 +98,7 @@ CCheckOpenPortsDlg::CCheckOpenPortsDlg(CWnd* pParent /*=nullptr*/)
 	m_hThreadRouter = NULL;
 	m_hThreadUploadSpeed = NULL;
 	m_hThreadUploadSpeedList = NULL;
+	m_hThreadLANListener = NULL;
 	m_bOnCloseWasCalled = false;
 	m_hBrushBackGround = CreateSolidBrush(RGB(93, 107, 153));
 	m_hBrushEditArea = CreateSolidBrush(RGB(255, 255, 255));
@@ -170,8 +171,8 @@ int CCheckOpenPortsDlg::OnCreate(LPCREATESTRUCT lpCreateStruct)
 }
 LRESULT CCheckOpenPortsDlg::OnClearThreads(WPARAM wParam, LPARAM lParam)
 {
-	WaitForMultipleObjects(3, m_hThreadList, TRUE, INFINITE);
-	/*if (m_hThreadRouter)
+	//WaitForMultipleObjects(3, m_hThreadList, TRUE, INFINITE);
+	if (m_hThreadRouter)
 	{
 		WaitForSingleObject(m_hThreadRouter, INFINITE);
 		CloseHandle(m_hThreadRouter);
@@ -190,27 +191,27 @@ LRESULT CCheckOpenPortsDlg::OnClearThreads(WPARAM wParam, LPARAM lParam)
 		WaitForSingleObject(m_hThreadUploadSpeedList, INFINITE);
 		CloseHandle(m_hThreadUploadSpeedList);
 		m_hThreadUploadSpeedList = NULL;
-	}*/
+	}
 
 
 	if (!m_bOnCloseWasCalled)
 	{
 		m_bOnCloseWasCalled = true;
 
-		for (int i = 0; i < 3; i++)
-		{
-			CloseHandle(m_hThreadList[i]);
-			m_hThreadUploadSpeedList = NULL;
-			m_hThreadRouter = NULL;
-			m_hThreadDownloadSpeedList = NULL;
-		}
+//		for (int i = 0; i < 3; i++)
+//		{
+//			CloseHandle(m_hThreadList[i]);
+//			m_hThreadUploadSpeedList = NULL;
+//			m_hThreadRouter = NULL;
+//			m_hThreadDownloadSpeedList = NULL;
+//		}
 
 		if (dll_handle)
 		{
 			FreeLibrary(dll_handle);
 			dll_handle = NULL;
 		}
-		OnOK();
+		OnClose();
 	}
 	return 0;
 }
@@ -296,7 +297,7 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 //	m_hThreadDownloadSpeed = (HANDLE)_beginthreadex(NULL, 0, DownloadSpeedThread, this, 0, NULL);
 //	m_hThreadUploadSpeed = (HANDLE)_beginthreadex(NULL, 0, UploadSpeedThread, this, 0, NULL);
 	m_bShowPacketInfo = false;
-	OnBnClickedButtonShowPackets();
+	//OnBnClickedButtonShowPackets();
 	OnBnClickedButtonListenLan();
 	OnBnClickedButtonStartPacket();
 
@@ -484,19 +485,56 @@ void CCheckOpenPortsDlg::OnBnClickedButtonCheckIfPortOpen()
 void CCheckOpenPortsDlg::OnClose()
 {
 	// TODO: Add your message handler code here and/or call default
-	if (!m_bHasClickClose)
+	//if (!m_bHasClickClose)
+//	{
+	OnBnClickedButtonStopLan();
+	OnBnClickedButtonStopSearchingOpenPorts();
+	OnBnClickedButtonStopPacket();
+	m_pfnPtrEndSNMP();
+	m_bHasClickClose = TRUE;
+
+	if (IsLANStopped() && IsSearchingOpenPortStopped())
 	{
-		m_pfnPtrStopLocalAreaListening();
-		m_pfnPtrStopSearchingOpenPorts();
-		m_pfnPtrStopPacketListener();
-		m_pfnPtrEndSNMP();
-		m_bHasClickClose = TRUE;
+		if (m_hThreadRouter)
+		{
+			WaitForSingleObject(m_hThreadRouter, INFINITE);
+			CloseHandle(m_hThreadRouter);
+		}
+		if (m_hThreadDownloadSpeed)
+		{
+			WaitForSingleObject(m_hThreadDownloadSpeed, INFINITE);
+			CloseHandle(m_hThreadDownloadSpeed);
+		}
+		if (m_hThreadUploadSpeed)
+		{
+			WaitForSingleObject(m_hThreadUploadSpeed, INFINITE);
+			CloseHandle(m_hThreadUploadSpeed);
+		}
+		if (m_hThreadLANListener)
+		{
+			WaitForSingleObject(m_hThreadLANListener, INFINITE);
+			CloseHandle(m_hThreadLANListener);
+		}
+		if (m_hThreadPacketListener)
+		{
+			WaitForSingleObject(m_hThreadPacketListener, INFINITE);
+			CloseHandle(m_hThreadPacketListener);
+		}
+
+		FreeLibrary(dll_handle);
+		CDialog::OnClose();
 	}
 	else
 	{
-		CDialog::OnClose();
-		//OnOK();
+		//m_bStopLANClicked = TRUE;
+		::MessageBox(this->GetSafeHwnd(), _T("Application is still busy. Make sure all listening activity has stopped."), _T("Network Monitoring Tool"), MB_ICONEXCLAMATION);
 	}
+	//}
+	//else
+	//{
+		
+		//OnOK();
+	//}
 
 /*	if (IsLANStopped() && IsSearchingOpenPortStopped())
 	{
@@ -541,47 +579,46 @@ void CCheckOpenPortsDlg::OnEnChangeEditArea()
 
 	// TODO:  Add your control notification handler code here
 }
-
-void CCheckOpenPortsDlg::OnBnClickedButtonListenLan()
+unsigned __stdcall  CCheckOpenPortsDlg::LANListenerThread(void* parg)
 {
+	CCheckOpenPortsDlg* pDlg = (CCheckOpenPortsDlg*)parg;
 	// TODO: Add your control notification handler code here
 	CString csText;
 	CString csPollTime;
 
-	m_ctrlBtnListen.EnableWindow(FALSE);
-	m_ctrlBtnStopListening.EnableWindow(TRUE);
-	m_vList.clear();
-	SetLANStop(false);
-	m_ctrlIPAddress.GetWindowText(csText);
+	pDlg->m_ctrlIPAddress.GetWindowText(csText);
 
 #ifdef UNICODE
 	wstring wstr(csText.GetBuffer());
-	string str = UnicodeToMultiByte(wstr);
-	m_ctrlEditPollingTime.GetWindowText(csPollTime);
+	string str = pDlg->UnicodeToMultiByte(wstr);
+	pDlg->m_ctrlEditPollingTime.GetWindowText(csPollTime);
 	if (csPollTime.IsEmpty())
 	{
-		m_ctrlEditPollingTime.SetWindowText(_T("1000"));
-		if (!m_pfnPtrStartLocalAreaListening(str.c_str(), CallbackLANListener, 1000))
-			::MessageBox(this->GetSafeHwnd(), _T("Failed to start Local Area Listener."), _T("Local Area Network Listener"), MB_ICONERROR);
+		pDlg->m_ctrlEditPollingTime.SetWindowText(_T("1000"));
+		if (!pDlg->m_pfnPtrStartLocalAreaListening(str.c_str(), CallbackLANListener, 1000))
+			::MessageBox(pDlg->GetSafeHwnd(), _T("Failed to start Local Area Listener."), _T("Local Area Network Listener"), MB_ICONERROR);
 	}
 	else
 	{
 		int nPollTime = _ttoi(csPollTime);
-		if (!m_pfnPtrStartLocalAreaListening(str.c_str(), CallbackLANListener, nPollTime))
-			::MessageBox(this->GetSafeHwnd(), _T("Failed to start Local Area Listener."), _T("Local Area Network Listener"), MB_ICONERROR);
-	}
-#else
-	if (csPollTime.IsEmpty())
-	{
-		m_ctrlEditPollingTime.SetWindowText(_T("1000"));
-		m_pfnPtrStartLocalAreaListening(csText.GetBuffer(), CallbackLANListener, 1000);
-	}
-	else
-	{
-		int nPollTime = _ttoi(csPollTime);
-		m_pfnPtrStartLocalAreaListening(csText.GetBuffer(), CallbackLANListener, nPollTime);
+		if (!pDlg->m_pfnPtrStartLocalAreaListening(str.c_str(), CallbackLANListener, nPollTime))
+			::MessageBox(pDlg->GetSafeHwnd(), _T("Failed to start Local Area Listener."), _T("Local Area Network Listener"), MB_ICONERROR);
 	}
 #endif
+	return 0;
+}
+void CCheckOpenPortsDlg::OnBnClickedButtonListenLan()
+{
+	m_ctrlBtnListen.EnableWindow(FALSE);
+	m_ctrlBtnStopListening.EnableWindow(TRUE);
+	SetLANStop(false);
+
+	if (!m_hThreadLANListener)
+	{
+		WaitForSingleObject(m_hThreadLANListener,INFINITE);
+		CloseHandle(m_hThreadLANListener);
+	}
+	m_hThreadLANListener = (HANDLE)_beginthreadex(NULL, 0, LANListenerThread, this, 0, 0);
 }
 
 void CCheckOpenPortsDlg::OnBnClickedButtonStopLan()
@@ -701,7 +738,7 @@ unsigned __stdcall  CCheckOpenPortsDlg::DownloadSpeedThread(void* parg)
 			prev = pDlg->GetDownloadSize();
 		}
 	}
-	::PostMessage(pDlg->GetSafeHwnd(), WM_CLEAR_TREADS, 0, 0);
+	//::PostMessage(pDlg->GetSafeHwnd(), WM_CLEAR_TREADS, 0, 0);
 	return 0;
 }
 unsigned __stdcall  CCheckOpenPortsDlg::DownloadSpeedThreadList(void* parg)
@@ -814,7 +851,7 @@ unsigned __stdcall  CCheckOpenPortsDlg::DownloadSpeedThreadList(void* parg)
 			timePrev = GetTickCount64();
 		}
 	}
-	::PostMessage(pDlg->GetSafeHwnd(), WM_CLEAR_TREADS, 0, 0);
+	//::PostMessage(pDlg->GetSafeHwnd(), WM_CLEAR_TREADS, 0, 0);
 	return 0;
 }
 
@@ -846,7 +883,7 @@ unsigned __stdcall  CCheckOpenPortsDlg::UploadSpeedThread(void* parg)
 			prev = pDlg->GetUploadSize();
 		}
 	}
-	::PostMessage(pDlg->GetSafeHwnd(), WM_CLEAR_TREADS, 0, 0);
+	//::PostMessage(pDlg->GetSafeHwnd(), WM_CLEAR_TREADS, 0, 0);
 	return 0;
 }
 
@@ -960,7 +997,7 @@ unsigned __stdcall  CCheckOpenPortsDlg::UploadSpeedThreadList(void* parg)
 			timePrev = GetTickCount64();
 		}
 	}
-	::PostMessage(pDlg->GetSafeHwnd(), WM_CLEAR_TREADS, 0, 0);
+	//::PostMessage(pDlg->GetSafeHwnd(), WM_CLEAR_TREADS, 0, 0);
 	return 0;
 }
 // CCheckOpenPortsDlg message handlers
@@ -1041,10 +1078,33 @@ unsigned __stdcall  CCheckOpenPortsDlg::RouterThread(void* parg)
 			Sleep(500);
 		}
 	}
-	::PostMessage(pDlg->GetSafeHwnd(), WM_CLEAR_TREADS, 0, 0);
+	//::PostMessage(pDlg->GetSafeHwnd(), WM_CLEAR_TREADS, 0, 0);
 	return 0;
 }
+unsigned __stdcall  CCheckOpenPortsDlg::PacketListenerThread(void* parg)
+{
+	CCheckOpenPortsDlg* pDlg = (CCheckOpenPortsDlg*)parg;
 
+	if (pDlg->m_hThreadDownloadSpeedList)
+	{
+		WaitForSingleObject(pDlg->m_hThreadDownloadSpeedList, INFINITE);
+		CloseHandle(pDlg->m_hThreadDownloadSpeedList);
+		pDlg->m_hThreadDownloadSpeedList = NULL;
+	}
+	if (pDlg->m_hThreadUploadSpeedList)
+	{
+		WaitForSingleObject(pDlg->m_hThreadUploadSpeedList, INFINITE);
+		CloseHandle(pDlg->m_hThreadUploadSpeedList);
+		pDlg->m_hThreadUploadSpeedList = NULL;
+	}
+	pDlg->m_hThreadDownloadSpeedList = (HANDLE)_beginthreadex(NULL, 0, DownloadSpeedThreadList, pDlg, 0, NULL);
+	pDlg->m_hThreadUploadSpeedList = (HANDLE)_beginthreadex(NULL, 0, UploadSpeedThreadList, pDlg, 0, NULL);
+
+	if (!pDlg->m_pfnPtrStartPacketListener(CallPacketListener))
+		::MessageBox(pDlg->GetSafeHwnd(), _T("Packet Listener failed to start. Please run the tool as Administrator. To run as administrator, right click on the executable file and click run as administrator."), _T("Run as Administrator"), MB_ICONEXCLAMATION);
+
+	return 0;
+}
 void CCheckOpenPortsDlg::CallbackLANListener(const char* ipAddress, const char* hostName, const char* macAddress, bool bIsopen)
 {
 	mtx_lanlistener.lock();
@@ -1293,14 +1353,14 @@ void CCheckOpenPortsDlg::OnBnClickedButtonStartPacket()
 	m_bStopPacketListener = false;
 	m_ctrlBtnListenPackets.EnableWindow(FALSE);
 	m_ctrlBtnUnlistenPackets.EnableWindow(TRUE);
-	if (!m_pfnPtrStartPacketListener(CallPacketListener))
-		::MessageBox(this->GetSafeHwnd(), _T("Packet Listener failed to start. Please run the tool as Administrator. To run as administrator, right click on the executable file and click run as administrator."), _T("Run as Administrator"), MB_ICONEXCLAMATION);
-	
-	m_hThreadDownloadSpeedList = (HANDLE)_beginthreadex(NULL, 0, DownloadSpeedThreadList, this, 0, NULL);
-	m_hThreadUploadSpeedList = (HANDLE)_beginthreadex(NULL, 0, UploadSpeedThreadList, this, 0, NULL);
 
-	m_hThreadList[1] = m_hThreadDownloadSpeedList;
-	m_hThreadList[2] = m_hThreadUploadSpeedList;
+	if (m_hThreadPacketListener)
+	{
+		WaitForSingleObject(m_hThreadPacketListener, INFINITE);
+		CloseHandle(m_hThreadPacketListener);
+		m_hThreadPacketListener = NULL;
+	}
+	m_hThreadPacketListener = (HANDLE)_beginthreadex(NULL, 0, PacketListenerThread, this, 0, NULL);
 }
 
 
@@ -1312,13 +1372,18 @@ void CCheckOpenPortsDlg::OnBnClickedButtonStopPacket()
 	m_ctrlBtnListenPackets.EnableWindow(TRUE);
 	m_ctrlBtnUnlistenPackets.EnableWindow(FALSE);
 
-	WaitForSingleObject(m_hThreadUploadSpeedList, INFINITE);
-	WaitForSingleObject(m_hThreadDownloadSpeedList, INFINITE);
-	CloseHandle(m_hThreadUploadSpeedList);
-	CloseHandle(m_hThreadDownloadSpeedList);
 
-	m_hThreadUploadSpeedList = NULL;
-	m_hThreadDownloadSpeedList = NULL;
+	//WaitForSingleObject(m_hThreadUploadSpeedList, INFINITE);
+	//WaitForSingleObject(m_hThreadDownloadSpeedList, INFINITE);
+	//WaitForSingleObject(m_hThreadPacketListener, INFINITE);
+	//CloseHandle(m_hThreadUploadSpeedList);
+	//CloseHandle(m_hThreadDownloadSpeedList);
+	//CloseHandle(m_hThreadPacketListener);
+
+
+	//m_hThreadUploadSpeedList = NULL;
+	//m_hThreadDownloadSpeedList = NULL;
+	//m_hThreadPacketListener = NULL;
 }
 
 

@@ -15,7 +15,6 @@ CPacketListener::CPacketListener(FNCallbackPacketListener fnPtr)
 }
 CPacketListener::~CPacketListener()
 {
-	m_threadListening->join();
 	if (m_threadListening)
 	{
 		delete m_threadListening;
@@ -25,6 +24,7 @@ CPacketListener::~CPacketListener()
 }
 void CPacketListener::PollingThread(void* args)
 {
+	DEBUG_LOG("CPacketListener: Thread Started.");
 	CPacketListener* pListener = (CPacketListener*)args;
 	int nBytes = 0;
 	char* pBuffer = (char*)malloc(65536);
@@ -43,6 +43,7 @@ void CPacketListener::PollingThread(void* args)
 	free(pBuffer);
 	pBuffer = NULL;
 	closesocket(pListener->GetSocket());
+	DEBUG_LOG("CPacketListener: Thread Ended.");
 	return;
 }
 
@@ -99,19 +100,17 @@ bool CPacketListener::StartListening()
 		closesocket(m_socket);
 		return false;
 	}
-	
+	if (m_threadListening != NULL)
+	{
+		delete m_threadListening;
+		m_threadListening = NULL;
+	}
 	m_threadListening = new thread(PollingThread, this);
 	freeaddrinfo(result);
+	m_threadListening->join();
 	return true;
 }
 void CPacketListener::StopListening()
 {
 	m_bIsStopped = true;
-}
-void CPacketListener::WaitToEndThreads()
-{
-	if (m_threadListening != NULL)
-	{
-		m_threadListening->join();
-	}
 }

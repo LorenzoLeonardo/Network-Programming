@@ -58,8 +58,6 @@ typedef struct _tOBJ
 	double m_lfMaxDownloadSpeed;
 	double m_lfMaxUploadSpeed;
 	vector<CString> m_vIPHOSTMAC;//IP, Host, MAC
-	HANDLE m_hDownloadThread;
-	HANDLE m_hUploadThread;
 }ENZ_CONNECTED_DEVICE_DETAILS;
 
 // CCheckOpenPortsDlg dialog
@@ -175,13 +173,13 @@ public:
 	void SetLANStop(bool b)
 	{
 		m_bLanStop = b;
-		if (m_bLanStop)
-			::MessageBox(this->GetSafeHwnd(), _T("Listening from Local Area Network has stopped."), _T("Local Area Listener Stopped"), MB_ICONEXCLAMATION);
+	//	if (m_bLanStop)
+	//		::MessageBox(this->GetSafeHwnd(), _T("Listening from Local Area Network has stopped."), _T("Local Area Listener Stopped"), MB_ICONEXCLAMATION);
 	}
 	void SetStopSearchingOpenPort()
 	{
 		m_bStopSearchingOpenPorts = true;
-		::MessageBox(this->GetSafeHwnd(), _T("Done searching for open ports."), _T("Open Ports Checker"), MB_ICONEXCLAMATION);
+//		::MessageBox(this->GetSafeHwnd(), _T("Done searching for open ports."), _T("Open Ports Checker"), MB_ICONEXCLAMATION);
 	}
 	bool IsSearchingOpenPortStopped()
 	{
@@ -231,7 +229,6 @@ protected:
 	bool m_bStopPacketListener;
 	bool m_bStopSearchingOpenPorts;
 	bool m_bLanStop;
-	vector<CString> m_vList;
 	CString m_IPAddress;
 	int m_nThread;
 	vector<thread*> v_Thread;
@@ -249,6 +246,9 @@ protected:
 	HANDLE m_hThreadUploadSpeed;
 	HANDLE m_hThreadUploadSpeedList;
 	HANDLE m_hThreadList[3];
+	HANDLE m_hThreadLANListener;
+	HANDLE m_hThreadPacketListener;
+
 	CButton m_ctrlBtnCheckOpenPorts;
 	CButton m_ctrlBtnStopSearchingPort;
 	CProgressCtrl m_ctrlProgressStatus;
@@ -288,6 +288,8 @@ protected:
 	static unsigned __stdcall  UploadSpeedThread(void* parg);
 	static unsigned __stdcall  DownloadSpeedThreadList(void* parg);
 	static unsigned __stdcall  UploadSpeedThreadList(void* parg);
+	static unsigned __stdcall  LANListenerThread(void* parg);
+	static unsigned __stdcall  PacketListenerThread(void* parg);
 	// Generated message map functions
 	virtual BOOL OnInitDialog();
 public:

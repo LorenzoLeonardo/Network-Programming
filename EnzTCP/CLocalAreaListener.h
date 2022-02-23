@@ -21,7 +21,6 @@ public:
 	
 	void Start();
 	void Stop();
-	void WaitToEndThreads();
 	string GetStartingIPAddress();
 	bool CheckIPDeviceConnected(string ipAddress, string& hostName, string& macAddress);
 	map<thread*, int>* GetThreads();

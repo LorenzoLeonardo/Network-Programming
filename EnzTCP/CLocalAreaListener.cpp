@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "CLocalAreaListener.h"
-
+#include "DebugLog.h"
 
 CLocalAreaListener* g_pCLocalAreaListener = NULL;
 
@@ -25,7 +25,12 @@ CLocalAreaListener::CLocalAreaListener(const char* szStartingIPAddress, Callback
 
 CLocalAreaListener::~CLocalAreaListener()
 {
-	WaitToEndThreads();
+	//WaitToEndThreads();
+	if (m_threadMain != NULL)
+	{
+		delete m_threadMain;
+		m_threadMain = NULL;
+	}
 	if (m_objICMP != NULL)
 	{
 		delete m_objICMP;
@@ -54,6 +59,7 @@ void MultiQueryingThread(void* args)
 
 void MainThread(void* args)
 {
+	DEBUG_LOG("CLocalAreaListener: Thread Started.");
 	CLocalAreaListener* pCLocalAreaListener = (CLocalAreaListener*)args;
 	string ipAddressStart = pCLocalAreaListener->GetStartingIPAddress();
 	int nStart = atoi(ipAddressStart.substr(ipAddressStart.rfind('.', ipAddressStart.size())+1, ipAddressStart.size()).c_str());
@@ -74,7 +80,8 @@ void MainThread(void* args)
 
 		while (it != pCLocalAreaListener->GetThreads()->end())
 		{
-			it->first->join();
+			if(it->first->joinable())
+				it->first->join();
 			it++;
 		}
 		it = pCLocalAreaListener->GetThreads()->begin();
@@ -91,6 +98,7 @@ void MainThread(void* args)
 	
 	pCLocalAreaListener->SetMainThreadHasStarted(FALSE);
 	g_pCLocalAreaListener->m_fnptrCallbackLocalAreaListener("stop", NULL, NULL, false);
+	DEBUG_LOG("CLocalAreaListener: Thread Ended.");
 	return;
 }
 string CLocalAreaListener::GetStartingIPAddress()
@@ -109,7 +117,7 @@ void CLocalAreaListener::Start()
 			m_threadMain = NULL;
 		}
 		m_threadMain = new thread(MainThread, this);
-		//m_threadMain->detach();
+		m_threadMain->join();
 	}
 }
 
@@ -119,12 +127,8 @@ void CLocalAreaListener::Stop()
 }
 bool CLocalAreaListener::CheckIPDeviceConnected(string ipAddress,string &hostName, string &macAddress)
 {
-	return 	m_objICMP->CheckDevice(ipAddress, hostName, macAddress);
-}
-void CLocalAreaListener::WaitToEndThreads()
-{
-	if (m_threadMain != NULL)
-	{
-		m_threadMain->join();
-	}
+	if (m_objICMP)
+		return 	m_objICMP->CheckDevice(ipAddress, hostName, macAddress);
+	else
+		return false;
 }
