@@ -14,7 +14,7 @@ CICMP::CICMP()
 }
 CICMP::~CICMP()
 {
-    WSACleanup();
+   WSACleanup();
 }
 int CICMP::InitializeLocalIPAndHostname()
 {

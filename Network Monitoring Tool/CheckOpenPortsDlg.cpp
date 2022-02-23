@@ -402,9 +402,9 @@ string CCheckOpenPortsDlg::UnicodeToMultiByte(wstring& wstr)
 	if (wstr.empty()) 
 		return "";
 
-	int size_needed = WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), NULL, 0, NULL, NULL);
+	int size_needed = WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.length(), NULL, 0, NULL, NULL);
 	string strTo(size_needed, 0);
-	WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), &strTo[0], size_needed, NULL, NULL);
+	WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.length(), &strTo[0], size_needed, NULL, NULL);
 	return strTo;
 }
 wstring CCheckOpenPortsDlg::MultiByteToUnicode(string& str)
@@ -412,9 +412,9 @@ wstring CCheckOpenPortsDlg::MultiByteToUnicode(string& str)
 	if (str.empty())
 		return L"";
 
-	int size_needed =MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), NULL, 0);
+	int size_needed =MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.length(), NULL, 0);
 	wstring wstrTo(size_needed, 0);
-	MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), &wstrTo[0], size_needed);
+	MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.length(), &wstrTo[0], size_needed);
 	return wstrTo;
 }
 
@@ -520,8 +520,8 @@ void CCheckOpenPortsDlg::OnClose()
 			WaitForSingleObject(m_hThreadPacketListener, INFINITE);
 			CloseHandle(m_hThreadPacketListener);
 		}
-
-		FreeLibrary(dll_handle);
+		if(dll_handle)
+			FreeLibrary(dll_handle);
 		CDialog::OnClose();
 	}
 	else
@@ -588,7 +588,7 @@ unsigned __stdcall  CCheckOpenPortsDlg::LANListenerThread(void* parg)
 
 	pDlg->m_ctrlIPAddress.GetWindowText(csText);
 
-#ifdef UNICODE
+
 	wstring wstr(csText.GetBuffer());
 	string str = pDlg->UnicodeToMultiByte(wstr);
 	pDlg->m_ctrlEditPollingTime.GetWindowText(csPollTime);
@@ -604,7 +604,7 @@ unsigned __stdcall  CCheckOpenPortsDlg::LANListenerThread(void* parg)
 		if (!pDlg->m_pfnPtrStartLocalAreaListening(str.c_str(), CallbackLANListener, nPollTime))
 			::MessageBox(pDlg->GetSafeHwnd(), _T("Failed to start Local Area Listener."), _T("Local Area Network Listener"), MB_ICONERROR);
 	}
-#endif
+
 	return 0;
 }
 void CCheckOpenPortsDlg::OnBnClickedButtonListenLan()
@@ -613,10 +613,11 @@ void CCheckOpenPortsDlg::OnBnClickedButtonListenLan()
 	m_ctrlBtnStopListening.EnableWindow(TRUE);
 	SetLANStop(false);
 
-	if (!m_hThreadLANListener)
+	if (m_hThreadLANListener)
 	{
 		WaitForSingleObject(m_hThreadLANListener,INFINITE);
 		CloseHandle(m_hThreadLANListener);
+		m_hThreadLANListener = NULL;
 	}
 	m_hThreadLANListener = (HANDLE)_beginthreadex(NULL, 0, LANListenerThread, this, 0, 0);
 }
@@ -764,20 +765,18 @@ unsigned __stdcall  CCheckOpenPortsDlg::DownloadSpeedThreadList(void* parg)
 	mtx_packetlistenerDownload.unlock();
 	while (!pDlg->HasClickClose() && !pDlg->IsPacketStopped())
 	{
-		timeCurrent = GetTickCount64();
 		mtx_packetlistenerDownload.lock();
+		timeCurrent = GetTickCount64();
+		
 		it = pDlg->m_mConnectedBefore.begin();
 		while (it != pDlg->m_mConnectedBefore.end())
 		{
 			mCurrent[it->first] = pDlg->GetDownloadSize(it->first);
 			it++;
 		}
-		mtx_packetlistenerDownload.unlock();
 		
-
 		if ((timeCurrent - timePrev) >= POLLING_TIME)
 		{
-			mtx_packetlistenerDownload.lock();
 			map<ULONG, ENZ_CONNECTED_DEVICE_DETAILS>::iterator it = g_dlg->m_mConnectedBefore.begin();
 			int nRow = 0, col = 0;
 			WCHAR* temp = NULL;
@@ -847,9 +846,10 @@ unsigned __stdcall  CCheckOpenPortsDlg::DownloadSpeedThreadList(void* parg)
 				mPrev[it->first] = pDlg->GetDownloadSize(it->first);
 				it++;
 			}
-			mtx_packetlistenerDownload.unlock();
+			
 			timePrev = GetTickCount64();
 		}
+		mtx_packetlistenerDownload.unlock();
 	}
 	//::PostMessage(pDlg->GetSafeHwnd(), WM_CLEAR_TREADS, 0, 0);
 	return 0;
@@ -910,20 +910,21 @@ unsigned __stdcall  CCheckOpenPortsDlg::UploadSpeedThreadList(void* parg)
 	mtx_packetlistenerUpload.unlock();
 	while (!pDlg->HasClickClose() && !pDlg->IsPacketStopped())
 	{
-		timeCurrent = GetTickCount64();
 		mtx_packetlistenerUpload.lock();
+		timeCurrent = GetTickCount64();
+		
 		it = pDlg->m_mConnectedBefore.begin();
 		while (it != pDlg->m_mConnectedBefore.end())
 		{
 			mCurrent[it->first] = pDlg->GetUploadSize(it->first);
 			it++;
 		}
-		mtx_packetlistenerUpload.unlock();
+		
 		
 
 		if ((timeCurrent - timePrev) >= POLLING_TIME)
 		{
-			mtx_packetlistenerUpload.lock();
+		
 			map<ULONG, ENZ_CONNECTED_DEVICE_DETAILS>::iterator it = g_dlg->m_mConnectedBefore.begin();
 			int nRow = 0, col = 0;
 			WCHAR* temp = NULL;
@@ -993,9 +994,9 @@ unsigned __stdcall  CCheckOpenPortsDlg::UploadSpeedThreadList(void* parg)
 				mPrev[it->first] = pDlg->GetUploadSize(it->first);
 				it++;
 			}
-			mtx_packetlistenerUpload.unlock();
 			timePrev = GetTickCount64();
 		}
+		mtx_packetlistenerUpload.unlock();
 	}
 	//::PostMessage(pDlg->GetSafeHwnd(), WM_CLEAR_TREADS, 0, 0);
 	return 0;
@@ -1009,7 +1010,7 @@ unsigned __stdcall  CCheckOpenPortsDlg::RouterThread(void* parg)
 	CString csBrand = _T("");
 	CString csModel = _T("");
 	CString csDesc = _T("");
-	string sTemp;
+	char* sTemp = NULL;
 
 	if (pDlg->m_pfnPtrGetDefaultGateway(szDefaultGateway))
 	{
@@ -1024,9 +1025,17 @@ unsigned __stdcall  CCheckOpenPortsDlg::RouterThread(void* parg)
 				return 0;
 			}
 #ifdef UNICODE
-			sTemp = (char*)value.value.string.ptr;
-			csBrand = pDlg->MultiByteToUnicode(sTemp).c_str();
-#else
+			sTemp = (char*)malloc(sizeof(char) * (value.value.sNumber + 1));
+			if (sTemp)
+			{
+				memset(sTemp, 0, sizeof(char) * (value.value.sNumber + 1));
+				memcpy_s(sTemp, sizeof(char) * (value.value.sNumber), value.value.string.ptr, value.value.sNumber);
+				string s(sTemp);
+				csBrand = pDlg->MultiByteToUnicode(s).c_str();
+				free(sTemp);
+				sTemp = NULL;
+			}
+#else		
 			csBrand = value.value.string.ptr;
 #endif
 			
@@ -1036,8 +1045,16 @@ unsigned __stdcall  CCheckOpenPortsDlg::RouterThread(void* parg)
 				return 0;
 			}
 #ifdef UNICODE
-			sTemp = (char*)value.value.string.ptr;
-			csModel = pDlg->MultiByteToUnicode(sTemp).c_str();
+			sTemp = (char*)malloc(sizeof(char) * (value.value.sNumber + 1));
+			if (sTemp)
+			{
+				memset(sTemp, 0, sizeof(char) * (value.value.sNumber + 1));
+				memcpy_s(sTemp, sizeof(char) * (value.value.sNumber), value.value.string.ptr, value.value.sNumber);
+				string s(sTemp);
+				csModel = pDlg->MultiByteToUnicode(s).c_str();
+				free(sTemp);
+				sTemp = NULL;
+			}
 #else
 			csModel = value.value.string.ptr;
 #endif
@@ -1049,8 +1066,17 @@ unsigned __stdcall  CCheckOpenPortsDlg::RouterThread(void* parg)
 				return 0;
 			}
 #ifdef UNICODE
-			sTemp = (char*)value.value.string.ptr;
-			csDesc = pDlg->MultiByteToUnicode(sTemp).c_str();
+
+			sTemp = (char*)malloc(sizeof(char) * (value.value.sNumber + 1));
+			if (sTemp)
+			{
+				memset(sTemp, 0, sizeof(char) * (value.value.sNumber + 1));
+				memcpy_s(sTemp, sizeof(char) * (value.value.sNumber), value.value.string.ptr, value.value.sNumber);
+				string s(sTemp);
+				csDesc = pDlg->MultiByteToUnicode(s).c_str();
+				free(sTemp);
+				sTemp = NULL;
+			}
 #else
 			csDesc = value.value.string.ptr;
 #endif
