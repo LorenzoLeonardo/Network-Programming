@@ -97,8 +97,8 @@ public:
 	CIPAddressCtrl m_ctrlIPAddress;
 	CEdit m_ctrlResult;
 	CListCtrlCustom m_ctrlLANConnected;
-	map<ULONG, CDeviceConnected*> m_mConnected;
-	map<ULONG, CDeviceConnected*> m_mConnectedBefore;
+	map<ULONG, CDeviceConnected> m_mConnected;
+	map<ULONG, CDeviceConnected> m_mConnectedBefore;
 	CEdit m_ctrlEditPacketReportArea;
 	CEdit m_ctrlEditDownloadSpeed;
 	CEdit m_ctrlEditUploadSpeed;
@@ -131,7 +131,7 @@ public:
 		if (!m_mConnectedBefore.empty())
 		{
 			if (m_mConnectedBefore.find(ulIPAdd) != m_mConnectedBefore.end())
-				m_mConnectedBefore[ulIPAdd]->m_ulDataSizeDownload = size;
+				m_mConnectedBefore[ulIPAdd].m_ulDataSizeDownload = size;
 		}
 	
 	}
@@ -147,7 +147,7 @@ public:
 		if (!m_mConnectedBefore.empty())
 		{
 			if(m_mConnectedBefore.find(ulIPAdd)!= m_mConnectedBefore.end())
-				m_mConnectedBefore[ulIPAdd]->m_ulDataSizeUpload = size;
+				m_mConnectedBefore[ulIPAdd].m_ulDataSizeUpload = size;
 		}
 		
 	}
@@ -162,7 +162,7 @@ public:
 		if (!m_mConnectedBefore.empty())
 		{
 			if (m_mConnectedBefore.find(ulIPAdd) != m_mConnectedBefore.end())
-				ulSize = m_mConnectedBefore[ulIPAdd]->m_ulDataSizeDownload;
+				ulSize = m_mConnectedBefore[ulIPAdd].m_ulDataSizeDownload;
 		}
 		
 		return ulSize;
@@ -178,7 +178,7 @@ public:
 		if (!m_mConnectedBefore.empty())
 		{
 			if (m_mConnectedBefore.find(ulIPAdd) != m_mConnectedBefore.end())
-				ulSize = m_mConnectedBefore[ulIPAdd]->m_ulDataSizeUpload;
+				ulSize = m_mConnectedBefore[ulIPAdd].m_ulDataSizeUpload;
 		}
 		
 		return ulSize;
@@ -306,8 +306,8 @@ protected:
 	static unsigned __stdcall  RouterThread(void* parg);
 	//static unsigned __stdcall  DownloadSpeedThread(void* parg);
 	//static unsigned __stdcall  UploadSpeedThread(void* parg);
-	//static unsigned __stdcall  DownloadSpeedThreadList(void* parg);
-	//static unsigned __stdcall  UploadSpeedThreadList(void* parg);
+	static unsigned __stdcall  DownloadSpeedThreadList(void* parg);
+	static unsigned __stdcall  UploadSpeedThreadList(void* parg);
 	static unsigned __stdcall  LANListenerThread(void* parg);
 	static unsigned __stdcall  PacketListenerThread(void* parg);
 	// Generated message map functions

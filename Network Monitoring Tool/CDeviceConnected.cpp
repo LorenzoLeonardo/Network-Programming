@@ -1,6 +1,9 @@
 #include "pch.h"
 #include "CDeviceConnected.h"
+#include <mutex>
 
+std::mutex mtxdown;
+std::mutex mtxup;
 CDeviceConnected::CDeviceConnected()
 {
     m_hwndMainWnd = NULL;
@@ -44,12 +47,12 @@ CDeviceConnected::CDeviceConnected(HWND hWnd)
     m_hDownload = NULL;
     m_hUpload = NULL;
 
-    //Run();
+  
 }
 
 CDeviceConnected::~CDeviceConnected()
 {
-    //Stop();
+   
 }
 
 unsigned __stdcall CDeviceConnected::ThreadDownloadSpeedReader(LPVOID pvParam)
@@ -64,10 +67,11 @@ unsigned __stdcall CDeviceConnected::ThreadDownloadSpeedReader(LPVOID pvParam)
 
     while (::WaitForSingleObject(pParent->m_StopThreadDownload, 0) != WAIT_OBJECT_0)
     {
-         timeCurrent = GetTickCount64();
-         current = pParent->m_ulDataSizeDownload;
+        timeCurrent = GetTickCount64();
+        current = pParent->m_ulDataSizeDownload;
         if ((timeCurrent - timePrev) >= POLLING_TIME)
         {
+           
             pParent->m_lfDownloadSpeed = ((double)(current - prev) / (double)(timeCurrent - timePrev)) * 8;
             if (pParent->m_lfMaxDownloadSpeed < pParent->m_lfDownloadSpeed)
                 pParent->m_lfMaxDownloadSpeed = pParent->m_lfDownloadSpeed;
@@ -77,9 +81,11 @@ unsigned __stdcall CDeviceConnected::ThreadDownloadSpeedReader(LPVOID pvParam)
             prev = pParent->m_ulDataSizeDownload;
             
             ::SendMessage(pParent->m_hwndMainWnd, WM_UPDATE_DOWNSPEED, (WPARAM)pvParam, 0);
+
             timePrev = GetTickCount64();
+           
         }
-      //  Sleep(POLLING_TIME);
+        Sleep(POLLING_TIME);
     }
     ::SetEvent(pParent->m_WaitThreadDownload);
     return 0;
@@ -97,10 +103,11 @@ unsigned __stdcall CDeviceConnected::ThreadUploadSpeedReader(LPVOID pvParam)
 
     while (::WaitForSingleObject(pParent->m_StopThreadUpload, 0) != WAIT_OBJECT_0)
     {
-        timeCurrent = GetTickCount64();
+         timeCurrent = GetTickCount64();
         current = pParent->m_ulDataSizeUpload;
         if ((timeCurrent - timePrev) >= POLLING_TIME)
         {
+           
             pParent->m_lfUploadSpeed = ((double)(current - prev) / (double)(timeCurrent - timePrev)) * 8;
             if (pParent->m_lfMaxUploadSpeed < pParent->m_lfUploadSpeed)
                 pParent->m_lfMaxUploadSpeed = pParent->m_lfUploadSpeed;
@@ -110,6 +117,7 @@ unsigned __stdcall CDeviceConnected::ThreadUploadSpeedReader(LPVOID pvParam)
            
             ::SendMessage(pParent->m_hwndMainWnd, WM_UPDATE_UPSPEED, (WPARAM)pvParam, 0);
             timePrev = GetTickCount64();
+     
         }
         Sleep(POLLING_TIME);
     }
