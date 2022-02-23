@@ -293,14 +293,11 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	m_ctrlIPAddress.SetWindowText(m_ipFilter);
 
 	m_hThreadRouter = (HANDLE)_beginthreadex(NULL, 0, RouterThread, this, 0, NULL);
-	m_hThreadList[0] = m_hThreadRouter;
-//	m_hThreadDownloadSpeed = (HANDLE)_beginthreadex(NULL, 0, DownloadSpeedThread, this, 0, NULL);
-//	m_hThreadUploadSpeed = (HANDLE)_beginthreadex(NULL, 0, UploadSpeedThread, this, 0, NULL);
+
 	m_bShowPacketInfo = false;
-	//OnBnClickedButtonShowPackets();
+	OnBnClickedButtonShowPackets();
 	OnBnClickedButtonListenLan();
 	OnBnClickedButtonStartPacket();
-
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -490,15 +487,20 @@ void CCheckOpenPortsDlg::OnClose()
 	OnBnClickedButtonStopLan();
 	OnBnClickedButtonStopSearchingOpenPorts();
 	OnBnClickedButtonStopPacket();
-	m_pfnPtrEndSNMP();
 	m_bHasClickClose = TRUE;
 
 	if (IsLANStopped() && IsSearchingOpenPortStopped())
 	{
+		m_pfnPtrEndSNMP();
 		if (m_hThreadRouter)
 		{
 			WaitForSingleObject(m_hThreadRouter, INFINITE);
 			CloseHandle(m_hThreadRouter);
+		}
+		if (m_hThreadLANListener)
+		{
+			WaitForSingleObject(m_hThreadLANListener, INFINITE);
+			CloseHandle(m_hThreadLANListener);
 		}
 		if (m_hThreadDownloadSpeed)
 		{
@@ -510,11 +512,7 @@ void CCheckOpenPortsDlg::OnClose()
 			WaitForSingleObject(m_hThreadUploadSpeed, INFINITE);
 			CloseHandle(m_hThreadUploadSpeed);
 		}
-		if (m_hThreadLANListener)
-		{
-			WaitForSingleObject(m_hThreadLANListener, INFINITE);
-			CloseHandle(m_hThreadLANListener);
-		}
+
 		if (m_hThreadPacketListener)
 		{
 			WaitForSingleObject(m_hThreadPacketListener, INFINITE);
@@ -1397,19 +1395,6 @@ void CCheckOpenPortsDlg::OnBnClickedButtonStopPacket()
 	m_pfnPtrStopPacketListener();
 	m_ctrlBtnListenPackets.EnableWindow(TRUE);
 	m_ctrlBtnUnlistenPackets.EnableWindow(FALSE);
-
-
-	//WaitForSingleObject(m_hThreadUploadSpeedList, INFINITE);
-	//WaitForSingleObject(m_hThreadDownloadSpeedList, INFINITE);
-	//WaitForSingleObject(m_hThreadPacketListener, INFINITE);
-	//CloseHandle(m_hThreadUploadSpeedList);
-	//CloseHandle(m_hThreadDownloadSpeedList);
-	//CloseHandle(m_hThreadPacketListener);
-
-
-	//m_hThreadUploadSpeedList = NULL;
-	//m_hThreadDownloadSpeedList = NULL;
-	//m_hThreadPacketListener = NULL;
 }
 
 
@@ -1441,7 +1426,9 @@ void CCheckOpenPortsDlg::OnBnClickedButtonShowPackets()
 		m_bShowPacketInfo = true;
 		//m_ctrlEditPacketReportArea.ShowWindow(false);
 		if (m_pmodeless)
+		{
 			m_pmodeless->OnBnClickedCancel();
+		}
 	}
 }
 

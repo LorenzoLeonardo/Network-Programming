@@ -7,6 +7,8 @@ inline string getCurrentDateTime(string s) {
     time_t now = time(0);
     struct tm  tstruct;
     char  buf[80];
+
+    memset(buf, 0, sizeof(buf));
     localtime_s(&tstruct ,&now);
     if (s == "now")
         strftime(buf, sizeof(buf), "%Y-%m-%d %X", &tstruct);

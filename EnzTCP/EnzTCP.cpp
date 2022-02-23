@@ -7,10 +7,10 @@
 #include "CSNMP.h"
 #include "CPacketListener.h"
 #include "DebugLog.h"
+
 CCheckOpenPorts* g_pOpenPorts = NULL;
 CLocalAreaListener* g_pLocalAreaListener = NULL;
 CPacketListener* g_pPacketListener = NULL;
-
 CSNMP*   g_SNMP = NULL;
 
 BOOL APIENTRY DllMain(HMODULE hModule,
