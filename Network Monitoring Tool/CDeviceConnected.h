@@ -3,7 +3,7 @@
 #define WM_UPDATE_DOWNSPEED WM_USER+100
 #define WM_UPDATE_UPSPEED WM_USER+101
 
-#define POLLING_TIME 1000
+#define POLLING_TIME 500
 
 class CDeviceConnected
 {

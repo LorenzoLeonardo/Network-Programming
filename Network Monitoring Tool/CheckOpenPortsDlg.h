@@ -115,7 +115,7 @@ public:
 	inline string UnicodeToMultiByte(wstring& wstr);
 	inline wstring MultiByteToUnicode(string& wstr);
 	void Increment();
-
+	bool IsInTheList(CString csIPAddress);
 	bool HasClickClose()
 	{
 		return m_bHasClickClose;
