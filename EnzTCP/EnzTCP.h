@@ -129,3 +129,4 @@ extern "C" ENZTCPLIBRARY_API	HANDLE		ConnectToServer(const char* ipAddress, cons
 extern "C" ENZTCPLIBRARY_API	void		DisconnectFromServer(HANDLE hHandle);
 extern "C" ENZTCPLIBRARY_API	bool		StartPacketListener(FNCallbackPacketListener fnpPtr);
 extern "C" ENZTCPLIBRARY_API	void		StopPacketListener();
+extern "C" ENZTCPLIBRARY_API	bool		GetNetworkDeviceStatus(const char* ipAddress, char* hostname, int nSizeHostName, char* macAddress, int nSizeMacAddress, DWORD * pError);

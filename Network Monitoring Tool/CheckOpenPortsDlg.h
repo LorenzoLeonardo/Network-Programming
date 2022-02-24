@@ -45,7 +45,7 @@ typedef bool (*FNGetDefaultGateway)(char szDefaultGateway[]);
 typedef bool (*FNStopSearchingOpenPorts)();
 typedef bool (*FNStartPacketListener)(FNCallbackPacketListener);
 typedef void (*FNStopPacketListener)();
-
+typedef bool (*FNGetNetworkDeviceStatus)(const char* ipAddress, char* hostname, int nSizeHostName, char* macAddress, int nSizeMacAddress, DWORD * pError);
 inline void GetLastErrorMessageString(_tstring& str, int nGetLastError);
 template <typename Map>
 inline bool key_compare(Map const& lhs, Map const& rhs);
@@ -85,6 +85,7 @@ public:
 	FNStartLocalAreaListening m_pfnPtrStartLocalAreaListening;
 	FNStopLocalAreaListening m_pfnPtrStopLocalAreaListening;
 	FNStopSearchingOpenPorts m_pfnPtrStopSearchingOpenPorts;
+	FNGetNetworkDeviceStatus m_pfnPtrGetNetworkDeviceStatus;
 
 	CPacketInfoDlg* m_pmodeless;
 // Dialog Data

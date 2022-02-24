@@ -38,7 +38,7 @@ private:
 	string m_HostName;
 	string m_HostIP;
 
-	bool Ping(HANDLE hIcmpFile, string sSrc, string sDest, IPAddr &, int);
+	bool Ping(HANDLE hIcmpFile, string sSrc, string sDest, IPAddr &, UCHAR);
 	void FillICMPData(char* icmp_data, int datasize);
 	USHORT CheckSum(USHORT* buffer, int size);
 	bool DecodeICMPHeader(USHORT usSeq, char* buf, int bytes, struct sockaddr_in* from);
@@ -47,6 +47,7 @@ public:
 	~CICMP();
 
 	bool CheckDevice(string ipAddress, string& hostname, string& sMacAddress);
+	bool CheckDevice(string ipAddress, string& hostname, string& sMacAddress, DWORD* pError);
 	bool CheckDeviceEx(string ipAddress, string& hostname, string& sMacAddress);
 	string GetHostName(string ipAddress);
 	int InitializeLocalIPAndHostname();

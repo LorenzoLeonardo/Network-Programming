@@ -376,6 +376,7 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 		m_pfnPtrStopSearchingOpenPorts = (FNStopSearchingOpenPorts)GetProcAddress(dll_handle, "StopSearchingOpenPorts");
 		m_pfnPtrStartPacketListener = (FNStartPacketListener)GetProcAddress(dll_handle, "StartPacketListener");
 		m_pfnPtrStopPacketListener = (FNStopPacketListener)GetProcAddress(dll_handle, "StopPacketListener");
+		m_pfnPtrGetNetworkDeviceStatus = (FNGetNetworkDeviceStatus)GetProcAddress(dll_handle, "GetNetworkDeviceStatus");
 	}
 	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_FIXED_WIDTH, 30);
 	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_LEFT, 110);
@@ -1312,7 +1313,7 @@ void CCheckOpenPortsDlg::CallbackLANListener(const char* ipAddress, const char* 
 			while (it != g_dlg->m_mConnectedBefore.end())
 			{
 				nRow = g_dlg->m_ctrlLANConnected.GetItemCount();
-				if (!g_dlg->IsInTheList(it->second.m_szIPAddress))
+				if (!g_dlg->IsInTheList(it->second.m_szIPAddress) && !it->second.m_szIPAddress.IsEmpty())
 				{
 					g_dlg->m_ctrlLANConnected.InsertItem(LVIF_TEXT | LVIF_STATE, nRow,
 						to_wstring(nRow + 1).c_str(), 0, 0, 0, 0);
@@ -1354,8 +1355,32 @@ void CCheckOpenPortsDlg::CallbackLANListener(const char* ipAddress, const char* 
 				it++;
 				//nRow++;
 			}
+
+			
+			char szHostName[32], szMacAddress[32];
+			DWORD dwError = 0;
+			string ipAdd;
+			memset(szHostName, 0, sizeof(szHostName));
+			memset(szMacAddress, 0, sizeof(szMacAddress));
+			for (int i = 0; i < g_dlg->m_ctrlLANConnected.GetItemCount(); i++)
+			{
+				wstring wTemp(g_dlg->m_ctrlLANConnected.GetItemText(i, 1).GetBuffer());
+
+				ipAdd = g_dlg->UnicodeToMultiByte(wTemp);
+				if (!g_dlg->m_pfnPtrGetNetworkDeviceStatus(ipAdd.c_str(), szHostName, sizeof(szHostName),
+					szMacAddress, sizeof(szMacAddress), &dwError))
+				{
+					g_dlg->m_ctrlLANConnected.DeleteItem(i);
+					for (int j = i; j < g_dlg->m_ctrlLANConnected.GetItemCount(); j++)
+					{
+						g_dlg->m_ctrlLANConnected.SetItemText(j, 0, to_wstring(j + 1).c_str());
+					}
+					g_dlg->m_ctrlLANConnected.RedrawWindow();
+				}
+			}
 			if ((g_dlg->m_mConnectedBefore.size() - 1) < g_dlg->m_nCurrentRowSelected)
 				g_dlg->m_nCurrentRowSelected = (int)g_dlg->m_mConnectedBefore.size() - 1;
+
 
 			g_dlg->m_ctrlLANConnected.SetItemState(g_dlg->m_nCurrentRowSelected, LVIS_SELECTED, LVIS_SELECTED);
 			g_dlg->m_ctrlLANConnected.SetFocus();

@@ -12,6 +12,7 @@ CCheckOpenPorts* g_pOpenPorts = NULL;
 CLocalAreaListener* g_pLocalAreaListener = NULL;
 CPacketListener* g_pPacketListener = NULL;
 CSNMP*   g_SNMP = NULL;
+CICMP* g_pICMP = NULL;
 
 BOOL APIENTRY DllMain(HMODULE hModule,
     DWORD  ul_reason_for_call,
@@ -44,6 +45,11 @@ BOOL APIENTRY DllMain(HMODULE hModule,
         {
             delete g_SNMP;
             g_SNMP = NULL;
+        }
+        if (g_pICMP != NULL)
+        {
+            delete g_pICMP;
+            g_pICMP = NULL;
         }
         DEBUG_LOG("Application Ended");
         break;
@@ -250,5 +256,61 @@ void ENZTCPLIBRARY_API StopPacketListener()
     if (g_pPacketListener != NULL)
     {
         g_pPacketListener->StopListening();
+    }
+}
+
+bool ENZTCPLIBRARY_API GetNetworkDeviceStatus(const char* ipAddress, char* hostname, int nSizeHostName, char* macAddress, int nSizeMacAddress, DWORD* pError)
+{
+    string shostName, smacAddress;
+    bool bRet = false;
+
+    if (g_pICMP == NULL)
+    {
+        try
+        {
+            g_pICMP = new CICMP();
+            if (g_pICMP == NULL)
+            {
+                *pError = ERROR_NOT_ENOUGH_MEMORY;
+                return false;
+            }
+
+            bRet = g_pICMP->CheckDevice(ipAddress, shostName, smacAddress, pError);
+            if (nSizeHostName < shostName.length())
+            {
+                *pError = ERROR_INSUFFICIENT_BUFFER;
+                bRet = false;
+            }
+            else if (nSizeMacAddress < smacAddress.length())
+            {
+                *pError = ERROR_INSUFFICIENT_BUFFER;
+                bRet = false;
+            }
+            memcpy(macAddress, smacAddress.c_str(),smacAddress.length());
+            memcpy(hostname, shostName.c_str(), shostName.length());
+            return bRet;
+        }
+        catch (int nError)
+        {
+            *pError = nError;
+            return bRet;
+        }
+    }
+    else
+    {
+        bRet = g_pICMP->CheckDevice(ipAddress, shostName, smacAddress, pError);
+        if (nSizeHostName < shostName.length())
+        {
+            *pError = ERROR_INSUFFICIENT_BUFFER;
+            bRet = false;
+        }
+        else if (nSizeMacAddress < smacAddress.length())
+        {
+            *pError = ERROR_INSUFFICIENT_BUFFER;
+            bRet = false;
+        }
+        memcpy(macAddress, smacAddress.c_str(), smacAddress.length());
+        memcpy(hostname, shostName.c_str(), shostName.length());
+        return bRet;
     }
 }
