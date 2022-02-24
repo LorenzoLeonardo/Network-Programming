@@ -19,6 +19,7 @@
 #include "CListCtrlCustom.h"
 #include "CPacketInfoDlg.h"
 #include "CDeviceConnected.h"
+#include "CCustomClock.h"
 
 #ifndef _tstring
 #ifdef UNICODE
@@ -112,11 +113,13 @@ public:
 	CEdit m_ctrlPortNum;
 	CButton m_ctrlBtnListen;
 	CButton m_ctrlBtnStopListening;
+	CCustomClock m_customClock;
 	RECT m_rectModeless;
 	inline string UnicodeToMultiByte(wstring& wstr);
 	inline wstring MultiByteToUnicode(string& wstr);
 	void Increment();
 	bool IsInTheList(CString csIPAddress);
+	void UpdateClock();
 	bool HasClickClose()
 	{
 		return m_bHasClickClose;
@@ -263,6 +266,7 @@ protected:
 	HANDLE m_hThreadList[3];
 	HANDLE m_hThreadLANListener;
 	HANDLE m_hThreadPacketListener;
+	HANDLE m_hClockThread;
 
 	CButton m_ctrlBtnCheckOpenPorts;
 	CButton m_ctrlBtnStopSearchingPort;
@@ -308,6 +312,7 @@ protected:
 	static unsigned __stdcall  UploadSpeedThreadList(void* parg);
 	static unsigned __stdcall  LANListenerThread(void* parg);
 	static unsigned __stdcall  PacketListenerThread(void* parg);
+	static unsigned __stdcall  ClockThread(void* parg);
 	// Generated message map functions
 	virtual BOOL OnInitDialog();
 public:
