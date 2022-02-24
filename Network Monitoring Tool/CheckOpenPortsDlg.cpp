@@ -1169,11 +1169,11 @@ unsigned __stdcall  CCheckOpenPortsDlg::RouterThread(void* parg)
 			}
 			ULONG ulDays = value.value.uNumber / 8640000;
 			float fRem = remainder(value.value.uNumber / (float)8640000, (float)8640000) - ulDays;
-			ULONG ulHour = fRem * 24;
+			ULONG ulHour = (ULONG)fRem * 24;
 			fRem = (float)(fRem * 24) - ulHour;
-			ULONG ulMin = fRem * 60;
+			ULONG ulMin = (ULONG)fRem * 60;
 			fRem = (float)(fRem * 60) - ulMin;
-			ULONG ulSec = fRem * 60;
+			ULONG ulSec = (ULONG)fRem * 60;
 	
 			csFormat=_T("");
 			csFormat.Format(_T("%s %s %s\r\n\r\nRouter's Up Time\r\n%u days, %u hours, %u min, %u secs"),	csBrand.GetBuffer(), csModel.GetBuffer(), csDesc.GetBuffer(), ulDays, ulHour, ulMin, ulSec);
