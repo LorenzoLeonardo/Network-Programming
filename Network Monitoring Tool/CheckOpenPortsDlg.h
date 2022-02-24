@@ -191,13 +191,10 @@ public:
 	void SetLANStop(bool b)
 	{
 		m_bLanStop = b;
-	//	if (m_bLanStop)
-	//		::MessageBox(this->GetSafeHwnd(), _T("Listening from Local Area Network has stopped."), _T("Local Area Listener Stopped"), MB_ICONEXCLAMATION);
 	}
 	void SetStopSearchingOpenPort()
 	{
 		m_bStopSearchingOpenPorts = true;
-//		::MessageBox(this->GetSafeHwnd(), _T("Done searching for open ports."), _T("Open Ports Checker"), MB_ICONEXCLAMATION);
 	}
 	bool IsSearchingOpenPortStopped()
 	{

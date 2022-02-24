@@ -20,9 +20,16 @@ inline string getCurrentDateTime(string s)
 };
 inline void DEBUG_LOG(string logMsg) {
 
-    string filePath = getCurrentDateTime("date") + ".txt";
-    string now = getCurrentDateTime("now");
-    ofstream ofs(filePath.c_str(), std::ios_base::out | std::ios_base::app);
-    ofs << now << '\t' << logMsg << '\n';
-    ofs.close();
+    DWORD value = 0;
+    DWORD BufferSize = 4;
+
+    RegGetValue(HKEY_LOCAL_MACHINE, "SOFTWARE\\Enzo Network Monitoring Tool", "DebugLog", /*RRF_RT_ANY*/RRF_RT_DWORD, NULL, (PVOID)&value, &BufferSize);
+    if (value)
+    {
+        string filePath = getCurrentDateTime("date") + ".txt";
+        string now = getCurrentDateTime("now");
+        ofstream ofs(filePath.c_str(), std::ios_base::out | std::ios_base::app);
+        ofs << now << '\t' << logMsg << '\n';
+        ofs.close();
+    }
 }
