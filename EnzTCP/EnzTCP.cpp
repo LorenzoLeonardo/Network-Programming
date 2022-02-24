@@ -1,14 +1,14 @@
 #include "pch.h"
 #include "EnzTCP.h"
 #include "CTCPListener.h"
-#include "CCheckOpenPorts.h"
+#include "COpenPortListener.h"
 #include "CSocketClient.h"
 #include "CLocalAreaListener.h"
 #include "CSNMP.h"
 #include "CPacketListener.h"
 #include "DebugLog.h"
 
-CCheckOpenPorts* g_pOpenPorts = NULL;
+COpenPortListener* g_pOpenPorts = NULL;
 CLocalAreaListener* g_pLocalAreaListener = NULL;
 CPacketListener* g_pPacketListener = NULL;
 CSNMP*   g_SNMP = NULL;
@@ -132,7 +132,7 @@ void ENZTCPLIBRARY_API EnumOpenPorts(char* ipAddress, int nNumPorts, FuncFindOpe
     }
     string sAddress(ipAddress);
 
-    g_pOpenPorts = new CCheckOpenPorts(sAddress, nNumPorts, pfnPtr);
+    g_pOpenPorts = new COpenPortListener(sAddress, nNumPorts, pfnPtr);
     if (g_pOpenPorts == NULL)
         return;
     g_pOpenPorts->StartSearchingOpenPorts();

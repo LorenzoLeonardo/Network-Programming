@@ -33,7 +33,7 @@
     <ClInclude Include="CTCPListener.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CCheckOpenPorts.h">
+    <ClInclude Include="COpenPortListener.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CSocketClient.h">
@@ -74,7 +74,7 @@
     <ClCompile Include="EnzTCP.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CCheckOpenPorts.cpp">
+    <ClCompile Include="COpenPortListener.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="CSocketClient.cpp">

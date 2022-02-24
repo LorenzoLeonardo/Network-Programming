@@ -1,9 +1,9 @@
 #include "pch.h"
-#include "CCheckOpenPorts.h"
+#include "COpenPortListener.h"
 #include "CSocketClient.h"
-
-CCheckOpenPorts* g_objPtrCCheckOpenPorts = NULL;
-CCheckOpenPorts::CCheckOpenPorts()
+#include "DebugLog.h"
+COpenPortListener* g_objPtrCCheckOpenPorts = NULL;
+COpenPortListener::COpenPortListener()
 {
 	m_pfnFindOpenPort = NULL;
 	m_nNumPorts = 0;
@@ -11,7 +11,7 @@ CCheckOpenPorts::CCheckOpenPorts()
 	g_objPtrCCheckOpenPorts = this;
 	m_tMonitor = NULL;
 }
-CCheckOpenPorts::CCheckOpenPorts(string ipTargetIPAddress, int nPort)
+COpenPortListener::COpenPortListener(string ipTargetIPAddress, int nPort)
 {
 	m_pfnFindOpenPort = NULL;
 	m_nNumPorts = 0;
@@ -20,7 +20,7 @@ CCheckOpenPorts::CCheckOpenPorts(string ipTargetIPAddress, int nPort)
 	g_objPtrCCheckOpenPorts = this;
 	m_tMonitor = NULL;
 }
-CCheckOpenPorts::CCheckOpenPorts(string ipTargetIPAddress, int nNumberOfPorts, FuncFindOpenPort pfnPtr)
+COpenPortListener::COpenPortListener(string ipTargetIPAddress, int nNumberOfPorts, FuncFindOpenPort pfnPtr)
 {
 	m_pfnFindOpenPort = pfnPtr;
 	m_nNumPorts = nNumberOfPorts;
@@ -28,7 +28,7 @@ CCheckOpenPorts::CCheckOpenPorts(string ipTargetIPAddress, int nNumberOfPorts, F
 	g_objPtrCCheckOpenPorts = this;
 	m_tMonitor = NULL;
 }
-CCheckOpenPorts::~CCheckOpenPorts()
+COpenPortListener::~COpenPortListener()
 {
 	if (m_tMonitor != NULL)
 	{
@@ -36,19 +36,19 @@ CCheckOpenPorts::~CCheckOpenPorts()
 		m_tMonitor = NULL;
 	}
 }
-int CCheckOpenPorts::GetNumPorts()
+int COpenPortListener::GetNumPorts()
 {
 	return m_nNumPorts;
 }
-string CCheckOpenPorts::GetIPAddress()
+string COpenPortListener::GetIPAddress()
 {
 	return m_ipAddressTarget;
 }
-map<thread*, int> *CCheckOpenPorts::GetThreads()
+map<thread*, int> *COpenPortListener::GetThreads()
 {
 	return &m_mapThreads;
 }
-thread* CCheckOpenPorts::GetThreadMonitoring()
+thread* COpenPortListener::GetThreadMonitoring()
 {
 	return m_tMonitor;
 }
@@ -68,7 +68,8 @@ void ThreadMultiFunc(LPVOID pParam)
 }
 void ThreadMonitorThreads(LPVOID pParam)
 {
-	CCheckOpenPorts* pCCheckOpenPorts = (CCheckOpenPorts*)pParam;
+	DEBUG_LOG("COpenPortListener: Thread Started.");
+	COpenPortListener* pCCheckOpenPorts = (COpenPortListener*)pParam;
 	int nOuterLoopLimit = pCCheckOpenPorts->GetNumPorts() / 1000;
 	int i = 1;
 
@@ -97,9 +98,10 @@ void ThreadMonitorThreads(LPVOID pParam)
 		pCCheckOpenPorts->GetThreads()->clear();
 	}
 	g_objPtrCCheckOpenPorts->m_pfnFindOpenPort((char*)"DONE", 0,true, 0);
+	DEBUG_LOG("COpenPortListener: Thread Ended.");
 	return;
 }
-bool CCheckOpenPorts::IsPortOpen(string ipAddress, string port, int *pLastError)
+bool COpenPortListener::IsPortOpen(string ipAddress, string port, int *pLastError)
 {
 	try
 	{
@@ -113,7 +115,7 @@ bool CCheckOpenPorts::IsPortOpen(string ipAddress, string port, int *pLastError)
 	}
 }
 
-void CCheckOpenPorts::StartSearchingOpenPorts()
+void COpenPortListener::StartSearchingOpenPorts()
 {
 	if (m_tMonitor == NULL)
 	{
@@ -123,7 +125,7 @@ void CCheckOpenPorts::StartSearchingOpenPorts()
 	}
 }
 
-void CCheckOpenPorts::StopSearchingOpenPorts()
+void COpenPortListener::StopSearchingOpenPorts()
 {
 	m_bStopSearchingOpenPorts = true;
 }

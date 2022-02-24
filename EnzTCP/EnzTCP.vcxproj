@@ -151,7 +151,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="CCheckOpenPorts.h" />
+    <ClInclude Include="COpenPortListener.h" />
     <ClInclude Include="CICMP.h" />
     <ClInclude Include="CLocalAreaListener.h" />
     <ClInclude Include="CPacketListener.h" />
@@ -167,7 +167,7 @@
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="CCheckOpenPorts.cpp" />
+    <ClCompile Include="COpenPortListener.cpp" />
     <ClCompile Include="CICMP.cpp" />
     <ClCompile Include="CLocalAreaListener.cpp" />
     <ClCompile Include="CPacketListener.cpp" />

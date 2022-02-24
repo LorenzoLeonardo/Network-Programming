@@ -10,14 +10,14 @@ typedef struct
 {
 	string sPort;
 }THREADMON_t;
-class CCheckOpenPorts
+class COpenPortListener
 {
 public :
-	CCheckOpenPorts();
-	CCheckOpenPorts(string ipTargetIPAddress, int nNumberOfPorts, FuncFindOpenPort pfnPtr);
-	CCheckOpenPorts(string ipTargetIPAddress, int nPort);
+	COpenPortListener();
+	COpenPortListener(string ipTargetIPAddress, int nNumberOfPorts, FuncFindOpenPort pfnPtr);
+	COpenPortListener(string ipTargetIPAddress, int nPort);
 
-	~CCheckOpenPorts();
+	~COpenPortListener();
 	FuncFindOpenPort m_pfnFindOpenPort;
 	void StartSearchingOpenPorts();
 	void StopSearchingOpenPorts();
