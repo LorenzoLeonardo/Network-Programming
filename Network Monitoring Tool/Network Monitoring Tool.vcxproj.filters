@@ -48,6 +48,9 @@
     <ClInclude Include="CSaveDeviceInfoDlg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="CCustomClock.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CheckOpenPorts.cpp">
@@ -69,6 +72,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="CSaveDeviceInfoDlg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CCustomClock.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
