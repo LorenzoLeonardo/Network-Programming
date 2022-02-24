@@ -119,7 +119,7 @@ void CCheckOpenPorts::StartSearchingOpenPorts()
 	{
 		m_bStopSearchingOpenPorts = false;
 		m_tMonitor = new thread(ThreadMonitorThreads, this);
-		m_tMonitor->detach();
+		m_tMonitor->join();
 	}
 }
 

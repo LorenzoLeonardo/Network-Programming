@@ -94,12 +94,15 @@ CCheckOpenPortsDlg::CCheckOpenPortsDlg(CWnd* pParent /*=nullptr*/)
 	m_bHasClickClose = FALSE;
 	dll_handle = NULL;
 
-	m_hThreadDownloadSpeed = NULL;
+	
 	m_hThreadDownloadSpeedList = NULL;
 	m_hThreadRouter = NULL;
-	m_hThreadUploadSpeed = NULL;
 	m_hThreadUploadSpeedList = NULL;
 	m_hThreadLANListener = NULL;
+	m_hThreadPacketListener = NULL;
+	m_hThreadClock = NULL;
+	m_hThreadOpenPortListener = NULL;
+
 	m_bOnCloseWasCalled = false;
 	m_hBrushBackGround = CreateSolidBrush(RGB(93, 107, 153));
 	m_hBrushEditArea = CreateSolidBrush(RGB(255, 255, 255));
@@ -157,7 +160,7 @@ BEGIN_MESSAGE_MAP(CCheckOpenPortsDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
-	ON_BN_CLICKED(IDC_BUTTON_PORT, &CCheckOpenPortsDlg::OnBnClickedButtonPort)
+	ON_BN_CLICKED(IDC_BUTTON_PORT, &CCheckOpenPortsDlg::OnBnClickedButtonStartSearchingOpenPort)
 	ON_BN_CLICKED(IDC_BUTTON2, &CCheckOpenPortsDlg::OnBnClickedButtonStopSearchingOpenPorts)
 	ON_BN_CLICKED(IDC_BUTTON_CHECKPORT, &CCheckOpenPortsDlg::OnBnClickedButtonCheckIfPortOpen)
 	ON_WM_CLOSE()
@@ -187,7 +190,7 @@ int CCheckOpenPortsDlg::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
 	if (CDialog::OnCreate(lpCreateStruct) == -1)
 		return -1;
-	m_hClockThread = (HANDLE)_beginthreadex(NULL, 0, ClockThread, this, 0, NULL);
+	m_hThreadClock = (HANDLE)_beginthreadex(NULL, 0, ClockThread, this, 0, NULL);
 	return 0;
 }
 void CCheckOpenPortsDlg::UpdateClock()
@@ -203,6 +206,19 @@ unsigned __stdcall  CCheckOpenPortsDlg::ClockThread(void* parg)
 		pDlg->UpdateClock();
 		Sleep(1000);
 	}
+	return 0;
+}
+unsigned __stdcall  CCheckOpenPortsDlg::OpenPortListenerThread(void* parg)
+{
+	CCheckOpenPortsDlg* pDlg = (CCheckOpenPortsDlg*)parg;
+
+	pDlg->m_ctrlIPAddress.GetWindowText(pDlg->m_IPAddress);
+
+
+	wstring strIP(pDlg->m_IPAddress.GetBuffer());
+	pDlg->m_pfnPtrEnumOpenPorts(pDlg->UnicodeToMultiByte(strIP).c_str(), MAX_PORT, CallBackEnumPort);
+
+
 	return 0;
 }
 LRESULT CCheckOpenPortsDlg::OnUpdateDownloadSpeed(WPARAM wParam, LPARAM lParam)
@@ -543,7 +559,7 @@ void CCheckOpenPortsDlg::Increment()
 	m_ctrlProgressStatus.SetPos(m_nThread);
 }
 
-void CCheckOpenPortsDlg::OnBnClickedButtonPort()
+void CCheckOpenPortsDlg::OnBnClickedButtonStartSearchingOpenPort()
 {
 	m_bStopSearchingOpenPorts = false;
 	m_ctrlBtnStopSearchingPort.EnableWindow(true);
@@ -553,13 +569,16 @@ void CCheckOpenPortsDlg::OnBnClickedButtonPort()
 	m_ctrlProgressStatus.ShowWindow(TRUE);
 	m_ctrlProgressStatus.SetRange32(1, MAX_PORT);
 	m_nThread = 0;
-	m_ctrlIPAddress.GetWindowText(m_IPAddress);
-#ifdef UNICODE
-	wstring strIP(m_IPAddress.GetBuffer());
-	m_pfnPtrEnumOpenPorts(UnicodeToMultiByte(strIP).c_str(), MAX_PORT, CallBackEnumPort);
-#else
-	m_pfnPtrEnumOpenPorts(m_IPAddress.GetBuffer(), MAX_PORT, CallBackEnumPort);
-#endif
+
+
+	if (m_hThreadOpenPortListener)
+	{
+		WaitForSingleObject(m_hThreadOpenPortListener, INFINITE);
+		CloseHandle(m_hThreadOpenPortListener);
+		m_hThreadOpenPortListener = NULL;
+	}
+	m_hThreadOpenPortListener = (HANDLE)_beginthreadex(NULL, 0, OpenPortListenerThread, this, 0, NULL);
+
 	
 }
 
@@ -622,26 +641,30 @@ void CCheckOpenPortsDlg::OnClose()
 			WaitForSingleObject(m_hThreadLANListener, INFINITE);
 			CloseHandle(m_hThreadLANListener);
 		}
-		if (m_hThreadDownloadSpeed)
+		if (m_hThreadUploadSpeedList)
 		{
-			WaitForSingleObject(m_hThreadDownloadSpeed, INFINITE);
-			CloseHandle(m_hThreadDownloadSpeed);
+			WaitForSingleObject(m_hThreadUploadSpeedList, INFINITE);
+			CloseHandle(m_hThreadUploadSpeedList);
 		}
-		if (m_hThreadUploadSpeed)
+		if (m_hThreadDownloadSpeedList)
 		{
-			WaitForSingleObject(m_hThreadUploadSpeed, INFINITE);
-			CloseHandle(m_hThreadUploadSpeed);
+			WaitForSingleObject(m_hThreadDownloadSpeedList, INFINITE);
+			CloseHandle(m_hThreadDownloadSpeedList);
 		}
-
 		if (m_hThreadPacketListener)
 		{
 			WaitForSingleObject(m_hThreadPacketListener, INFINITE);
 			CloseHandle(m_hThreadPacketListener);
 		}
-		if (m_hClockThread)
+		if (m_hThreadOpenPortListener)
 		{
-			WaitForSingleObject(m_hClockThread, INFINITE);
-			CloseHandle(m_hClockThread);
+			WaitForSingleObject(m_hThreadOpenPortListener, INFINITE);
+			CloseHandle(m_hThreadOpenPortListener);
+		}
+		if (m_hThreadClock)
+		{
+			WaitForSingleObject(m_hThreadClock, INFINITE);
+			CloseHandle(m_hThreadClock);
 		}
 		if(dll_handle)
 			FreeLibrary(dll_handle);

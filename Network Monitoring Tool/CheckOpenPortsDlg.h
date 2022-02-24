@@ -258,15 +258,14 @@ protected:
 	ULONG m_ulDataSizeDownload;
 	ULONG m_ulDataSizeUpload;
 	CEdit m_ctrlEditPollingTime;
+
 	HANDLE m_hThreadRouter;
-	HANDLE m_hThreadDownloadSpeed;
 	HANDLE m_hThreadDownloadSpeedList;
-	HANDLE m_hThreadUploadSpeed;
 	HANDLE m_hThreadUploadSpeedList;
-	HANDLE m_hThreadList[3];
 	HANDLE m_hThreadLANListener;
 	HANDLE m_hThreadPacketListener;
-	HANDLE m_hClockThread;
+	HANDLE m_hThreadClock;
+	HANDLE m_hThreadOpenPortListener;
 
 	CButton m_ctrlBtnCheckOpenPorts;
 	CButton m_ctrlBtnStopSearchingPort;
@@ -283,7 +282,7 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	afx_msg void OnBnClickedButtonStopSearchingOpenPorts();
 	afx_msg void OnBnClickedButtonCheckIfPortOpen();
-	afx_msg void OnBnClickedButtonPort();
+	afx_msg void OnBnClickedButtonStartSearchingOpenPort();
 	afx_msg void OnClose();
 	afx_msg void OnEnChangeEditArea();
 	afx_msg void OnBnClickedButtonListenLan();
@@ -306,13 +305,12 @@ protected:
 	static bool CallPacketListener(unsigned char* buffer, int nSize);
 	
 	static unsigned __stdcall  RouterThread(void* parg);
-	//static unsigned __stdcall  DownloadSpeedThread(void* parg);
-	//static unsigned __stdcall  UploadSpeedThread(void* parg);
 	static unsigned __stdcall  DownloadSpeedThreadList(void* parg);
 	static unsigned __stdcall  UploadSpeedThreadList(void* parg);
 	static unsigned __stdcall  LANListenerThread(void* parg);
 	static unsigned __stdcall  PacketListenerThread(void* parg);
 	static unsigned __stdcall  ClockThread(void* parg);
+	static unsigned __stdcall  OpenPortListenerThread(void* parg);
 	// Generated message map functions
 	virtual BOOL OnInitDialog();
 public:
