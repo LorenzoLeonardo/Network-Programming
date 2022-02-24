@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "CSNMP.h"
-
+#include "DebugLog.h"
 
 smiOID    CSNMP::m_psmilOID;
 smiVALUE  CSNMP::m_nvalue;
@@ -45,6 +45,7 @@ bool CSNMP::InitSNMP(const char* szAgentIPAddress, const char* szCommunity, int 
         dwLastError = SnmpGetLastError(m_pSession->hSnmpSession);
         SnmpUtilMemFree(m_pSession);
         WSACleanup();
+        DEBUG_LOG("CSNMP::InitSNMP(): SNMPAPI_FAILURE == m_pSession->hSnmpSession");
         return false;
     }
 
@@ -55,6 +56,7 @@ bool CSNMP::InitSNMP(const char* szAgentIPAddress, const char* szCommunity, int 
         dwLastError = SnmpGetLastError(m_pSession->hSnmpSession);
         SnmpUtilMemFree(m_pSession);
         WSACleanup();
+        DEBUG_LOG("CSNMP::InitSNMP(): SNMPAPI_FAILURE == m_pSession->hAgentEntity");
         return false;
     }
     SnmpSetTimeout(m_pSession->hAgentEntity, 500);
@@ -68,6 +70,7 @@ bool CSNMP::InitSNMP(const char* szAgentIPAddress, const char* szCommunity, int 
         dwLastError = SnmpGetLastError(m_pSession->hSnmpSession);
         SnmpUtilMemFree(m_pSession);
         WSACleanup();
+        DEBUG_LOG("CSNMP::InitSNMP(): SNMPAPI_FAILURE == m_pSession->hManagerEntity");
         return false;
     }
     // attach timeout specified with manager
@@ -76,7 +79,7 @@ bool CSNMP::InitSNMP(const char* szAgentIPAddress, const char* szCommunity, int 
     SnmpSetRetry(m_pSession->hManagerEntity, 5);
 
     m_smiCommunity.ptr = (smiLPBYTE)szCommunity;
-    m_smiCommunity.len = strlen(szCommunity);
+    m_smiCommunity.len = (ULONG)strlen(szCommunity);
 
     m_pSession->hViewContext = SnmpStrToContext(m_pSession->hSnmpSession, &m_smiCommunity);
 
@@ -86,6 +89,7 @@ bool CSNMP::InitSNMP(const char* szAgentIPAddress, const char* szCommunity, int 
         dwLastError = SnmpGetLastError(m_pSession->hSnmpSession);
         SnmpUtilMemFree(m_pSession);
         WSACleanup();
+        DEBUG_LOG("CSNMP::Get(): SNMPAPI_FAILURE == m_pSession->hViewContext");
         return false;
     }
 
@@ -111,6 +115,7 @@ smiVALUE CSNMP::Get(const char* szOID, DWORD &dwLastError)
     {
         m_bSnmpSuccess = false;
         dwLastError = SnmpGetLastError(m_pSession->hSnmpSession);
+        DEBUG_LOG("CSNMP::Get(): SNMPAPI_FAILURE == m_pSession->hVbl");
         return m_nvalue;
     }
     m_pSession->nRequestId = 1;
@@ -132,6 +137,7 @@ smiVALUE CSNMP::Get(const char* szOID, DWORD &dwLastError)
         {
             m_bSnmpSuccess = false;
             dwLastError = SnmpGetLastError(m_pSession->hSnmpSession);
+            DEBUG_LOG("CSNMP::Get(): m_pSession->nError = SnmpFreeVbl(m_pSession->hVbl);");
             return m_nvalue;
         }
         m_pSession->nError = SnmpFreePdu(m_pSession->hPdu);
@@ -139,6 +145,7 @@ smiVALUE CSNMP::Get(const char* szOID, DWORD &dwLastError)
         {
             m_bSnmpSuccess = false;
             dwLastError = SnmpGetLastError(m_pSession->hSnmpSession);
+            DEBUG_LOG("CSNMP::Get(): m_pSession->nError = SnmpFreePdu(m_pSession->hPdu);");
             return m_nvalue;
         }
        
@@ -148,6 +155,7 @@ smiVALUE CSNMP::Get(const char* szOID, DWORD &dwLastError)
     {
         m_bSnmpSuccess = false;
         dwLastError = SnmpGetLastError(m_pSession->hSnmpSession);
+        DEBUG_LOG("CSNMP::Get(): m_pSession->nError = SnmpFreeVbl(m_pSession->hVbl);");
         return m_nvalue;
     }
     m_pSession->nError = SnmpFreePdu(m_pSession->hPdu);
@@ -155,6 +163,7 @@ smiVALUE CSNMP::Get(const char* szOID, DWORD &dwLastError)
     {
         m_bSnmpSuccess = false;
         dwLastError = SnmpGetLastError(m_pSession->hSnmpSession);
+        DEBUG_LOG("CSNMP::Get(): m_pSession->nError = SnmpFreePdu(m_pSession->hPdu);");
         return m_nvalue;
     }
 

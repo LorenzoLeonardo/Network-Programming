@@ -191,7 +191,7 @@ bool CICMP::CheckDeviceEx(string ipAddress, string& hostname, string& sMacAddres
     FillICMPData(icmp_data, datasize);
 
     ((ICMP_HDR*)icmp_data)->byType = ICMP_ECHO;
-    ((ICMP_HDR*)icmp_data)->ulTimeStamp = GetTickCount();
+    ((ICMP_HDR*)icmp_data)->ulTimeStamp = (ULONG)GetTickCount64();
     ((ICMP_HDR*)icmp_data)->usSeq = usSequenceNumber;
     ((ICMP_HDR*)icmp_data)->usChecksum = CheckSum((USHORT*)icmp_data, datasize);
 
@@ -388,24 +388,28 @@ bool CICMP::CheckDevice(string ipAddress, string& hostname, string& sMacAddress,
     if (ipAddress.empty())
     {
         *pError = ERROR_INVALID_DATA;
+        DEBUG_LOG("CICMP::CheckDevice(): ipAddress failed. Error:" + to_string(*pError));
         return bRet;
     }
     hostname = GetHostName(ipAddress);
     if (hostname.empty())
     {
         *pError = ERROR_INVALID_DATA;
+        DEBUG_LOG("CICMP::CheckDevice(): GetHostName() failed. Error:" + to_string(*pError));
         return bRet;
     }
 
     if (inet_pton(AF_INET, ipAddress.c_str(), &ipDest) != 1)
     {
         *pError = WSAGetLastError();
+        DEBUG_LOG("CICMP::CheckDevice(): inet_pton dest IP failed. Error:" + to_string(*pError));
         return false;
     }
 
     if (inet_pton(AF_INET, m_HostIP.c_str(), &ipSource) != 1)
     {
         *pError = WSAGetLastError();
+        DEBUG_LOG("CICMP::CheckDevice(): inet_pton host IP failed. Error:" + to_string(*pError));
         return false;
     }
 
