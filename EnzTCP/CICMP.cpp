@@ -30,14 +30,19 @@ int CICMP::InitializeLocalIPAndHostname()
     hints.ai_socktype = SOCK_RAW;
     hints.ai_protocol = IPPROTO_ICMP;
     hints.ai_flags = AI_ALL;
+    char szLocalHost[] = "localhost";
 
-    iResult = getaddrinfo("localhost", NULL, &hints, &result);
+    iResult = getaddrinfo(szLocalHost, NULL, &hints, &result);
     if (iResult != 0)
         return iResult;
     
     iResult = getnameinfo(result->ai_addr, (socklen_t)result->ai_addrlen, hostname, NI_MAXHOST, NULL, 0, 0);
     if (iResult != 0)
+    {
+        freeaddrinfo(result);
         return iResult;
+    }
+    freeaddrinfo(result);
     m_HostName = hostname;
     iResult = getaddrinfo(hostname, NULL, &hints, &result);
     if (iResult != 0)
@@ -45,54 +50,28 @@ int CICMP::InitializeLocalIPAndHostname()
 
     inet_ntop(AF_INET, (const void*)(result->ai_addr->sa_data+2), ipAddress, sizeof(ipAddress));
     m_HostIP = ipAddress;
-    
+    freeaddrinfo(result);
     return iResult;
 }
 string CICMP::GetHostName(string ipAddress)
 {
-    /*int iResult = 0;
-    char hostname[NI_MAXHOST];
-    char servInfo[NI_MAXSERV];
-    struct sockaddr_in saGNI;
     struct sockaddr_in sa;
-    struct addrinfo* result = NULL, * ptr = NULL, hints;
-
-    ZeroMemory(&hints, sizeof(hints));
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_RAW;
-    hints.ai_protocol = IPPROTO_ICMP;
-    hints.ai_flags = AI_ALL;
-
-    iResult = getaddrinfo(ipAddress.c_str(), NULL, &hints, &result);
-    if (iResult != 0)
-       return "";*/
-
-   /* inet_pton(AF_INET, ipAddress.c_str(), &(sa.sin_addr));
-
-    saGNI.sin_family = AF_INET;
-    saGNI.sin_addr.s_addr = sa.sin_addr.s_addr;
-    saGNI.sin_port = htons(27015);
-
-    memset(hostname, 0, sizeof(hostname));
-    iResult = getnameinfo((struct sockaddr *)&saGNI, sizeof(struct sockaddr_in), hostname, NI_MAXHOST, servInfo, NI_MAXSERV, NI_NOFQDN);
-    if (iResult != 0)
-        return "";*/
-
-    struct sockaddr_in sa;
-    inet_pton(AF_INET, ipAddress.c_str(), &(sa.sin_addr));
-
     struct sockaddr_in saGNI;
     char hostname[NI_MAXHOST];
-    char servInfo[NI_MAXSERV];
     u_short port = 27015;
+    DWORD dwRetval = 0;
+
+    inet_pton(AF_INET, ipAddress.c_str(), &(sa.sin_addr));
     saGNI.sin_family = AF_INET;
     saGNI.sin_addr.s_addr = sa.sin_addr.s_addr;
     saGNI.sin_port = htons(port);
 
-    DWORD dwRetval = getnameinfo((struct sockaddr*)&saGNI,
+    dwRetval = getnameinfo((struct sockaddr*)&saGNI,
         sizeof(struct sockaddr),
         hostname,
-        NI_MAXHOST, servInfo, NI_MAXSERV, NI_NUMERICSERV);
+        NI_MAXHOST, NULL, 0, 0);
+    if (dwRetval != 0)
+        return "";
 
     string sRet = hostname;
     return sRet;

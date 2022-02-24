@@ -7,7 +7,7 @@
 #include "CheckOpenPorts.h"
 #include "CheckOpenPortsDlg.h"
 #include "afxdialogex.h"
-
+#include "CSaveDeviceInfoDlg.h"
 
 
 CCheckOpenPortsDlg* g_dlg;
@@ -739,15 +739,17 @@ void CCheckOpenPortsDlg::OnNMDblclkListLan(NMHDR* pNMHDR, LRESULT* pResult)
 
 	if (pNMItemActivate->iItem >= 0)
 	{
-		if ((m_nThread >= MAX_PORT) || m_bStopSearchingOpenPorts)
-		{
-			OnBnClickedButtonPort();
-		}
-		else
-		{
-			::MessageBox(this->GetSafeHwnd(), _T("Port Listener is still busy!"), _T("Port Listener Busy"), MB_ICONEXCLAMATION);
-		}
+		CSaveDeviceInfoDlg saveDlg;
 		
+		saveDlg.SetInformation(m_ctrlLANConnected.GetItemText(pNMItemActivate->iItem, 1),
+			m_ctrlLANConnected.GetItemText(pNMItemActivate->iItem, 3),
+			m_ctrlLANConnected.GetItemText(pNMItemActivate->iItem, 2));
+
+		INT_PTR nPtr = saveDlg.DoModal();
+		if (nPtr == IDOK)
+		{
+			m_ctrlLANConnected.SetItemText(pNMItemActivate->iItem, 2, saveDlg.GetDeviceName());
+		}
 	}
 }
 
@@ -1172,6 +1174,15 @@ void CCheckOpenPortsDlg::CallbackLANListener(const char* ipAddress, const char* 
 			tDeviceDetails.m_szMACAddress.Format(_T("%s"), g_dlg->MultiByteToUnicode(sTemp).c_str());
 			sTemp = hostName;
 			tDeviceDetails.m_szHostName.Format(_T("%s"), g_dlg->MultiByteToUnicode(sTemp).c_str());
+			
+			if (tDeviceDetails.m_szIPAddress == tDeviceDetails.m_szHostName)
+			{
+				TCHAR value[32];
+				DWORD BufferSize = sizeof(value);
+				DWORD dwRet=RegGetValue(HKEY_LOCAL_MACHINE, REGISTRY_PATH, tDeviceDetails.m_szMACAddress, /*RRF_RT_ANY*/RRF_RT_REG_SZ, NULL, (PVOID)&value, &BufferSize);
+				if(dwRet == ERROR_SUCCESS)
+					tDeviceDetails.m_szHostName = value;
+			}
 			g_dlg->m_mConnected[ipaddr] = tDeviceDetails;
 		}
 	}
