@@ -224,6 +224,7 @@
     <Image Include="C:\Users\loren\Downloads\android-icon-72x72.bmp" />
     <Image Include="c:\users\loren\downloads\bitmap3.bmp" />
     <Image Include="C:\Users\loren\Downloads\Square44x44Logo.targetsize-256.bmp" />
+    <Image Include="res\android-icon-72x72.bmp" />
     <Image Include="res\bitmap1.bmp" />
     <Image Include="res\Network Monitoring Tool.ico" />
   </ItemGroup>

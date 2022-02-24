@@ -61,7 +61,7 @@ bool CSaveDeviceInfoDlg::SaveDeviceName()
 	else if (dwError == ERROR_ACCESS_DENIED)
 		AfxMessageBox(_T("Access denied. Please run the tool as administrator."));
 	
-	
+
 	if (dwError == ERROR_SUCCESS)
 	{
 		LONG setRes = RegSetValueEx(hKey, csMacAddress, 0, REG_SZ, (LPBYTE)csDevName.GetBuffer(), sizeof(TCHAR)* csDevName.GetLength());

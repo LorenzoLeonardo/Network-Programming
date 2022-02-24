@@ -46,6 +46,8 @@
 #define IDC_STATIC_DEV_INFO             1025
 #define IDC_IPADDRESS_IPINFO            1026
 #define IDC_EDIT_DEVICE_NAME            1027
+#define IDC_CHECK1                      1028
+#define IDC_CHECK_DEBUG                 1028
 
 // Next default values for new objects
 // 
@@ -53,7 +55,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        139
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1028
+#define _APS_NEXT_CONTROL_VALUE         1029
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

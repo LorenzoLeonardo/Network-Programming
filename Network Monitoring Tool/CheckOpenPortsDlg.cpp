@@ -154,6 +154,7 @@ void CCheckOpenPortsDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BUTTON_START_PACKET, m_ctrlBtnListenPackets);
 	DDX_Control(pDX, IDC_BUTTON_STOP_PACKET, m_ctrlBtnUnlistenPackets);
 	DDX_Control(pDX, IDC_STATIC_PICTURE, m_ctrlStaticLogo);
+	DDX_Control(pDX, IDC_CHECK_DEBUG, m_ctrlBtnDebug);
 }
 
 BEGIN_MESSAGE_MAP(CCheckOpenPortsDlg, CDialogEx)
@@ -183,6 +184,7 @@ BEGIN_MESSAGE_MAP(CCheckOpenPortsDlg, CDialogEx)
 	ON_MESSAGE(WM_CLEAR_TREADS, OnClearThreads)
 	ON_MESSAGE(WM_UPDATE_DOWNSPEED, OnUpdateDownloadSpeed)
 	ON_MESSAGE(WM_UPDATE_UPSPEED, OnUpdateUploadSpeed)
+	ON_BN_CLICKED(IDC_CHECK_DEBUG, &CCheckOpenPortsDlg::OnBnClickedCheckDebug)
 END_MESSAGE_MAP()
 
 
@@ -382,7 +384,17 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 			pSysMenu->AppendMenu(MF_STRING, IDM_ABOUTBOX, strAboutMenu);
 		}
 	}
+
+	DWORD value = 0;
+	DWORD BufferSize = 4;
+
+	RegGetValue(HKEY_LOCAL_MACHINE, REGISTRY_PATH, _T("DebugLog"), /*RRF_RT_ANY*/RRF_RT_DWORD, NULL, (PVOID)&value, &BufferSize);
+	if (value)
+		m_ctrlBtnDebug.SetCheck(BST_CHECKED);
+	else
+		m_ctrlBtnDebug.SetCheck(BST_UNCHECKED);
 	::SetWindowTheme(GetDlgItem(IDC_STATIC_ROUTER_INFO)->GetSafeHwnd(), _T(""), _T(""));//To change text Color of Group Box
+	::SetWindowTheme(GetDlgItem(IDC_CHECK_DEBUG)->GetSafeHwnd(), _T(""), _T(""));
 	// Set the icon for this dialog.  The framework does this automatically
 	//  when the application's main window is not a dialog
 	SetIcon(m_hIcon, TRUE);			// Set big icon
@@ -468,7 +480,18 @@ HBRUSH CCheckOpenPortsDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 				return m_hBrushBackGround;
 			}
 		}
-
+		case CTLCOLOR_BTN:
+		{
+			int id = pWnd->GetDlgCtrlID();
+			if (id == IDC_CHECK_DEBUG)
+			{
+				pDC->SetTextColor(RGB(255, 255, 255));
+				pDC->SetBkColor(RGB(93, 107, 153));
+				pDC->SetBkMode(TRANSPARENT);
+				return m_hBrushBackGround;
+			}
+			break;
+		}
 		case CTLCOLOR_DLG:
 		{
 			pDC->SetBkColor(RGB(64, 86, 141));
@@ -1586,4 +1609,52 @@ void CCheckOpenPortsDlg::OnMove(int x, int y)
 		m_pmodeless->MoveWindow(x + rectParent.right, y, m_rectModeless.right, m_rectModeless.bottom+3);
 		// TODO: Add your message handler code here
 	}
+}
+
+
+void CCheckOpenPortsDlg::OnBnClickedCheckDebug()
+{
+	// TODO: Add your control notification handler code here
+	int ChkBox = m_ctrlBtnDebug.GetCheck();
+	CString str;
+	CString csDevName, csMacAddress;
+	HKEY hKey;
+	DWORD dwError = 0;
+
+	dwError = RegOpenKeyEx(HKEY_LOCAL_MACHINE, REGISTRY_PATH, 0, KEY_ALL_ACCESS, &hKey);
+	if (dwError == ERROR_FILE_NOT_FOUND)
+		dwError = RegCreateKeyEx(HKEY_LOCAL_MACHINE, REGISTRY_PATH, NULL, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hKey, NULL);
+	else if (dwError == ERROR_ACCESS_DENIED)
+		AfxMessageBox(_T("Access denied. Please run the tool as administrator."));
+
+
+
+	if (dwError == ERROR_SUCCESS)
+	{
+		DWORD value = 0;
+		DWORD BufferSize = 4;
+		if (ChkBox == BST_UNCHECKED)
+		{
+			value = 0;
+			m_ctrlBtnDebug.SetCheck(BST_UNCHECKED);
+			LONG setRes = RegSetValueEx(hKey, _T("DebugLog"), 0, RRF_RT_DWORD, (LPBYTE)&value, BufferSize);
+
+			if (setRes == ERROR_SUCCESS)
+				return;
+			else
+				return;
+		}
+		else if (ChkBox == BST_CHECKED)
+		{
+			value = 1;
+			m_ctrlBtnDebug.SetCheck(BST_CHECKED);
+			LONG setRes = RegSetValueEx(hKey, _T("DebugLog"), 0, RRF_RT_REG_DWORD, (LPBYTE)&value, BufferSize);
+
+			if (setRes == ERROR_SUCCESS)
+				return;
+			else
+				return;
+		}
+	}
+
 }
