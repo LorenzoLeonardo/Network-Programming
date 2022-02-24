@@ -103,11 +103,32 @@ CCheckOpenPortsDlg::CCheckOpenPortsDlg(CWnd* pParent /*=nullptr*/)
 	m_bOnCloseWasCalled = false;
 	m_hBrushBackGround = CreateSolidBrush(RGB(93, 107, 153));
 	m_hBrushEditArea = CreateSolidBrush(RGB(255, 255, 255));
+
+	m_pfnPtrSNMPGet = NULL;
+	m_pfnPtrEndSNMP = NULL;
+	m_pfnPtrGetDefaultGateway = NULL;
+	m_pfnPtrStartSNMP = NULL;
+	m_pfnPtrStartPacketListener = NULL;
+	m_pfnPtrStopPacketListener = NULL;
+	m_pfnPtrEnumOpenPorts = NULL;
+	m_pfnPtrIsPortOpen = NULL;
+	m_pfnPtrStartLocalAreaListening = NULL;
+	m_pfnPtrStopLocalAreaListening = NULL;
+	m_pfnPtrStopSearchingOpenPorts = NULL;
+	m_pfnPtrGetNetworkDeviceStatus = NULL;
+
+	m_customClock.SetFontStyle(_T("Yu Gothic UI"));
+	m_customClock.SetFontSize(50);
+	m_customClock.SetFontWeight(FW_NORMAL);
+	m_customClock.SetTextColor(RGB(255, 255, 255));
+	m_customClock.SetTextBKColor(RGB(93, 107, 153));
+	m_customClock.CreateClock();
 }
 CCheckOpenPortsDlg::~CCheckOpenPortsDlg()
 {
 	DeleteObject(m_hBrushBackGround);
 	DeleteObject(m_hBrushEditArea);
+	m_customClock.DestroyClock();
 }
 void CCheckOpenPortsDlg::DoDataExchange(CDataExchange* pDX)
 {
@@ -166,7 +187,22 @@ int CCheckOpenPortsDlg::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
 	if (CDialog::OnCreate(lpCreateStruct) == -1)
 		return -1;
-	
+	m_hClockThread = (HANDLE)_beginthreadex(NULL, 0, ClockThread, this, 0, NULL);
+	return 0;
+}
+void CCheckOpenPortsDlg::UpdateClock()
+{
+	CClientDC cdc(this);
+	m_customClock.DrawClock(&cdc, 420, 15);
+}
+unsigned __stdcall  CCheckOpenPortsDlg::ClockThread(void* parg)
+{
+	CCheckOpenPortsDlg* pDlg = (CCheckOpenPortsDlg*)parg;
+	while(!pDlg->HasClickClose())
+	{
+		pDlg->UpdateClock();
+		Sleep(1000);
+	}
 	return 0;
 }
 LRESULT CCheckOpenPortsDlg::OnUpdateDownloadSpeed(WPARAM wParam, LPARAM lParam)
@@ -307,6 +343,8 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	int nCol = 0;
 	char szDefaultGateWay[32];
 
+
+
 	CDialogEx::OnInitDialog();
 	
 	// Add "About..." menu item to system menu.
@@ -378,6 +416,7 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 		m_ipFilter = "127.0.0.1";
 	m_ctrlIPAddress.SetWindowText(m_ipFilter);
 
+	
 	m_hThreadRouter = (HANDLE)_beginthreadex(NULL, 0, RouterThread, this, 0, NULL);
 
 	m_bShowPacketInfo = false;
@@ -567,11 +606,12 @@ void CCheckOpenPortsDlg::OnClose()
 	OnBnClickedButtonStopLan();
 	OnBnClickedButtonStopSearchingOpenPorts();
 	OnBnClickedButtonStopPacket();
-	m_bHasClickClose = TRUE;
+	
 
 	if (IsLANStopped() && IsSearchingOpenPortStopped())
 	{
 		m_pfnPtrEndSNMP();
+		m_bHasClickClose = TRUE;
 		if (m_hThreadRouter)
 		{
 			WaitForSingleObject(m_hThreadRouter, INFINITE);
@@ -597,6 +637,11 @@ void CCheckOpenPortsDlg::OnClose()
 		{
 			WaitForSingleObject(m_hThreadPacketListener, INFINITE);
 			CloseHandle(m_hThreadPacketListener);
+		}
+		if (m_hClockThread)
+		{
+			WaitForSingleObject(m_hClockThread, INFINITE);
+			CloseHandle(m_hClockThread);
 		}
 		if(dll_handle)
 			FreeLibrary(dll_handle);
