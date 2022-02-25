@@ -31,6 +31,8 @@ public:
     COLORREF m_colRow1;
     COLORREF m_colRow2;
 
+    int InsertItem(_In_ UINT nMask, _In_ int nItem, _In_z_ LPCTSTR lpszItem, _In_ UINT nState,
+        _In_ UINT nStateMask, _In_ int nImage, _In_ LPARAM lParam);
 protected:
    // afx_msg void PreSubclassWindow();
     afx_msg void OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult);

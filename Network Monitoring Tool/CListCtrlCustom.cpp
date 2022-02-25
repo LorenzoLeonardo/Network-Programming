@@ -73,7 +73,12 @@ void CListCtrlCustom::OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult)
 		}
 	}
 }
+int CListCtrlCustom::InsertItem(_In_ UINT nMask, _In_ int nItem, _In_z_ LPCTSTR lpszItem, _In_ UINT nState,
+	_In_ UINT nStateMask, _In_ int nImage, _In_ LPARAM lParam)
+{
 
+	return CListCtrl::InsertItem(nMask, nItem, lpszItem, nState, nStateMask, nImage, lParam);
+}
 
 BOOL CListCtrlCustom::OnEraseBkgnd(CDC* pDC)
 {
