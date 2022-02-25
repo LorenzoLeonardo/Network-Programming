@@ -116,6 +116,44 @@ bool CSocket::GetDefaultGateway(char* szDefaultIPAddress)
     }
 }
 
+bool CSocket::GetDefaultGateway(const char* szAdapterName ,char* pDefaultGateway, int nSize)
+{
+    WSADATA wsaData;
+    PIP_ADAPTER_INFO pAdapterInfo = NULL, pAdapter = NULL;
+    ULONG ulOutBufLen = 0;
+    bool bRet = false;
+
+    int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+    if (iResult != 0)
+        return bRet;
+
+    if (GetAdaptersInfo(pAdapterInfo, &ulOutBufLen) == ERROR_BUFFER_OVERFLOW)
+    {
+        free(pAdapterInfo);
+        pAdapterInfo = (PIP_ADAPTER_INFO)malloc(ulOutBufLen);
+    }
+    if (GetAdaptersInfo(pAdapterInfo, &ulOutBufLen) == NO_ERROR)
+    {
+        pAdapter = pAdapterInfo;
+        if (nSize > sizeof(pAdapter->GatewayList.IpAddress.String))
+        {
+            while (pAdapter)
+            {
+                if (strcmp(pAdapter->AdapterName, szAdapterName) == 0)
+                {
+                    memcpy_s(pDefaultGateway, sizeof(pAdapter->GatewayList.IpAddress.String), pAdapter->GatewayList.IpAddress.String, sizeof(pAdapter->GatewayList.IpAddress.String));
+                    break;
+                }
+                pAdapter = pAdapter->Next;
+            }
+            bRet = true;
+        }
+    }
+    free(pAdapterInfo);
+    WSACleanup();
+    return bRet;
+}
+
 void CSocket::SetIP()
 {
     struct sockaddr_in* pV4Addr = (struct sockaddr_in*)&m_addr;

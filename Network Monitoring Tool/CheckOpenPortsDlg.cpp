@@ -361,8 +361,6 @@ void CCheckOpenPortsDlg::InitAdapterUI()
 {
 	CStringA csWindowText;
 
-	u_char p[6];
-
 	for (int i = 0; i < m_vAdapterInfo.size(); i++)
 	{
 		if(m_vAdapterInfo[i].LeaseObtained)
@@ -444,7 +442,8 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 		m_pfnPtrStartPacketListener = (FNStartPacketListener)GetProcAddress(dll_handle, "StartPacketListener");
 		m_pfnPtrStopPacketListener = (FNStopPacketListener)GetProcAddress(dll_handle, "StopPacketListener");
 		m_pfnPtrGetNetworkDeviceStatus = (FNGetNetworkDeviceStatus)GetProcAddress(dll_handle, "GetNetworkDeviceStatus");
-		 m_pfnPtrEnumNetworkAdapters = (FNEnumNetworkAdapters)GetProcAddress(dll_handle, "EnumNetworkAdapters");
+		m_pfnPtrEnumNetworkAdapters = (FNEnumNetworkAdapters)GetProcAddress(dll_handle, "EnumNetworkAdapters");
+		m_pfnPtrGetDefaultGatewayEx = (FNGetDefaultGatewayEx)GetProcAddress(dll_handle, "GetDefaultGatewayEx");
 	}
 
 	m_pfnPtrEnumNetworkAdapters(CallBackEnumAdapters);
@@ -461,13 +460,21 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 
 	m_ctrlBtnListenPackets.EnableWindow(TRUE);
 	m_ctrlBtnUnlistenPackets.EnableWindow(FALSE);
-	if (m_pfnPtrGetDefaultGateway(szDefaultGateWay))
-		m_ipFilter = szDefaultGateWay;
-	else
-		m_ipFilter = "127.0.0.1";
-	m_ctrlIPAddress.SetWindowText(m_ipFilter);
 
-	
+
+	if (m_pfnPtrGetDefaultGatewayEx(m_vAdapterInfo[m_ctrlComboAdapterList.GetCurSel()].AdapterName, szDefaultGateWay, sizeof(szDefaultGateWay)))
+	{
+		m_ipFilter = m_vAdapterInfo[m_ctrlComboAdapterList.GetCurSel()].IpAddressList.IpAddress.String;
+		wstring temp = m_ipFilter.GetBuffer();
+		inet_pton(AF_INET, UnicodeToMultiByte(temp).c_str(), &m_ulIPFilter);
+	}
+	else
+	{
+		AfxMessageBox(_T("No network adapters found. The tool will now terminate"));
+		return false;
+	}
+	CString csGateWay(szDefaultGateWay);
+	m_ctrlIPAddress.SetWindowText(csGateWay);
 	m_hThreadRouter = (HANDLE)_beginthreadex(NULL, 0, RouterThread, this, 0, NULL);
 
 	m_bShowPacketInfo = false;
@@ -740,21 +747,21 @@ unsigned __stdcall  CCheckOpenPortsDlg::LANListenerThread(void* parg)
 	CString csPollTime;
 
 	pDlg->m_ctrlIPAddress.GetWindowText(csText);
-
-
+	string ip = pDlg->m_vAdapterInfo[pDlg->m_ctrlComboAdapterList.GetCurSel()].IpAddressList.IpAddress.String;
+	string mask = pDlg->m_vAdapterInfo[pDlg->m_ctrlComboAdapterList.GetCurSel()].IpAddressList.IpMask.String;
 	wstring wstr(csText.GetBuffer());
 	string str = pDlg->UnicodeToMultiByte(wstr);
 	pDlg->m_ctrlEditPollingTime.GetWindowText(csPollTime);
 	if (csPollTime.IsEmpty())
 	{
 		pDlg->m_ctrlEditPollingTime.SetWindowText(_T("1000"));
-		if (!pDlg->m_pfnPtrStartLocalAreaListening(str.c_str(), CallbackLANListener, 1000))
+		if (!pDlg->m_pfnPtrStartLocalAreaListening(ip.c_str(), mask.c_str(), CallbackLANListener, 1000))
 			::MessageBox(pDlg->GetSafeHwnd(), _T("Failed to start Local Area Listener."), _T("Local Area Network Listener"), MB_ICONERROR);
 	}
 	else
 	{
 		int nPollTime = _ttoi(csPollTime);
-		if (!pDlg->m_pfnPtrStartLocalAreaListening(str.c_str(), CallbackLANListener, nPollTime))
+		if (!pDlg->m_pfnPtrStartLocalAreaListening(ip.c_str(), mask.c_str(), CallbackLANListener, nPollTime))
 			::MessageBox(pDlg->GetSafeHwnd(), _T("Failed to start Local Area Listener."), _T("Local Area Network Listener"), MB_ICONERROR);
 	}
 
@@ -793,10 +800,10 @@ void CCheckOpenPortsDlg::OnNMClickListLan(NMHDR* pNMHDR, LRESULT* pResult)
 	
 	if (pNMItemActivate->iItem > -1)
 	{
-		m_ipFilter = m_ctrlLANConnected.GetItemText(m_nCurrentRowSelected, 1);
-		m_ctrlIPAddress.SetWindowText(m_ipFilter);
-		wstring temp = m_ipFilter.GetBuffer();
- 		inet_pton(AF_INET, UnicodeToMultiByte(temp).c_str(), &m_ulIPFilter);
+		//m_ipFilter = ;
+		m_ctrlIPAddress.SetWindowText(m_ctrlLANConnected.GetItemText(m_nCurrentRowSelected, 1));
+		//wstring temp = m_ipFilter.GetBuffer();
+ 		//inet_pton(AF_INET, UnicodeToMultiByte(temp).c_str(), &m_ulIPFilter);
 	}
 }
 
@@ -1433,7 +1440,8 @@ void CCheckOpenPortsDlg::CallBackEnumAdapters(void* args)
 {
 	PIP_ADAPTER_INFO pAdapterInfo = (PIP_ADAPTER_INFO)args;
 
-	g_dlg->m_vAdapterInfo.push_back(*pAdapterInfo);
+	if(pAdapterInfo->LeaseObtained)
+		g_dlg->m_vAdapterInfo.push_back(*pAdapterInfo);
 }
 bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 {
@@ -1692,11 +1700,17 @@ void CCheckOpenPortsDlg::OnCbnSelchangeComboListAdapter()
 {
 	// TODO: Add your control notification handler code here
 	CStringA csWindowText;
+	char szDefaultGateWay[32];
 	u_char p[6];
-
 	int i = m_ctrlComboAdapterList.GetCurSel();
-	//for (int i = 0; i < m_vAdapterInfo.size(); i++)
-	//{
+
+	memset(szDefaultGateWay, 0, sizeof(szDefaultGateWay));
+	if (m_pfnPtrGetDefaultGatewayEx(m_vAdapterInfo[i].AdapterName, szDefaultGateWay, sizeof(szDefaultGateWay)))
+	{
+		m_ipFilter = m_vAdapterInfo[i].IpAddressList.IpAddress.String;
+		wstring temp = m_ipFilter.GetBuffer();
+		inet_pton(AF_INET, UnicodeToMultiByte(temp).c_str(), &m_ulIPFilter);
+
 		csWindowText.Format("Adapter Name: \t%s\r\n", m_vAdapterInfo[i].AdapterName);
 		csWindowText.Format("%sAdapter Desc: \t%s\r\n", csWindowText.GetBuffer(), m_vAdapterInfo[i].Description);
 		memcpy(p, m_vAdapterInfo[i].Address, 6);
@@ -1705,21 +1719,23 @@ void CCheckOpenPortsDlg::OnCbnSelchangeComboListAdapter()
 		csWindowText.Format("%sIP Addr: \t\t%s\r\n", csWindowText.GetBuffer(), m_vAdapterInfo[i].IpAddressList.IpAddress.String);
 		csWindowText.Format("%sIP Mask: \t\t%s\r\n", csWindowText.GetBuffer(), m_vAdapterInfo[i].IpAddressList.IpMask.String);
 		csWindowText.Format("%sIP Gateway: \t%s\r\n", csWindowText.GetBuffer(), m_vAdapterInfo[i].GatewayList.IpAddress.String);
-		if (m_vAdapterInfo[i].DhcpEnabled) {
+		if (m_vAdapterInfo[i].DhcpEnabled) 
+		{
 			csWindowText.Format("%sDHCP Enable: \tYes\r\n", csWindowText.GetBuffer());
 			csWindowText.Format("%sLease Obtained: \t%lld\r\n", csWindowText.GetBuffer(), m_vAdapterInfo[i].LeaseObtained);
 		}
-		else {
+		else 
 			csWindowText.Format("%sDHCP Enable: \tNo\r\n", csWindowText.GetBuffer());
-		}
-		if (m_vAdapterInfo[i].HaveWins) {
+
+		if (m_vAdapterInfo[i].HaveWins) 
+		{
 			csWindowText.Format("%sHave Wins: \tYes\r\n", csWindowText.GetBuffer());
 			csWindowText.Format("%sPrimary Wins Server: \t%s\r\n", csWindowText.GetBuffer(), m_vAdapterInfo[i].PrimaryWinsServer.IpAddress.String);
 			csWindowText.Format("%sSecondary Wins Server: \t%s\r\n", csWindowText.GetBuffer(), m_vAdapterInfo[i].SecondaryWinsServer.IpAddress.String);
 		}
-		else {
+		else
 			csWindowText.Format("%sHave Wins: \tNo\r\n", csWindowText.GetBuffer());
-		}
+
 		m_ctrlEditAdapterInfo.SetWindowText(CA2W(csWindowText));
-	//}
+	}
 }

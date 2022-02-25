@@ -37,12 +37,13 @@ using namespace std;
 
 typedef  void(*LPEnumOpenPorts)(const char*, int, FuncFindOpenPort);
 typedef  bool(*LPIsPortOpen)(const char*, int, int*);
-typedef bool (*FNStartLocalAreaListening)(const char* ipAddress, CallbackLocalAreaListener fnpPtr, int nPollingTime);
+typedef bool (*FNStartLocalAreaListening)(const char* ipAddress, const char* subnetMask, CallbackLocalAreaListener fnpPtr, int nPollingTime);
 typedef void (*FNStopLocalAreaListening)();
 typedef bool (*FNStartSNMP)(const char* szAgentIPAddress, const char* szCommunity, int nVersion, DWORD & dwLastError);
 typedef smiVALUE (*FNSNMPGet)(const char* szOID, DWORD & dwLastError);
 typedef void (*FNEndSNMP)();
 typedef bool (*FNGetDefaultGateway)(char szDefaultGateway[]);
+typedef bool (*FNGetDefaultGatewayEx)(const char* szAdapterName, char* szDefaultGateway, int nSize);
 typedef bool (*FNStopSearchingOpenPorts)();
 typedef bool (*FNStartPacketListener)(FNCallbackPacketListener);
 typedef void (*FNStopPacketListener)();
@@ -90,6 +91,7 @@ public:
 	FNStopSearchingOpenPorts m_pfnPtrStopSearchingOpenPorts;
 	FNGetNetworkDeviceStatus m_pfnPtrGetNetworkDeviceStatus;
 	FNEnumNetworkAdapters m_pfnPtrEnumNetworkAdapters;
+	FNGetDefaultGatewayEx m_pfnPtrGetDefaultGatewayEx;
 	CPacketInfoDlg* m_pmodeless;
 // Dialog Data
 #ifdef AFX_DESIGN_TIME

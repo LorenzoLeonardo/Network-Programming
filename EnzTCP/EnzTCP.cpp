@@ -161,7 +161,7 @@ bool ENZTCPLIBRARY_API IsPortOpen(char* ipAddress, int nNumPorts, int *pnlastErr
    }
 }
 
-bool ENZTCPLIBRARY_API StartLocalAreaListening(const char* ipAddress, CallbackLocalAreaListener fnpPtr, int nPollingTimeMS)
+bool ENZTCPLIBRARY_API StartLocalAreaListening(const char* ipAddress, const char* subNetMask, CallbackLocalAreaListener fnpPtr, int nPollingTimeMS)
 {
     try
     {
@@ -170,7 +170,7 @@ bool ENZTCPLIBRARY_API StartLocalAreaListening(const char* ipAddress, CallbackLo
             delete g_pLocalAreaListener;
             g_pLocalAreaListener = NULL;
         }
-        g_pLocalAreaListener = new CLocalAreaListener(ipAddress, fnpPtr, nPollingTimeMS);
+        g_pLocalAreaListener = new CLocalAreaListener(ipAddress, subNetMask, fnpPtr, nPollingTimeMS);
         if (g_pLocalAreaListener == NULL)
             return false;
         g_pLocalAreaListener->Start();
@@ -229,6 +229,12 @@ bool ENZTCPLIBRARY_API GetDefaultGateway(char* szDefaultIPAddress)
 {
     CSocket sock;
     return sock.GetDefaultGateway(szDefaultIPAddress);
+}
+
+bool ENZTCPLIBRARY_API GetDefaultGatewayEx(const char* szAdapterName, char* szDefaultGateway, int nSize)
+{
+    CSocket sock;
+    return sock.GetDefaultGateway(szAdapterName, szDefaultGateway, nSize);
 }
 
 bool ENZTCPLIBRARY_API StartPacketListener(FNCallbackPacketListener fnpPtr)

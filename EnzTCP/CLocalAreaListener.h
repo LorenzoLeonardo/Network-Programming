@@ -15,7 +15,7 @@ typedef void (*CallbackLocalAreaListener)(const char* ipAddress, const char* hos
 class CLocalAreaListener
 {
 public:
-	CLocalAreaListener(const char *szStartingIPAddress, CallbackLocalAreaListener pFncPtr, int nPollingTimesMS);
+	CLocalAreaListener(const char *szStartingIPAddress, const char* subNetMask, CallbackLocalAreaListener pFncPtr, int nPollingTimesMS);
 	~CLocalAreaListener();
 	CallbackLocalAreaListener m_fnptrCallbackLocalAreaListener;
 	
@@ -40,11 +40,16 @@ public:
 	{
 		m_bMainThreadStarted = b;
 	}
+	string GetSubnetMask()
+	{
+		return m_szSubnetMask;
+	}
 private:
 
 	map<thread*, int> m_mapThreads;
 	thread* m_threadMain;
 	string  m_szStartingIP;
+	string  m_szSubnetMask;
 	bool	m_bHasStarted;
 	int		m_nPollingTimeMS;
 	bool    m_bMainThreadStarted;

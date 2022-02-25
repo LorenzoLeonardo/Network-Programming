@@ -27,5 +27,6 @@ public:
 	const char* Receive();
 	void Send(char* sendbuf);
 	bool GetDefaultGateway(char* szDefaultIPAddress);
+	bool GetDefaultGateway(const char* szAdapterName, char* szDefaultGateway, int nSize);
 };
 
