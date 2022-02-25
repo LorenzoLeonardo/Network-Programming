@@ -8,6 +8,9 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Enzo Chat Server", "Enzo Chat Server\Enzo Chat Server.vcxproj", "{F8379631-D7DE-4596-AE84-E25D7C4A4E36}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Network Monitoring Tool", "Network Monitoring Tool\Network Monitoring Tool.vcxproj", "{20A8E3CD-5E38-4390-960A-B305E4333C67}"
+	ProjectSection(ProjectDependencies) = postProject
+		{702858AC-6210-495B-9F93-D7BB1ABF3785} = {702858AC-6210-495B-9F93-D7BB1ABF3785}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SniffingTest", "SniffingTest\SniffingTest.vcxproj", "{88ECEEED-42A7-404F-A764-3C09BA547E39}"
 EndProject

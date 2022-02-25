@@ -15,7 +15,7 @@
 
 int main()
 {
-    constexpr WORD payload_size = 1;
+  /*  constexpr WORD payload_size = 1;
     unsigned char payload[payload_size]{ 42 };
     // Declare and initialize variables
     PMIB_TCPTABLE pTcpTable;
@@ -120,6 +120,47 @@ int main()
         FREE(pTcpTable);
         pTcpTable = NULL;
     }
+    */
+    WSADATA wsaData;
+    PIP_ADAPTER_INFO pAdapterInfo = NULL, pAdapter = NULL;
+    ULONG ulOutBufLen;
+    u_char p[6];
+
+    WSAStartup(MAKEWORD(2, 2), &wsaData);
+
+    if (GetAdaptersInfo(pAdapterInfo, &ulOutBufLen) == ERROR_BUFFER_OVERFLOW) {
+        free(pAdapterInfo);
+        pAdapterInfo = (PIP_ADAPTER_INFO)malloc(ulOutBufLen);
+    }
+    GetAdaptersInfo(pAdapterInfo, &ulOutBufLen);
+    pAdapter = pAdapterInfo;
+    while (pAdapter) {
+        printf("\tAdapter Name: \t%s\n", pAdapter->AdapterName);
+        printf("\tAdapter Desc: \t%s\n", pAdapter->Description);
+        memcpy(p, pAdapter->Address, 6);
+        printf("\tAdapter Addr: \t%X:%X:%X:%X:%X:%X\n",
+            p[0], p[1], p[2], p[3], p[4], p[5]);
+        printf("\tIP Addr: \t%s\n", pAdapter->IpAddressList.IpAddress.String);
+        printf("\tIP Mask: \t%s\n", pAdapter->IpAddressList.IpMask.String);
+        printf("\tIP Gateway: \t%s\n", pAdapter->GatewayList.IpAddress.String);
+        if (pAdapter->DhcpEnabled) {
+            printf("\tDHCP Enable: Yes\n");
+            printf("\tLease Obtained: %ld\n", pAdapter->LeaseObtained);
+        }
+        else {
+            printf("\tDHCP Enable: No\n");
+        }
+        if (pAdapter->HaveWins) {
+            printf("\tHave Wins: Yes\n");
+            printf("\t\tPrimary Wins Server: \t%s\n", pAdapter->PrimaryWinsServer.IpAddress.String);
+            printf("\t\tSecondary Wins Server: \t%s\n", pAdapter->SecondaryWinsServer.IpAddress.String);
+        }
+        else {
+            printf("\tHave Wins: No\n");
+        }
+        pAdapter = pAdapter->Next;
+    }
+
 
     return 0;
 }
