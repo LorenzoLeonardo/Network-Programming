@@ -47,6 +47,8 @@ typedef bool (*FNStopSearchingOpenPorts)();
 typedef bool (*FNStartPacketListener)(FNCallbackPacketListener);
 typedef void (*FNStopPacketListener)();
 typedef bool (*FNGetNetworkDeviceStatus)(const char* ipAddress, char* hostname, int nSizeHostName, char* macAddress, int nSizeMacAddress, DWORD * pError);
+typedef bool (*FNEnumNetworkAdapters)(FuncAdapterList);
+
 inline void GetLastErrorMessageString(_tstring& str, int nGetLastError);
 template <typename Map>
 inline bool key_compare(Map const& lhs, Map const& rhs);
@@ -87,7 +89,7 @@ public:
 	FNStopLocalAreaListening m_pfnPtrStopLocalAreaListening;
 	FNStopSearchingOpenPorts m_pfnPtrStopSearchingOpenPorts;
 	FNGetNetworkDeviceStatus m_pfnPtrGetNetworkDeviceStatus;
-
+	FNEnumNetworkAdapters m_pfnPtrEnumNetworkAdapters;
 	CPacketInfoDlg* m_pmodeless;
 // Dialog Data
 #ifdef AFX_DESIGN_TIME
@@ -101,6 +103,7 @@ public:
 	CListCtrlCustom m_ctrlLANConnected;
 	map<ULONG, CDeviceConnected> m_mConnected;
 	map<ULONG, CDeviceConnected> m_mConnectedBefore;
+	vector<IP_ADAPTER_INFO> m_vAdapterInfo;
 	CEdit m_ctrlEditPacketReportArea;
 	CEdit m_ctrlEditDownloadSpeed;
 	CEdit m_ctrlEditUploadSpeed;
@@ -239,7 +242,7 @@ public:
 	{
 		return m_ulIPFilter;
 	}
-
+	void InitAdapterUI();
 protected:
 	HBRUSH m_hBrushBackGround;
 	HBRUSH m_hBrushEditArea;
@@ -303,6 +306,7 @@ protected:
 	static void CallbackLANListener(const char* ipAddress, const char* hostName, const char* macAddress, bool bIsopen);
 	static void CallBackEnumPort(char* ipAddress, int nPort, bool bIsopen, int nLastError);
 	static bool CallPacketListener(unsigned char* buffer, int nSize);
+	static void CallBackEnumAdapters(void*);
 	
 	static unsigned __stdcall  RouterThread(void* parg);
 	static unsigned __stdcall  DownloadSpeedThreadList(void* parg);
@@ -321,4 +325,9 @@ public:
 	afx_msg void OnBnClickedCheckDebug();
 protected:
 	CButton m_ctrlBtnDebug;
+public:
+	afx_msg void OnCbnSelchangeComboListAdapter();
+protected:
+	CEdit m_ctrlEditAdapterInfo;
+	CComboBox m_ctrlComboAdapterList;
 };

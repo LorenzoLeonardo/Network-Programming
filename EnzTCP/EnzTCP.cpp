@@ -314,3 +314,34 @@ bool ENZTCPLIBRARY_API GetNetworkDeviceStatus(const char* ipAddress, char* hostn
         return bRet;
     }
 }
+
+bool ENZTCPLIBRARY_API EnumNetworkAdapters(FuncAdapterList pFunc)
+{
+    WSADATA wsaData;
+    PIP_ADAPTER_INFO pAdapterInfo = NULL, pAdapter = NULL;
+    ULONG ulOutBufLen = 0;
+    bool bRet = false;
+
+    int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+    if (iResult != 0)
+        return bRet;
+
+    if (GetAdaptersInfo(pAdapterInfo, &ulOutBufLen) == ERROR_BUFFER_OVERFLOW) 
+    {
+        free(pAdapterInfo);
+        pAdapterInfo = (PIP_ADAPTER_INFO)malloc(ulOutBufLen);
+    }
+    if (GetAdaptersInfo(pAdapterInfo, &ulOutBufLen) == NO_ERROR)
+    {
+        pAdapter = pAdapterInfo;
+        while (pAdapter)
+        {
+            pFunc((void*)pAdapter);
+            pAdapter = pAdapter->Next;
+        }
+        bRet = true;
+    }
+    free(pAdapterInfo);
+    WSACleanup();
+    return bRet;
+}

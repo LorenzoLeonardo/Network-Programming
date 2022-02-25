@@ -155,6 +155,8 @@ void CCheckOpenPortsDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BUTTON_STOP_PACKET, m_ctrlBtnUnlistenPackets);
 	DDX_Control(pDX, IDC_STATIC_PICTURE, m_ctrlStaticLogo);
 	DDX_Control(pDX, IDC_CHECK_DEBUG, m_ctrlBtnDebug);
+	DDX_Control(pDX, IDC_EDIT_ADAPTER_INFO, m_ctrlEditAdapterInfo);
+	DDX_Control(pDX, IDC_COMBO_LIST_ADAPTER, m_ctrlComboAdapterList);
 }
 
 BEGIN_MESSAGE_MAP(CCheckOpenPortsDlg, CDialogEx)
@@ -185,6 +187,7 @@ BEGIN_MESSAGE_MAP(CCheckOpenPortsDlg, CDialogEx)
 	ON_MESSAGE(WM_UPDATE_DOWNSPEED, OnUpdateDownloadSpeed)
 	ON_MESSAGE(WM_UPDATE_UPSPEED, OnUpdateUploadSpeed)
 	ON_BN_CLICKED(IDC_CHECK_DEBUG, &CCheckOpenPortsDlg::OnBnClickedCheckDebug)
+	ON_CBN_SELCHANGE(IDC_COMBO_LIST_ADAPTER, &CCheckOpenPortsDlg::OnCbnSelchangeComboListAdapter)
 END_MESSAGE_MAP()
 
 
@@ -354,7 +357,17 @@ LRESULT CCheckOpenPortsDlg::OnClearThreads(WPARAM wParam, LPARAM lParam)
 	}
 	return 0;
 }
+void CCheckOpenPortsDlg::InitAdapterUI()
+{
+	CStringA csWindowText;
 
+	u_char p[6];
+
+	for (int i = 0; i < m_vAdapterInfo.size();i++)
+		m_ctrlComboAdapterList.AddString(CA2W(m_vAdapterInfo[i].Description));
+	m_ctrlComboAdapterList.SetCurSel(0);
+	OnCbnSelchangeComboListAdapter();
+}
 BOOL CCheckOpenPortsDlg::OnInitDialog()
 {
 	LPCTSTR lpcRecHeader[] = { _T("No."), _T("IP Address"), _T("Device Name"), _T("MAC Address"), _T("Download Speed"), _T("Upload Speed"),  _T("Max Download Speed"), _T("Max Upload Speed") };
@@ -394,6 +407,8 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	else
 		m_ctrlBtnDebug.SetCheck(BST_UNCHECKED);
 	::SetWindowTheme(GetDlgItem(IDC_STATIC_ROUTER_INFO)->GetSafeHwnd(), _T(""), _T(""));//To change text Color of Group Box
+	::SetWindowTheme(GetDlgItem(IDC_STATIC_ADAPTER_INFO)->GetSafeHwnd(), _T(""), _T(""));
+	::SetWindowTheme(GetDlgItem(IDC_STATIC_OPEN_PORTS)->GetSafeHwnd(), _T(""), _T(""));
 	::SetWindowTheme(GetDlgItem(IDC_CHECK_DEBUG)->GetSafeHwnd(), _T(""), _T(""));
 	// Set the icon for this dialog.  The framework does this automatically
 	//  when the application's main window is not a dialog
@@ -426,7 +441,12 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 		m_pfnPtrStartPacketListener = (FNStartPacketListener)GetProcAddress(dll_handle, "StartPacketListener");
 		m_pfnPtrStopPacketListener = (FNStopPacketListener)GetProcAddress(dll_handle, "StopPacketListener");
 		m_pfnPtrGetNetworkDeviceStatus = (FNGetNetworkDeviceStatus)GetProcAddress(dll_handle, "GetNetworkDeviceStatus");
+		 m_pfnPtrEnumNetworkAdapters = (FNEnumNetworkAdapters)GetProcAddress(dll_handle, "EnumNetworkAdapters");
 	}
+
+	m_pfnPtrEnumNetworkAdapters(CallBackEnumAdapters);
+	InitAdapterUI();
+
 	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_FIXED_WIDTH, 30);
 	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_LEFT, 110);
 	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_LEFT, 110);
@@ -465,7 +485,7 @@ HBRUSH CCheckOpenPortsDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 		{
 			int id = pWnd->GetDlgCtrlID();
 
-			if (id == IDC_EDIT_AREA || id == IDC_EDIT_PACKET_REPORT || id == IDC_EDIT_SPEED_DOWN || id == IDC_EDIT_SPEED_UP)
+			if (id == IDC_EDIT_AREA || id == IDC_EDIT_PACKET_REPORT || id == IDC_EDIT_SPEED_DOWN || id == IDC_EDIT_SPEED_UP || id == IDC_EDIT_ADAPTER_INFO)
 			{
 				pDC->SetTextColor(RGB(0, 0, 0));
 				pDC->SetBkColor(RGB(255, 255, 255));
@@ -1192,11 +1212,11 @@ unsigned __stdcall  CCheckOpenPortsDlg::RouterThread(void* parg)
 			}
 			ULONG ulDays = value.value.uNumber / 8640000;
 			float fRem = remainder(value.value.uNumber / (float)8640000, (float)8640000) - ulDays;
-			ULONG ulHour = (ULONG)fRem * 24;
+			ULONG ulHour = fRem * 24;
 			fRem = (float)(fRem * 24) - ulHour;
-			ULONG ulMin = (ULONG)fRem * 60;
+			ULONG ulMin = fRem * 60;
 			fRem = (float)(fRem * 60) - ulMin;
-			ULONG ulSec = (ULONG)fRem * 60;
+			ULONG ulSec = fRem * 60;
 	
 			csFormat=_T("");
 			csFormat.Format(_T("%s %s %s\r\n\r\nRouter's Up Time\r\n%u days, %u hours, %u min, %u secs"),	csBrand.GetBuffer(), csModel.GetBuffer(), csDesc.GetBuffer(), ulDays, ulHour, ulMin, ulSec);
@@ -1406,7 +1426,12 @@ void CCheckOpenPortsDlg::CallBackEnumPort(char* ipAddress, int nPort, bool bIsop
 		}
 	}
 }
+void CCheckOpenPortsDlg::CallBackEnumAdapters(void* args)
+{
+	PIP_ADAPTER_INFO pAdapterInfo = (PIP_ADAPTER_INFO)args;
 
+	g_dlg->m_vAdapterInfo.push_back(*pAdapterInfo);
+}
 bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 {
 	CString csText, csSrcPort, csDestPort, sourceIP, destIP, cs, csTemp, ipFilter, csReport;
@@ -1657,4 +1682,41 @@ void CCheckOpenPortsDlg::OnBnClickedCheckDebug()
 		}
 	}
 
+}
+
+
+void CCheckOpenPortsDlg::OnCbnSelchangeComboListAdapter()
+{
+	// TODO: Add your control notification handler code here
+	CStringA csWindowText;
+	u_char p[6];
+
+	int i = m_ctrlComboAdapterList.GetCurSel();
+	//for (int i = 0; i < m_vAdapterInfo.size(); i++)
+	//{
+		csWindowText.Format("Adapter Name: \t%s\r\n", m_vAdapterInfo[i].AdapterName);
+		csWindowText.Format("%sAdapter Desc: \t%s\r\n", csWindowText.GetBuffer(), m_vAdapterInfo[i].Description);
+		memcpy(p, m_vAdapterInfo[i].Address, 6);
+		csWindowText.Format("%sAdapter Addr: \t%X:%X:%X:%X:%X:%X\r\n", csWindowText.GetBuffer(),
+			p[0], p[1], p[2], p[3], p[4], p[5]);
+		csWindowText.Format("%sIP Addr: \t\t%s\r\n", csWindowText.GetBuffer(), m_vAdapterInfo[i].IpAddressList.IpAddress.String);
+		csWindowText.Format("%sIP Mask: \t\t%s\r\n", csWindowText.GetBuffer(), m_vAdapterInfo[i].IpAddressList.IpMask.String);
+		csWindowText.Format("%sIP Gateway: \t%s\r\n", csWindowText.GetBuffer(), m_vAdapterInfo[i].GatewayList.IpAddress.String);
+		if (m_vAdapterInfo[i].DhcpEnabled) {
+			csWindowText.Format("%sDHCP Enable: \tYes\r\n", csWindowText.GetBuffer());
+			csWindowText.Format("%sLease Obtained: \t%lld\r\n", csWindowText.GetBuffer(), m_vAdapterInfo[i].LeaseObtained);
+		}
+		else {
+			csWindowText.Format("%sDHCP Enable: \tNo\r\n", csWindowText.GetBuffer());
+		}
+		if (m_vAdapterInfo[i].HaveWins) {
+			csWindowText.Format("%sHave Wins: \tYes\r\n", csWindowText.GetBuffer());
+			csWindowText.Format("%sPrimary Wins Server: \t%s\r\n", csWindowText.GetBuffer(), m_vAdapterInfo[i].PrimaryWinsServer.IpAddress.String);
+			csWindowText.Format("%sSecondary Wins Server: \t%s\r\n", csWindowText.GetBuffer(), m_vAdapterInfo[i].SecondaryWinsServer.IpAddress.String);
+		}
+		else {
+			csWindowText.Format("%sHave Wins: \tNo\r\n", csWindowText.GetBuffer());
+		}
+		m_ctrlEditAdapterInfo.SetWindowText(CA2W(csWindowText));
+	//}
 }

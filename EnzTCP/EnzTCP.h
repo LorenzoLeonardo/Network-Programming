@@ -111,6 +111,7 @@ typedef void (*CallbackLocalAreaListener)(const char* , const char*, const char*
 typedef bool (*FNCallbackPacketListener)(unsigned char* buffer, int nSize);
 typedef void (*FuncNewConnection)(void*);
 typedef void (*FuncFindOpenPort)(char* , int, bool, int);
+typedef void (*FuncAdapterList)(void*);
 
 extern "C" ENZTCPLIBRARY_API	HANDLE		OpenServer(const char * sport, FuncNewConnection);
 extern "C" ENZTCPLIBRARY_API	void		RunServer(HANDLE);
@@ -130,3 +131,4 @@ extern "C" ENZTCPLIBRARY_API	void		DisconnectFromServer(HANDLE hHandle);
 extern "C" ENZTCPLIBRARY_API	bool		StartPacketListener(FNCallbackPacketListener fnpPtr);
 extern "C" ENZTCPLIBRARY_API	void		StopPacketListener();
 extern "C" ENZTCPLIBRARY_API	bool		GetNetworkDeviceStatus(const char* ipAddress, char* hostname, int nSizeHostName, char* macAddress, int nSizeMacAddress, DWORD * pError);
+extern "C" ENZTCPLIBRARY_API	bool		EnumNetworkAdapters(FuncAdapterList);
