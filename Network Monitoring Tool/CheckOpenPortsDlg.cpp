@@ -363,8 +363,7 @@ void CCheckOpenPortsDlg::InitAdapterUI()
 
 	for (int i = 0; i < m_vAdapterInfo.size(); i++)
 	{
-		if(m_vAdapterInfo[i].LeaseObtained)
-			m_ctrlComboAdapterList.AddString(CA2W(m_vAdapterInfo[i].Description));
+		m_ctrlComboAdapterList.AddString(CA2W(m_vAdapterInfo[i].Description));
 	}
 	m_ctrlComboAdapterList.SetCurSel(0);
 	OnCbnSelchangeComboListAdapter();
@@ -447,6 +446,12 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	}
 
 	m_pfnPtrEnumNetworkAdapters(CallBackEnumAdapters);
+	if (m_vAdapterInfo.empty())
+	{
+		AfxMessageBox(_T("No network connection has established. Please check your ethernet cables or WIFI settings. This tool will now exit."),MB_ICONERROR);
+		OnOK();
+		return false;
+	}
 	InitAdapterUI();
 
 	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_FIXED_WIDTH, 30);
@@ -1825,7 +1830,7 @@ void CCheckOpenPortsDlg::CallBackEnumAdapters(void* args)
 {
 	PIP_ADAPTER_INFO pAdapterInfo = (PIP_ADAPTER_INFO)args;
 
-	if(pAdapterInfo->LeaseObtained)
+	if(pAdapterInfo->IpAddressList.Context)
 		g_dlg->m_vAdapterInfo.push_back(*pAdapterInfo);
 }
 bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
