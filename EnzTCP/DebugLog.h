@@ -23,7 +23,7 @@ inline void DEBUG_LOG(string logMsg) {
     DWORD value = 0;
     DWORD BufferSize = 4;
 
-    RegGetValue(HKEY_LOCAL_MACHINE, "SOFTWARE\\Enzo Network Monitoring Tool", "DebugLog", /*RRF_RT_ANY*/RRF_RT_DWORD, NULL, (PVOID)&value, &BufferSize);
+    RegGetValueA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Enzo Network Monitoring Tool", "DebugLog", /*RRF_RT_ANY*/RRF_RT_DWORD, NULL, (PVOID)&value, &BufferSize);
     if (value)
     {
         string filePath = getCurrentDateTime("date") + ".txt";

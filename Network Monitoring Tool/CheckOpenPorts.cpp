@@ -7,6 +7,7 @@
 #include "CheckOpenPorts.h"
 #include "CheckOpenPortsDlg.h"
 #include <tlhelp32.h>
+#include "..\EnzTCP\DebugLog.h"
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -35,6 +36,98 @@ CCheckOpenPortsApp::CCheckOpenPortsApp()
 
 CCheckOpenPortsApp theApp;
 
+BOOL IsRunAsAdministrator()
+{
+	BOOL fIsRunAsAdmin = FALSE;
+	DWORD dwError = ERROR_SUCCESS;
+	PSID pAdministratorsGroup = NULL;
+
+	// Allocate and initialize a SID of the administrators group.
+	SID_IDENTIFIER_AUTHORITY NtAuthority = SECURITY_NT_AUTHORITY;
+	if (!AllocateAndInitializeSid(
+		&NtAuthority,
+		2,
+		SECURITY_BUILTIN_DOMAIN_RID,
+		DOMAIN_ALIAS_RID_ADMINS,
+		0, 0, 0, 0, 0, 0,
+		&pAdministratorsGroup))
+	{
+		dwError = GetLastError();
+		DEBUG_LOG("Network Monitoring Tool : CheckTokenMembership() Error: " + to_string(dwError));
+		goto Cleanup;
+	}
+
+	// Determine whether the SID of administrators group is enabled in 
+	// the primary access token of the process.
+	if (!CheckTokenMembership(NULL, pAdministratorsGroup, &fIsRunAsAdmin))
+	{
+		dwError = GetLastError();
+		DEBUG_LOG("Network Monitoring Tool : CheckTokenMembership() Error: "+ to_string(dwError));
+		goto Cleanup;
+	}
+
+Cleanup:
+	// Centralized cleanup for all allocated resources.
+	if (pAdministratorsGroup)
+	{
+		FreeSid(pAdministratorsGroup);
+		pAdministratorsGroup = NULL;
+	}
+
+	// Throw the error if something failed in the function.
+	if (ERROR_SUCCESS != dwError)
+	{
+		throw dwError;
+	}
+
+	return fIsRunAsAdmin;
+}
+
+void ElevateNow()
+{
+	BOOL bAlreadyRunningAsAdministrator = FALSE;
+	try
+	{
+		bAlreadyRunningAsAdministrator = IsRunAsAdministrator();
+	}
+	catch (...)
+	{
+		std::cout << "Failed to determine if application was running with admin rights" << std::endl;
+		DWORD dwErrorCode = GetLastError();
+		char szMessage[256];
+		sprintf_s(szMessage, ARRAYSIZE(szMessage), "Error code returned was 0x%08lx", dwErrorCode);
+		string s(szMessage);
+		DEBUG_LOG("Network Monitoring Tool : " + s);
+	}
+	if (!bAlreadyRunningAsAdministrator)
+	{
+		wchar_t szPath[MAX_PATH];
+		if (GetModuleFileName(NULL, szPath, ARRAYSIZE(szPath)))
+		{
+			// Launch itself as admin
+			SHELLEXECUTEINFO sei = { sizeof(sei) };
+			sei.lpVerb = L"runas";
+			sei.lpFile = szPath;
+			sei.hwnd = NULL;
+			sei.nShow = SW_NORMAL;
+
+			if (!ShellExecuteEx(&sei))
+			{
+				DWORD dwError = GetLastError();
+				if (dwError == ERROR_CANCELLED)
+				{
+					// The user refused to allow privileges elevation.
+					std::cout << "End user did not allow elevation" << std::endl;
+					DEBUG_LOG("Network Monitoring Tool : End user did not allow elevation");
+				}
+			}
+			else
+			{
+				_exit(1);  // Quit itself
+			}
+		}
+	}
+}
 
 // CCheckOpenPortsApp initialization
 /*BOOL EnableWindowsPrivilege(WCHAR* Privilege)
@@ -97,6 +190,18 @@ BOOL CCheckOpenPortsApp::InitInstance()
 //	InitCommonControlsEx(&InitCtrls);
 
 	CWinApp::InitInstance();
+
+	if (!IsRunAsAdministrator())
+	{
+		if (AfxMessageBox(_T("This tool cannot continue if you don't run as administrator. Are you willing to elevate the process?"), MB_YESNO) == IDNO)
+		{
+			return FALSE;
+		}
+		else
+		{
+			ElevateNow();
+		}
+	}
 
 	/*if (!EnableWindowsPrivilege(SE_ASSIGNPRIMARYTOKEN_NAME))
 	{
