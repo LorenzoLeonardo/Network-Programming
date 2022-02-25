@@ -363,8 +363,11 @@ void CCheckOpenPortsDlg::InitAdapterUI()
 
 	u_char p[6];
 
-	for (int i = 0; i < m_vAdapterInfo.size();i++)
-		m_ctrlComboAdapterList.AddString(CA2W(m_vAdapterInfo[i].Description));
+	for (int i = 0; i < m_vAdapterInfo.size(); i++)
+	{
+		if(m_vAdapterInfo[i].LeaseObtained)
+			m_ctrlComboAdapterList.AddString(CA2W(m_vAdapterInfo[i].Description));
+	}
 	m_ctrlComboAdapterList.SetCurSel(0);
 	OnCbnSelchangeComboListAdapter();
 }
