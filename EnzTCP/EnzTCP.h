@@ -133,3 +133,7 @@ extern "C" ENZTCPLIBRARY_API	bool		StartPacketListener(FNCallbackPacketListener 
 extern "C" ENZTCPLIBRARY_API	void		StopPacketListener();
 extern "C" ENZTCPLIBRARY_API	bool		GetNetworkDeviceStatus(const char* ipAddress, char* hostname, int nSizeHostName, char* macAddress, int nSizeMacAddress, DWORD * pError);
 extern "C" ENZTCPLIBRARY_API	bool		EnumNetworkAdapters(FuncAdapterList);
+extern "C" ENZTCPLIBRARY_API    HANDLE      CreatePacketListenerEx(FNCallbackPacketListener fnpPtr);
+extern "C" ENZTCPLIBRARY_API	bool		StartPacketListenerEx(HANDLE);
+extern "C" ENZTCPLIBRARY_API	void		StopPacketListenerEx(HANDLE);
+extern "C" ENZTCPLIBRARY_API    void        DeletePacketListenerEx(HANDLE);

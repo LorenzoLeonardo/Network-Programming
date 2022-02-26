@@ -19,8 +19,11 @@ public :
 	FNCallbackPacketListener m_fnCallbackDisplay;
 
 	static void PollingThread(void* args);
+	static void PollingThreadEx(void* args);
 	bool StartListening();
+	bool StartListeningEx();
 	void StopListening();
+	void StopListeningEx();
 	bool IsStopped()
 	{
 		return m_bIsStopped;

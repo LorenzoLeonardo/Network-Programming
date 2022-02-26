@@ -16,6 +16,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SniffingTest", "SniffingTes
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestTCPSniff", "TestTCPSniff\TestTCPSniff.vcxproj", "{B24C084E-7005-4B8B-8E30-580139ED359A}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestMultipleSniffers", "TestMultipleSniffers\TestMultipleSniffers.vcxproj", "{ACBDA424-663B-4194-9724-E445C0F6FEF2}"
+	ProjectSection(ProjectDependencies) = postProject
+		{702858AC-6210-495B-9F93-D7BB1ABF3785} = {702858AC-6210-495B-9F93-D7BB1ABF3785}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -64,6 +69,14 @@ Global
 		{B24C084E-7005-4B8B-8E30-580139ED359A}.Release|x64.Build.0 = Release|x64
 		{B24C084E-7005-4B8B-8E30-580139ED359A}.Release|x86.ActiveCfg = Release|Win32
 		{B24C084E-7005-4B8B-8E30-580139ED359A}.Release|x86.Build.0 = Release|Win32
+		{ACBDA424-663B-4194-9724-E445C0F6FEF2}.Debug|x64.ActiveCfg = Debug|x64
+		{ACBDA424-663B-4194-9724-E445C0F6FEF2}.Debug|x64.Build.0 = Debug|x64
+		{ACBDA424-663B-4194-9724-E445C0F6FEF2}.Debug|x86.ActiveCfg = Debug|Win32
+		{ACBDA424-663B-4194-9724-E445C0F6FEF2}.Debug|x86.Build.0 = Debug|Win32
+		{ACBDA424-663B-4194-9724-E445C0F6FEF2}.Release|x64.ActiveCfg = Release|x64
+		{ACBDA424-663B-4194-9724-E445C0F6FEF2}.Release|x64.Build.0 = Release|x64
+		{ACBDA424-663B-4194-9724-E445C0F6FEF2}.Release|x86.ActiveCfg = Release|Win32
+		{ACBDA424-663B-4194-9724-E445C0F6FEF2}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

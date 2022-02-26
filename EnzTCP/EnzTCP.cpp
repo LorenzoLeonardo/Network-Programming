@@ -351,3 +351,45 @@ bool ENZTCPLIBRARY_API EnumNetworkAdapters(FuncAdapterList pFunc)
     WSACleanup();
     return bRet;
 }
+
+HANDLE ENZTCPLIBRARY_API CreatePacketListenerEx(FNCallbackPacketListener fnpPtr)
+{
+    CPacketListener* pPacketListener = NULL;
+    try
+    {
+        pPacketListener = new CPacketListener(fnpPtr);
+        return pPacketListener;
+    }
+    catch (int nError)
+    {
+        return NULL;
+    }
+}
+
+bool ENZTCPLIBRARY_API StartPacketListenerEx(HANDLE hHandle)
+{
+    CPacketListener* pPacketListener = (CPacketListener*)hHandle;
+    if (pPacketListener)
+        return pPacketListener->StartListeningEx();
+    else
+        return false;
+}
+
+void ENZTCPLIBRARY_API StopPacketListenerEx(HANDLE hHandle)
+{
+    CPacketListener* pPacketListener = (CPacketListener*)hHandle;
+    if (pPacketListener)
+    {
+        pPacketListener->StopListeningEx();
+    }
+}
+
+void ENZTCPLIBRARY_API DeletePacketListenerEx(HANDLE hHandle)
+{
+    CPacketListener* pPacketListener = (CPacketListener*)hHandle;
+    if (pPacketListener)
+    {
+        delete pPacketListener;
+        pPacketListener = NULL;
+    }
+}
