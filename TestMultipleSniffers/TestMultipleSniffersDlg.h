@@ -5,11 +5,12 @@
 #pragma once
 
 #include "../EnzTCP/EnzTCP.h"
+#include "CDeviceConnected.h"
 #include <string>
 
 using namespace std;
 
-typedef HANDLE(*FNPTRCreatePacketListenerEx)(FNCallbackPacketListener);
+typedef HANDLE(*FNPTRCreatePacketListenerEx)(FNCallbackPacketListenerEx, void*);
 typedef bool (*FNPTRStartPacketListenerEx)(HANDLE);
 typedef void (*FNPTRStopPacketListenerEx)(HANDLE);
 typedef void (*FNPTRDeletePacketListenerEx)(HANDLE);
@@ -54,8 +55,8 @@ public:
 	HANDLE m_hPacketHandle2;
 
 
-	static bool CallbackPacketListener1(unsigned char* buffer, int nSize);
-	static bool CallbackPacketListener2(unsigned char* buffer, int nSize);
+	static bool CallbackPacketListener(unsigned char* buffer, int nSize, void* pObject);
+	
 
 	afx_msg void OnBnClickedButtonStartStop();
 	afx_msg void OnClose();

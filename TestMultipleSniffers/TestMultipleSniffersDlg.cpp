@@ -113,77 +113,48 @@ BOOL CTestMultipleSniffersDlg::OnInitDialog()
 		m_fnptrCreatePacketListenerEx = (FNPTRCreatePacketListenerEx)GetProcAddress(m_hModuleDLL, "CreatePacketListenerEx");
 		m_fnptrDeletePacketListenerEx = (FNPTRDeletePacketListenerEx)GetProcAddress(m_hModuleDLL, "DeletePacketListenerEx");
 	}
-	m_ctrlIPAddress.SetWindowTextW(_T("192.168.0.101"));
+
 
 	// TODO: Add extra initialization here
 	m_bStart = false;
-	m_hPacketHandle1 = m_fnptrCreatePacketListenerEx(CallbackPacketListener1);
-	m_hPacketHandle2 = m_fnptrCreatePacketListenerEx(CallbackPacketListener2);
+	m_ctrlIPAddress.SetWindowTextW(_T("192.168.0.101"));
+	CDeviceConnected* obj = new CDeviceConnected();
+
+	obj->m_ulDataSizeDownload = 0;
+	obj->m_ulDataSizeUpload = 0;
+	obj->m_lfDownloadSpeed = 0;
+	obj->m_lfUploadSpeed = 0;
+	obj->m_lfMaxDownloadSpeed = 0;
+	obj->m_lfMaxUploadSpeed = 0;
+	obj->m_szHostName = _T("192.168.0.101");
+	obj->m_szIPAddress = _T("192.168.0.101");
+	obj->m_szMACAddress = _T("192.168.0.101");
+	obj->m_ullDownloadStartTime = GetTickCount64();
+	obj->m_ullUploadStartTime = GetTickCount64();
+
+	m_hPacketHandle1 = m_fnptrCreatePacketListenerEx(CallbackPacketListener, (void*)obj);
+
+	/*CDeviceConnected* obj1 = new CDeviceConnected();
+
+	obj1->m_ulDataSizeDownload = 0;
+	obj1->m_ulDataSizeUpload = 0;
+	obj1->m_lfDownloadSpeed = 0;
+	obj1->m_lfUploadSpeed = 0;
+	obj1->m_lfMaxDownloadSpeed = 0;
+	obj1->m_lfMaxUploadSpeed = 0;
+	obj1->m_szHostName = _T("192.168.0.1");
+	obj1->m_szIPAddress = _T("192.168.0.1");
+	obj1->m_szMACAddress = _T("192.168.0.1");
+	obj1->m_ullDownloadStartTime = GetTickCount64();
+	obj1->m_ullUploadStartTime = GetTickCount64();
+
+	m_hPacketHandle2 = m_fnptrCreatePacketListenerEx(CallbackPacketListener, (void*)obj);*/
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
-bool CTestMultipleSniffersDlg::CallbackPacketListener1(unsigned char* buffer, int nSize)
+bool CTestMultipleSniffersDlg::CallbackPacketListener(unsigned char* buffer, int nSize, void* pObject)
 {
-	CString csText, csSrcPort, csDestPort, sourceIP, destIP, cs, csTemp, ipFilter, csReport;
-	int iphdrlen = 0, nDataSize = 0;
-	IPV4_HDR* iphdr;
-	TCP_HDR* tcpheader = NULL;
-	UDP_HDR* udpheader = NULL;
-	string sTemp;
-	char sztemp[32];
-
-	memset(sztemp, 0, sizeof(sztemp));
-	iphdr = (IPV4_HDR*)buffer;
-	iphdrlen = iphdr->ucIPHeaderLen * 4;
-
-
-		inet_ntop(AF_INET, (const void*)&iphdr->unDestaddress, sztemp, sizeof(sztemp));
-		destIP = sztemp;
-		inet_ntop(AF_INET, (const void*)&iphdr->unSrcaddress, sztemp, sizeof(sztemp));
-		sourceIP = sztemp;
-
-		switch (iphdr->ucIPProtocol)
-		{
-			case ICMP_PROTOCOL:
-			{
-				csText = _T("ICMP : ");
-				break;
-			}
-			case IGMP_PROTOCOL:
-			{
-				csText = _T("IGMP : ");
-				break;
-			}
-			case TCP_PROTOCOL:
-			{
-				tcpheader = (TCP_HDR*)(buffer + iphdrlen);
-				csSrcPort = to_wstring(ntohs(tcpheader->usSourcePort)).c_str();
-				csDestPort = to_wstring(ntohs(tcpheader->usDestPort)).c_str();
-				csText = _T("TCP : ");
-				break;
-			}
-			case UDP_PROTOCOL:
-			{
-				udpheader = (UDP_HDR*)(buffer + iphdrlen);
-				csSrcPort = to_wstring(ntohs(udpheader->usSourcePort)).c_str();
-				csDestPort = to_wstring(ntohs(udpheader->usDestPort)).c_str();
-				csText = _T("UDP : ");
-				break;
-			}
-			default:
-			{
-				csText = _T("OTHERS : ");
-				break;
-			}
-		}
-		g_dlg->m_ctrlEdit1.GetWindowText(csText);
-		csReport = csText + sourceIP + _T(":") + csSrcPort + _T(" -> ") + destIP + _T(":") + csDestPort + _T(" Size: ") + to_wstring(nSize).c_str() + _T(" bytes\r\n");
-		g_dlg->m_ctrlEdit1.SetWindowText(csReport);
-
-	return true;
-}
-bool CTestMultipleSniffersDlg::CallbackPacketListener2(unsigned char* buffer, int nSize)
-{
+	CDeviceConnected* pDevice = (CDeviceConnected*)pObject;
 	CString csText, csSrcPort, csDestPort, sourceIP, destIP, cs, csTemp, ipFilter, csReport;
 	int iphdrlen = 0, nDataSize = 0;
 	IPV4_HDR* iphdr;
@@ -202,46 +173,83 @@ bool CTestMultipleSniffersDlg::CallbackPacketListener2(unsigned char* buffer, in
 	inet_ntop(AF_INET, (const void*)&iphdr->unSrcaddress, sztemp, sizeof(sztemp));
 	sourceIP = sztemp;
 
-	switch (iphdr->ucIPProtocol)
+	/*switch (iphdr->ucIPProtocol)
 	{
-	case ICMP_PROTOCOL:
-	{
-		csText = _T("ICMP : ");
-		break;
-	}
-	case IGMP_PROTOCOL:
-	{
-		csText = _T("IGMP : ");
-		break;
-	}
-	case TCP_PROTOCOL:
-	{
-		tcpheader = (TCP_HDR*)(buffer + iphdrlen);
-		csSrcPort = to_wstring(ntohs(tcpheader->usSourcePort)).c_str();
-		csDestPort = to_wstring(ntohs(tcpheader->usDestPort)).c_str();
-		csText = _T("TCP : ");
-		break;
-	}
-	case UDP_PROTOCOL:
-	{
-		udpheader = (UDP_HDR*)(buffer + iphdrlen);
-		csSrcPort = to_wstring(ntohs(udpheader->usSourcePort)).c_str();
-		csDestPort = to_wstring(ntohs(udpheader->usDestPort)).c_str();
-		csText = _T("UDP : ");
-		break;
-	}
-	default:
-	{
-		csText = _T("OTHERS : ");
-		break;
-	}
-	}
-	g_dlg->m_ctrlEdit2.GetWindowText(csText);
-	csReport = csText + sourceIP + _T(":") + csSrcPort + _T(" -> ") + destIP + _T(":") + csDestPort + _T(" Size: ") + to_wstring(nSize).c_str() + _T(" bytes\r\n");
-	g_dlg->m_ctrlEdit2.SetWindowText(csReport);
+		case ICMP_PROTOCOL:
+		{
+			csText = _T("ICMP : ");
+			break;
+		}
+		case IGMP_PROTOCOL:
+		{
+			csText = _T("IGMP : ");
+			break;
+		}
+		case TCP_PROTOCOL:
+		{
+			tcpheader = (TCP_HDR*)(buffer + iphdrlen);
+			csSrcPort = to_wstring(ntohs(tcpheader->usSourcePort)).c_str();
+			csDestPort = to_wstring(ntohs(tcpheader->usDestPort)).c_str();
+			csText = _T("TCP : ");
+			break;
+		}
+		case UDP_PROTOCOL:
+		{
+			udpheader = (UDP_HDR*)(buffer + iphdrlen);
+			csSrcPort = to_wstring(ntohs(udpheader->usSourcePort)).c_str();
+			csDestPort = to_wstring(ntohs(udpheader->usDestPort)).c_str();
+			csText = _T("UDP : ");
+			break;
+		}
+		default:
+		{
+			csText = _T("OTHERS : ");
+			break;
+		}
+	}*/
 
+	if (pDevice->m_szIPAddress == sourceIP)
+	{
+		pDevice->m_ulDataSizeUpload += nSize;
+		ULONGLONG timeCurrent = GetTickCount64();
+		if ((timeCurrent - pDevice->m_ullUploadStartTime) >= 1000)
+		{
+			pDevice->m_lfUploadSpeed = ((double)pDevice->m_ulDataSizeUpload / (double)(timeCurrent - pDevice->m_ullUploadStartTime)) * 8;
+			pDevice->m_ulDataSizeUpload = 0;
+			pDevice->m_ullUploadStartTime = GetTickCount64();
+			g_dlg->m_ctrlEdit1.GetWindowText(csText);
+			CString csFormat;
+			if (pDevice->m_lfUploadSpeed <= 1000)
+				csFormat.Format(_T("%.2lf Kbps"), pDevice->m_lfUploadSpeed);
+			else
+				csFormat.Format(_T("%.2lf Mbps"), pDevice->m_lfUploadSpeed / 1000);
+			csReport = csText + sourceIP + _T("->") + destIP + _T(" (UPLOAD): ") + csFormat + _T("\r\n");
+			g_dlg->m_ctrlEdit1.SetWindowText(csReport);
+			
+		}
+	}
+	if (pDevice->m_szIPAddress == destIP)
+	{
+		pDevice->m_ulDataSizeDownload += nSize;
+		ULONGLONG timeCurrent = GetTickCount64();
+		if ((timeCurrent - pDevice->m_ullDownloadStartTime) >= 1000)
+		{
+			pDevice->m_lfDownloadSpeed = ((double)pDevice->m_ulDataSizeDownload / (double)(timeCurrent - pDevice->m_ullDownloadStartTime)) * 8;
+			pDevice->m_ulDataSizeDownload = 0;
+			pDevice->m_ullDownloadStartTime = GetTickCount64();
+			g_dlg->m_ctrlEdit2.GetWindowText(csText);
+			CString csFormat;
+			if(pDevice->m_lfDownloadSpeed <= 1000)
+				csFormat.Format(_T("%.2lf Kbps"), pDevice->m_lfDownloadSpeed);
+			else
+				csFormat.Format(_T("%.2lf Mbps"), pDevice->m_lfDownloadSpeed/1000);
+			csReport = csText + destIP + _T(" <- ") + sourceIP + _T(" (DOWNLOAD): ") + csFormat + _T("\r\n");
+			g_dlg->m_ctrlEdit2.SetWindowText(csReport);
+		}
+	}
 	return true;
 }
+
 void CTestMultipleSniffersDlg::OnSysCommand(UINT nID, LPARAM lParam)
 {
 	if ((nID & 0xFFF0) == IDM_ABOUTBOX)
@@ -299,7 +307,7 @@ void CTestMultipleSniffersDlg::OnBnClickedButtonStartStop()
 	if (!m_bStart)
 	{
 		m_fnptrStartPacketListenerEx(m_hPacketHandle1);
-		m_fnptrStartPacketListenerEx(m_hPacketHandle2);
+	//	m_fnptrStartPacketListenerEx(m_hPacketHandle2);
 
 		m_bStart = true;
 	}
@@ -315,9 +323,9 @@ void CTestMultipleSniffersDlg::OnClose()
 {
 	// TODO: Add your message handler code here and/or call default
 	m_fnptrStopPacketListenerEx(m_hPacketHandle1);
-	m_fnptrStopPacketListenerEx(m_hPacketHandle2);
+	//m_fnptrStopPacketListenerEx(m_hPacketHandle2);
 
 	m_fnptrDeletePacketListenerEx(m_hPacketHandle1);
-	m_fnptrDeletePacketListenerEx(m_hPacketHandle2);
+//	m_fnptrDeletePacketListenerEx(m_hPacketHandle2);
 	CDialogEx::OnClose();
 }

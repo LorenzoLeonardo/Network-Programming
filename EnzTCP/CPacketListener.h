@@ -11,12 +11,15 @@ private:
 	bool m_bIsStopped;
 	thread* m_threadListening;
 	SOCKET m_socket;
+	void* m_pObject;
 public :
 
 	CPacketListener(FNCallbackPacketListener fnPtr);
+	CPacketListener(FNCallbackPacketListenerEx fnPtr, void* pObject);
 	~CPacketListener();
 	
 	FNCallbackPacketListener m_fnCallbackDisplay;
+	FNCallbackPacketListenerEx m_fnCallbackDisplayEx;
 
 	static void PollingThread(void* args);
 	static void PollingThreadEx(void* args);
@@ -35,6 +38,10 @@ public :
 	thread* GetThread()
 	{
 		return m_threadListening;
+	}
+	void* GetCustomObject()
+	{
+		return m_pObject;
 	}
 };
 

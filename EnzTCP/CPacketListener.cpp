@@ -5,9 +5,22 @@
 CPacketListener::CPacketListener(FNCallbackPacketListener fnPtr)
 {
 	m_bIsStopped = true;
+	m_pObject = NULL;
 	m_socket = INVALID_SOCKET;
 	m_threadListening = NULL;
 	m_fnCallbackDisplay = fnPtr;
+	WSADATA wsa;
+	if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
+		throw INVALID_SOCKET;
+
+}
+CPacketListener::CPacketListener(FNCallbackPacketListenerEx fnPtr, void* pObject)
+{
+	m_bIsStopped = true;
+	m_pObject = pObject;
+	m_socket = INVALID_SOCKET;
+	m_threadListening = NULL;
+	m_fnCallbackDisplayEx = fnPtr;
 	WSADATA wsa;
 	if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
 		throw INVALID_SOCKET;
@@ -62,7 +75,7 @@ void CPacketListener::PollingThreadEx(void* args)
 	{
 		nBytes = recvfrom(pListener->GetSocket(), pBuffer, 65536, 0, NULL, 0);
 		upBuffer = reinterpret_cast<unsigned char*> (pBuffer);
-		pListener->m_fnCallbackDisplay(upBuffer, nBytes);
+		pListener->m_fnCallbackDisplayEx(upBuffer, nBytes, pListener->GetCustomObject());
 		memset(upBuffer, 0, 65536);
 	} while ((nBytes > 0) && !pListener->IsStopped());
 

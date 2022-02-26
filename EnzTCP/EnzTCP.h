@@ -109,6 +109,7 @@ public:
 
 typedef void (*CallbackLocalAreaListener)(const char* , const char*, const char*, bool );
 typedef bool (*FNCallbackPacketListener)(unsigned char* buffer, int nSize);
+typedef bool (*FNCallbackPacketListenerEx)(unsigned char* buffer, int nSize, void* pObject);
 typedef void (*FuncNewConnection)(void*);
 typedef void (*FuncFindOpenPort)(char* , int, bool, int);
 typedef void (*FuncAdapterList)(void*);
@@ -133,7 +134,7 @@ extern "C" ENZTCPLIBRARY_API	bool		StartPacketListener(FNCallbackPacketListener 
 extern "C" ENZTCPLIBRARY_API	void		StopPacketListener();
 extern "C" ENZTCPLIBRARY_API	bool		GetNetworkDeviceStatus(const char* ipAddress, char* hostname, int nSizeHostName, char* macAddress, int nSizeMacAddress, DWORD * pError);
 extern "C" ENZTCPLIBRARY_API	bool		EnumNetworkAdapters(FuncAdapterList);
-extern "C" ENZTCPLIBRARY_API    HANDLE      CreatePacketListenerEx(FNCallbackPacketListener fnpPtr);
+extern "C" ENZTCPLIBRARY_API    HANDLE      CreatePacketListenerEx(FNCallbackPacketListenerEx fnpPtr, void* pObject);
 extern "C" ENZTCPLIBRARY_API	bool		StartPacketListenerEx(HANDLE);
 extern "C" ENZTCPLIBRARY_API	void		StopPacketListenerEx(HANDLE);
 extern "C" ENZTCPLIBRARY_API    void        DeletePacketListenerEx(HANDLE);

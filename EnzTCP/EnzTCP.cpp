@@ -352,12 +352,12 @@ bool ENZTCPLIBRARY_API EnumNetworkAdapters(FuncAdapterList pFunc)
     return bRet;
 }
 
-HANDLE ENZTCPLIBRARY_API CreatePacketListenerEx(FNCallbackPacketListener fnpPtr)
+HANDLE ENZTCPLIBRARY_API CreatePacketListenerEx(FNCallbackPacketListenerEx fnpPtr, void* pObject)
 {
     CPacketListener* pPacketListener = NULL;
     try
     {
-        pPacketListener = new CPacketListener(fnpPtr);
+        pPacketListener = new CPacketListener(fnpPtr, pObject);
         return pPacketListener;
     }
     catch (int nError)
