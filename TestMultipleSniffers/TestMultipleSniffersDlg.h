@@ -7,7 +7,7 @@
 #include "../EnzTCP/EnzTCP.h"
 #include "CDeviceConnected.h"
 #include <string>
-
+#include <map>
 using namespace std;
 
 typedef HANDLE(*FNPTRCreatePacketListenerEx)(FNCallbackPacketListenerEx, void*);
@@ -34,6 +34,7 @@ public:
 	FNPTRStartPacketListenerEx m_fnptrStartPacketListenerEx;
 	FNPTRStopPacketListenerEx m_fnptrStopPacketListenerEx;
 	FNPTRDeletePacketListenerEx m_fnptrDeletePacketListenerEx;
+	map<CString, CDeviceConnected*> m_mapListConnected;
 // Implementation
 protected:
 	HICON m_hIcon;
@@ -57,6 +58,8 @@ public:
 
 	static bool CallbackPacketListener(unsigned char* buffer, int nSize, void* pObject);
 	
+	void DisplayDownloadSpeed(CString ipAddress, double ldDownloadSpeed);
+	void DisplayUploadSpeed(CString ipAddress, double ldUploadSpeed);
 
 	afx_msg void OnBnClickedButtonStartStop();
 	afx_msg void OnClose();
