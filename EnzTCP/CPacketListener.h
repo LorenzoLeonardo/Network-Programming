@@ -12,6 +12,11 @@ private:
 	thread* m_threadListening;
 	SOCKET m_socket;
 	void* m_pObject;
+	HANDLE m_hThread;
+	HANDLE m_hStopThread;
+	HANDLE m_hWaitThread;
+protected:
+	void CleanupHandles();
 public :
 
 	CPacketListener(FNCallbackPacketListener fnPtr);
@@ -22,7 +27,7 @@ public :
 	FNCallbackPacketListenerEx m_fnCallbackDisplayEx;
 
 	static void PollingThread(void* args);
-	static void PollingThreadEx(void* args);
+	static unsigned _stdcall PollingThreadEx(void* args);
 	bool StartListening();
 	bool StartListeningEx();
 	void StopListening();
@@ -42,6 +47,14 @@ public :
 	void* GetCustomObject()
 	{
 		return m_pObject;
+	}
+	HANDLE GetStopEventHandle()
+	{
+		return m_hStopThread;
+	}
+	HANDLE GetWaitEventHandle()
+	{
+		return m_hWaitThread;
 	}
 };
 

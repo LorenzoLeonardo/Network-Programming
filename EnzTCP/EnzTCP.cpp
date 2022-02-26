@@ -109,7 +109,8 @@ HANDLE ENZTCPLIBRARY_API ConnectToServer(const char* ipAddress, const char* port
     }
     catch (HANDLE nError)
     {
-         return nError;
+        DEBUG_LOG("ConnectToServer(): Exception (" + to_string((ULONG_PTR)nError) + ")");
+        return nError;
     }
 }
 
@@ -157,6 +158,7 @@ bool ENZTCPLIBRARY_API IsPortOpen(char* ipAddress, int nNumPorts, int *pnlastErr
    }
    catch (int nError)
    {
+       DEBUG_LOG("IsPortOpen(): Exception (" + to_string(nError) + ")");
        return nError == 0;
    }
 }
@@ -177,6 +179,7 @@ bool ENZTCPLIBRARY_API StartLocalAreaListening(const char* ipAddress, const char
     }
     catch (int nError)
     {
+        DEBUG_LOG("StartLocalAreaListening(): Exception (" + to_string(nError) + ")");
         return nError == 0;
     }
     return true;
@@ -200,6 +203,7 @@ bool ENZTCPLIBRARY_API StartSNMP(const char* szAgentIPAddress, const char* szCom
     if (g_SNMP == NULL)
     {
         dwLastError = ERROR_NOT_ENOUGH_MEMORY;
+        DEBUG_LOG("StartSNMP(): Exception (" + to_string(dwLastError) + ")");
         return false;
     }
     return g_SNMP->InitSNMP(szAgentIPAddress, szCommunity, nVersion, dwLastError);
@@ -249,6 +253,7 @@ bool ENZTCPLIBRARY_API StartPacketListener(FNCallbackPacketListener fnpPtr)
         }
         catch (int nError)
         {
+            DEBUG_LOG("StartPacketListener(): Exception (" + to_string(nError) + ")");
             return !(nError==INVALID_SOCKET);
         }
     }
@@ -278,27 +283,28 @@ bool ENZTCPLIBRARY_API GetNetworkDeviceStatus(const char* ipAddress, char* hostn
             if (g_pICMP == NULL)
             {
                 *pError = ERROR_NOT_ENOUGH_MEMORY;
-                return false;
+                throw *pError;
             }
 
             bRet = g_pICMP->CheckDevice(ipAddress, shostName, smacAddress, pError);
             if (nSizeHostName < shostName.length())
             {
                 *pError = ERROR_INSUFFICIENT_BUFFER;
-                bRet = false;
+                throw* pError;
             }
             else if (nSizeMacAddress < smacAddress.length())
             {
                 *pError = ERROR_INSUFFICIENT_BUFFER;
-                bRet = false;
+                throw* pError;
             }
             memcpy(macAddress, smacAddress.c_str(),smacAddress.length());
             memcpy(hostname, shostName.c_str(), shostName.length());
             return bRet;
         }
-        catch (int nError)
+        catch (DWORD nError)
         {
             *pError = nError;
+            DEBUG_LOG("GetNetworkDeviceStatus(): Exception (" + to_string(nError) + ")");
             return bRet;
         }
     }
@@ -330,24 +336,40 @@ bool ENZTCPLIBRARY_API EnumNetworkAdapters(FuncAdapterList pFunc)
 
     int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
     if (iResult != 0)
+    {
+        DEBUG_LOG("EnumNetworkAdapters(): Exception (" + to_string(WSAGetLastError()) + ")");
         return bRet;
+    }
 
     if (GetAdaptersInfo(pAdapterInfo, &ulOutBufLen) == ERROR_BUFFER_OVERFLOW) 
     {
-        free(pAdapterInfo);
         pAdapterInfo = (PIP_ADAPTER_INFO)malloc(ulOutBufLen);
-    }
-    if (GetAdaptersInfo(pAdapterInfo, &ulOutBufLen) == NO_ERROR)
-    {
-        pAdapter = pAdapterInfo;
-        while (pAdapter)
+        if (pAdapterInfo)
         {
-            pFunc((void*)pAdapter);
-            pAdapter = pAdapter->Next;
+            if (GetAdaptersInfo(pAdapterInfo, &ulOutBufLen) == NO_ERROR)
+            {
+                pAdapter = pAdapterInfo;
+                while (pAdapter)
+                {
+                    pFunc((void*)pAdapter);
+                    pAdapter = pAdapter->Next;
+                }
+                bRet = true;
+            }
+            else
+                DEBUG_LOG("EnumNetworkAdapters(): GetAdaptersInfo() Exception (" + to_string(GetLastError()) + ")");
         }
-        bRet = true;
+        else
+            DEBUG_LOG("EnumNetworkAdapters(): GetAdaptersInfo() Exception (" + to_string(ERROR_NOT_ENOUGH_MEMORY) + ")");
     }
-    free(pAdapterInfo);
+    else
+        DEBUG_LOG("EnumNetworkAdapters(): GetAdaptersInfo() Exception (" + to_string(GetLastError()) + ")");
+
+    if (pAdapterInfo)
+    {
+        free(pAdapterInfo);
+        pAdapterInfo = NULL;
+    }
     WSACleanup();
     return bRet;
 }
@@ -362,6 +384,7 @@ HANDLE ENZTCPLIBRARY_API CreatePacketListenerEx(FNCallbackPacketListenerEx fnpPt
     }
     catch (int nError)
     {
+        DEBUG_LOG("CreatePacketListenerEx(): Exception ("+to_string(nError)+")");
         return NULL;
     }
 }
