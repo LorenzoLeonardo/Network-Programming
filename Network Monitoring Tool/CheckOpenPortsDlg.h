@@ -245,6 +245,7 @@ public:
 		return m_ulIPFilter;
 	}
 	void InitAdapterUI();
+	void EndProgram();
 protected:
 	HBRUSH m_hBrushBackGround;
 	HBRUSH m_hBrushEditArea;
@@ -271,6 +272,7 @@ protected:
 	HANDLE m_hThreadPacketListener;
 	HANDLE m_hThreadClock;
 	HANDLE m_hThreadOpenPortListener;
+	HANDLE m_hThreadNICListener;
 
 	CButton m_ctrlBtnCheckOpenPorts;
 	CButton m_ctrlBtnStopSearchingPort;
@@ -317,6 +319,7 @@ protected:
 	static unsigned __stdcall  PacketListenerThread(void* parg);
 	static unsigned __stdcall  ClockThread(void* parg);
 	static unsigned __stdcall  OpenPortListenerThread(void* parg);
+	static unsigned __stdcall  NICListenerThread(void* parg);
 	// Generated message map functions
 	virtual BOOL OnInitDialog();
 public:

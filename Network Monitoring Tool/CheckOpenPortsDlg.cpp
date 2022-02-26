@@ -102,6 +102,7 @@ CCheckOpenPortsDlg::CCheckOpenPortsDlg(CWnd* pParent /*=nullptr*/)
 	m_hThreadPacketListener = NULL;
 	m_hThreadClock = NULL;
 	m_hThreadOpenPortListener = NULL;
+	m_hThreadNICListener = NULL;
 
 	m_bOnCloseWasCalled = false;
 	m_hBrushBackGround = CreateSolidBrush(RGB(93, 107, 153));
@@ -359,12 +360,6 @@ LRESULT CCheckOpenPortsDlg::OnClearThreads(WPARAM wParam, LPARAM lParam)
 }
 void CCheckOpenPortsDlg::InitAdapterUI()
 {
-	CStringA csWindowText;
-
-	for (int i = 0; i < m_vAdapterInfo.size(); i++)
-	{
-		m_ctrlComboAdapterList.AddString(CA2W(m_vAdapterInfo[i].Description));
-	}
 	m_ctrlComboAdapterList.SetCurSel(0);
 	OnCbnSelchangeComboListAdapter();
 }
@@ -448,7 +443,7 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	m_pfnPtrEnumNetworkAdapters(CallBackEnumAdapters);
 	if (m_vAdapterInfo.empty())
 	{
-		AfxMessageBox(_T("No network connection has established. Please check your ethernet cables or WIFI settings. This tool will now exit."),MB_ICONERROR);
+		AfxMessageBox(_T("All Network Interface are disconnected. Please check your ethernet ports and WIFI adapters."), MB_ICONERROR);
 		OnOK();
 		return false;
 	}
@@ -482,7 +477,7 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	CString csGateWay(szDefaultGateWay);
 	m_ctrlIPAddress.SetWindowText(csGateWay);
 	m_hThreadRouter = (HANDLE)_beginthreadex(NULL, 0, RouterThread, this, 0, NULL);
-
+	m_hThreadNICListener = (HANDLE)_beginthreadex(NULL, 0, NICListenerThread, this, 0, NULL);
 	m_bShowPacketInfo = false;
 	OnBnClickedButtonShowPackets();
 	OnBnClickedButtonListenLan();
@@ -724,6 +719,11 @@ void CCheckOpenPortsDlg::OnClose()
 		{
 			WaitForSingleObject(m_hThreadClock, INFINITE);
 			CloseHandle(m_hThreadClock);
+		}
+		if (m_hThreadNICListener)
+		{
+			WaitForSingleObject(m_hThreadNICListener, INFINITE);
+			CloseHandle(m_hThreadNICListener);
 		}
 		if(dll_handle)
 			FreeLibrary(dll_handle);
@@ -1149,10 +1149,13 @@ unsigned __stdcall  CCheckOpenPortsDlg::RouterThread(void* parg)
 	CString csDesc = _T("");
 	char* sTemp = NULL;
 
-	if (pDlg->m_pfnPtrGetDefaultGateway(szDefaultGateway))
+	DWORD error = 0;
+	smiVALUE value;
+
+	if (pDlg->m_vAdapterInfo.empty())
+		return 0;
+	if (pDlg->m_pfnPtrGetDefaultGatewayEx(pDlg->m_vAdapterInfo[pDlg->m_ctrlComboAdapterList.GetCurSel()].AdapterName, szDefaultGateway, sizeof(szDefaultGateway)))
 	{
-		DWORD error = 0;
-		smiVALUE value;
 		if (pDlg->m_pfnPtrStartSNMP(szDefaultGateway, "public", 1, error))
 		{
 
@@ -1161,7 +1164,7 @@ unsigned __stdcall  CCheckOpenPortsDlg::RouterThread(void* parg)
 			{
 				return 0;
 			}
-#ifdef UNICODE
+	#ifdef UNICODE
 			sTemp = (char*)malloc(sizeof(char) * (value.value.sNumber + 1));
 			if (sTemp)
 			{
@@ -1172,16 +1175,16 @@ unsigned __stdcall  CCheckOpenPortsDlg::RouterThread(void* parg)
 				free(sTemp);
 				sTemp = NULL;
 			}
-#else		
+	#else		
 			csBrand = value.value.string.ptr;
-#endif
-			
+	#endif
+
 			value = pDlg->m_pfnPtrSNMPGet(".1.3.6.1.2.1.1.5.0", error);//Model name
 			if (error != SNMPAPI_SUCCESS)
 			{
 				return 0;
 			}
-#ifdef UNICODE
+	#ifdef UNICODE
 			sTemp = (char*)malloc(sizeof(char) * (value.value.sNumber + 1));
 			if (sTemp)
 			{
@@ -1192,9 +1195,9 @@ unsigned __stdcall  CCheckOpenPortsDlg::RouterThread(void* parg)
 				free(sTemp);
 				sTemp = NULL;
 			}
-#else
+	#else
 			csModel = value.value.string.ptr;
-#endif
+	#endif
 			//pDlg->SetRouterBrand(cs);
 
 			value = pDlg->m_pfnPtrSNMPGet(".1.3.6.1.2.1.1.1.0", error);//decription
@@ -1202,7 +1205,7 @@ unsigned __stdcall  CCheckOpenPortsDlg::RouterThread(void* parg)
 			{
 				return 0;
 			}
-#ifdef UNICODE
+	#ifdef UNICODE
 
 			sTemp = (char*)malloc(sizeof(char) * (value.value.sNumber + 1));
 			if (sTemp)
@@ -1214,9 +1217,9 @@ unsigned __stdcall  CCheckOpenPortsDlg::RouterThread(void* parg)
 				free(sTemp);
 				sTemp = NULL;
 			}
-#else
+	#else
 			csDesc = value.value.string.ptr;
-#endif
+	#endif
 		}
 		CString csFormat;
 		while (!pDlg->HasClickClose())
@@ -1233,15 +1236,25 @@ unsigned __stdcall  CCheckOpenPortsDlg::RouterThread(void* parg)
 			ULONG ulMin = fRem * 60;
 			fRem = (float)(fRem * 60) - ulMin;
 			ULONG ulSec = fRem * 60;
-	
-			csFormat=_T("");
-			csFormat.Format(_T("%s %s %s\r\n\r\nRouter's Up Time\r\n%u days, %u hours, %u min, %u secs"),	csBrand.GetBuffer(), csModel.GetBuffer(), csDesc.GetBuffer(), ulDays, ulHour, ulMin, ulSec);
+
+			csFormat = _T("");
+			csFormat.Format(_T("%s %s %s\r\n\r\nRouter's Up Time\r\n%u days, %u hours, %u min, %u secs"), csBrand.GetBuffer(), csModel.GetBuffer(), csDesc.GetBuffer(), ulDays, ulHour, ulMin, ulSec);
 
 			pDlg->SetRouterUpTime(csFormat);
 			Sleep(500);
 		}
 	}
-	//::PostMessage(pDlg->GetSafeHwnd(), WM_CLEAR_TREADS, 0, 0);
+	return 0;
+}
+unsigned __stdcall  CCheckOpenPortsDlg::NICListenerThread(void* parg)
+{
+	CCheckOpenPortsDlg* pDlg = (CCheckOpenPortsDlg*)parg;
+
+	while (!pDlg->HasClickClose())
+	{
+		pDlg->m_pfnPtrEnumNetworkAdapters(CallBackEnumAdapters);
+		Sleep(1000);
+	}
 	return 0;
 }
 unsigned __stdcall  CCheckOpenPortsDlg::PacketListenerThread(void* parg)
@@ -1830,9 +1843,42 @@ void CCheckOpenPortsDlg::CallBackEnumPort(char* ipAddress, int nPort, bool bIsop
 void CCheckOpenPortsDlg::CallBackEnumAdapters(void* args)
 {
 	PIP_ADAPTER_INFO pAdapterInfo = (PIP_ADAPTER_INFO)args;
+	bool bFound = false;
+	int nIndexFound = -1;
+	for (int i = 0; i < g_dlg->m_vAdapterInfo.size(); i++)
+	{
+		if (strcmp(g_dlg->m_vAdapterInfo[i].AdapterName, pAdapterInfo->AdapterName) == 0)
+		{
+			bFound = true;
+			nIndexFound = i;
+			break;
+		}
+	}
+	if (!bFound)
+	{
+		if (pAdapterInfo->IpAddressList.Context)
+		{
+			g_dlg->m_vAdapterInfo.push_back(*pAdapterInfo);
+			g_dlg->m_ctrlComboAdapterList.AddString(CA2W(pAdapterInfo->Description));
+			g_dlg->InitAdapterUI();
+		}
+		if (g_dlg->m_vAdapterInfo.empty())
+		{
+			g_dlg->InitAdapterUI();
+		}
+	}
+	else
+	{
+		if (!pAdapterInfo->IpAddressList.Context)
+		{
+			g_dlg->m_vAdapterInfo.erase(g_dlg->m_vAdapterInfo.begin() + nIndexFound);
+			g_dlg->m_ctrlComboAdapterList.DeleteString(nIndexFound);
+			g_dlg->InitAdapterUI();
+		}
+	}
 
-	if(pAdapterInfo->IpAddressList.Context)
-		g_dlg->m_vAdapterInfo.push_back(*pAdapterInfo);
+
+
 }
 bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 {
@@ -2096,37 +2142,103 @@ void CCheckOpenPortsDlg::OnCbnSelchangeComboListAdapter()
 	int i = m_ctrlComboAdapterList.GetCurSel();
 
 	memset(szDefaultGateWay, 0, sizeof(szDefaultGateWay));
-	if (m_pfnPtrGetDefaultGatewayEx(m_vAdapterInfo[i].AdapterName, szDefaultGateWay, sizeof(szDefaultGateWay)))
+	if (!m_vAdapterInfo.empty())
 	{
-		m_ipFilter = m_vAdapterInfo[i].IpAddressList.IpAddress.String;
-		wstring temp = m_ipFilter.GetBuffer();
-		inet_pton(AF_INET, UnicodeToMultiByte(temp).c_str(), &m_ulIPFilter);
-
-		csWindowText.Format("Adapter Name: \t%s\r\n", m_vAdapterInfo[i].AdapterName);
-		csWindowText.Format("%sAdapter Desc: \t%s\r\n", csWindowText.GetBuffer(), m_vAdapterInfo[i].Description);
-		memcpy(p, m_vAdapterInfo[i].Address, 6);
-		csWindowText.Format("%sAdapter Addr: \t%X:%X:%X:%X:%X:%X\r\n", csWindowText.GetBuffer(),
-			p[0], p[1], p[2], p[3], p[4], p[5]);
-		csWindowText.Format("%sIP Addr: \t\t%s\r\n", csWindowText.GetBuffer(), m_vAdapterInfo[i].IpAddressList.IpAddress.String);
-		csWindowText.Format("%sIP Mask: \t\t%s\r\n", csWindowText.GetBuffer(), m_vAdapterInfo[i].IpAddressList.IpMask.String);
-		csWindowText.Format("%sIP Gateway: \t%s\r\n", csWindowText.GetBuffer(), m_vAdapterInfo[i].GatewayList.IpAddress.String);
-		if (m_vAdapterInfo[i].DhcpEnabled) 
+		if (m_pfnPtrGetDefaultGatewayEx(m_vAdapterInfo[i].AdapterName, szDefaultGateWay, sizeof(szDefaultGateWay)))
 		{
-			csWindowText.Format("%sDHCP Enable: \tYes\r\n", csWindowText.GetBuffer());
-			csWindowText.Format("%sLease Obtained: \t%lld\r\n", csWindowText.GetBuffer(), m_vAdapterInfo[i].LeaseObtained);
-		}
-		else 
-			csWindowText.Format("%sDHCP Enable: \tNo\r\n", csWindowText.GetBuffer());
+			m_ipFilter = m_vAdapterInfo[i].IpAddressList.IpAddress.String;
+			wstring temp = m_ipFilter.GetBuffer();
+			inet_pton(AF_INET, UnicodeToMultiByte(temp).c_str(), &m_ulIPFilter);
 
-		if (m_vAdapterInfo[i].HaveWins) 
-		{
-			csWindowText.Format("%sHave Wins: \tYes\r\n", csWindowText.GetBuffer());
-			csWindowText.Format("%sPrimary Wins Server: \t%s\r\n", csWindowText.GetBuffer(), m_vAdapterInfo[i].PrimaryWinsServer.IpAddress.String);
-			csWindowText.Format("%sSecondary Wins Server: \t%s\r\n", csWindowText.GetBuffer(), m_vAdapterInfo[i].SecondaryWinsServer.IpAddress.String);
-		}
-		else
-			csWindowText.Format("%sHave Wins: \tNo\r\n", csWindowText.GetBuffer());
+			csWindowText.Format("Adapter Name: \t%s\r\n", m_vAdapterInfo[i].AdapterName);
+			csWindowText.Format("%sAdapter Desc: \t%s\r\n", csWindowText.GetBuffer(), m_vAdapterInfo[i].Description);
+			memcpy(p, m_vAdapterInfo[i].Address, 6);
+			csWindowText.Format("%sAdapter Addr: \t%X:%X:%X:%X:%X:%X\r\n", csWindowText.GetBuffer(),
+				p[0], p[1], p[2], p[3], p[4], p[5]);
+			csWindowText.Format("%sIP Addr: \t\t%s\r\n", csWindowText.GetBuffer(), m_vAdapterInfo[i].IpAddressList.IpAddress.String);
+			csWindowText.Format("%sIP Mask: \t\t%s\r\n", csWindowText.GetBuffer(), m_vAdapterInfo[i].IpAddressList.IpMask.String);
+			csWindowText.Format("%sIP Gateway: \t%s\r\n", csWindowText.GetBuffer(), m_vAdapterInfo[i].GatewayList.IpAddress.String);
+			if (m_vAdapterInfo[i].DhcpEnabled)
+			{
+				csWindowText.Format("%sDHCP Enable: \tYes\r\n", csWindowText.GetBuffer());
+				csWindowText.Format("%sLease Obtained: \t%lld\r\n", csWindowText.GetBuffer(), m_vAdapterInfo[i].LeaseObtained);
+			}
+			else
+				csWindowText.Format("%sDHCP Enable: \tNo\r\n", csWindowText.GetBuffer());
 
-		m_ctrlEditAdapterInfo.SetWindowText(CA2W(csWindowText));
+			if (m_vAdapterInfo[i].HaveWins)
+			{
+				csWindowText.Format("%sHave Wins: \tYes\r\n", csWindowText.GetBuffer());
+				csWindowText.Format("%sPrimary Wins Server: \t%s\r\n", csWindowText.GetBuffer(), m_vAdapterInfo[i].PrimaryWinsServer.IpAddress.String);
+				csWindowText.Format("%sSecondary Wins Server: \t%s\r\n", csWindowText.GetBuffer(), m_vAdapterInfo[i].SecondaryWinsServer.IpAddress.String);
+			}
+			else
+				csWindowText.Format("%sHave Wins: \tNo\r\n", csWindowText.GetBuffer());
+
+			m_ctrlEditAdapterInfo.SetWindowText(CA2W(csWindowText));
+		}
 	}
+	else
+	{
+		AfxMessageBox(_T("All Network Interfaces are disconnected. Please check your ethernet ports or WIFI adapters."));
+		OnBnClickedButtonStopLan();
+		OnBnClickedButtonStopSearchingOpenPorts();
+		OnBnClickedButtonStopPacket();
+	}
+}
+void CCheckOpenPortsDlg::EndProgram()
+{
+	m_bHasClickClose = TRUE;
+	m_pfnPtrStopLocalAreaListening();
+	m_ctrlBtnStopListening.EnableWindow(FALSE);
+	m_bStopPacketListener = true;
+	m_pfnPtrStopPacketListener();
+	m_ctrlBtnListenPackets.EnableWindow(TRUE);
+	m_ctrlBtnUnlistenPackets.EnableWindow(FALSE);
+	m_pfnPtrStopSearchingOpenPorts();
+	m_pfnPtrEndSNMP();
+
+	if (m_hThreadRouter)
+	{
+		WaitForSingleObject(m_hThreadRouter, INFINITE);
+		CloseHandle(m_hThreadRouter);
+	}
+	if (m_hThreadLANListener)
+	{
+		WaitForSingleObject(m_hThreadLANListener, INFINITE);
+		CloseHandle(m_hThreadLANListener);
+	}
+	if (m_hThreadUploadSpeedList)
+	{
+		WaitForSingleObject(m_hThreadUploadSpeedList, INFINITE);
+		CloseHandle(m_hThreadUploadSpeedList);
+	}
+	if (m_hThreadDownloadSpeedList)
+	{
+		WaitForSingleObject(m_hThreadDownloadSpeedList, INFINITE);
+		CloseHandle(m_hThreadDownloadSpeedList);
+	}
+	if (m_hThreadPacketListener)
+	{
+		WaitForSingleObject(m_hThreadPacketListener, INFINITE);
+		CloseHandle(m_hThreadPacketListener);
+	}
+	if (m_hThreadOpenPortListener)
+	{
+		WaitForSingleObject(m_hThreadOpenPortListener, INFINITE);
+		CloseHandle(m_hThreadOpenPortListener);
+	}
+	if (m_hThreadClock)
+	{
+		WaitForSingleObject(m_hThreadClock, INFINITE);
+		CloseHandle(m_hThreadClock);
+	}
+	if (m_hThreadNICListener)
+	{
+		WaitForSingleObject(m_hThreadNICListener, INFINITE);
+		CloseHandle(m_hThreadNICListener);
+	}
+	if (dll_handle)
+		FreeLibrary(dll_handle);
+	CDialog::OnClose();
 }
