@@ -475,7 +475,8 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	}
 	else
 	{
-		AfxMessageBox(_T("No network adapters found. The tool will now terminate"));
+		AfxMessageBox(_T("No network adapters found. Please check your ethernet cables or WIFI settings. This tool will now exit."), MB_ICONERROR);
+		OnOK();
 		return false;
 	}
 	CString csGateWay(szDefaultGateWay);
