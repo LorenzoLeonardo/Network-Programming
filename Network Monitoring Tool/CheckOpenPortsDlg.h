@@ -32,7 +32,7 @@
 using namespace std;
 
 #define MAX_PORT 65535
-
+#define POLLING_TIME 500
 #define WM_CLEAR_TREADS WM_USER + 1
 
 typedef  void(*LPEnumOpenPorts)(const char*, int, FuncFindOpenPort);
@@ -303,8 +303,6 @@ protected:
 	afx_msg void OnBnClickedButtonStopPacket();
 	afx_msg void OnBnClickedButtonShowPackets();
 	afx_msg LRESULT OnClearThreads(WPARAM wParam, LPARAM lParam);
-	afx_msg LRESULT OnUpdateDownloadSpeed(WPARAM wParam, LPARAM lParam);
-	afx_msg LRESULT OnUpdateUploadSpeed(WPARAM wParam, LPARAM lParam);
 	DECLARE_MESSAGE_MAP()
 
 	static void CallbackLANListener(const char* ipAddress, const char* hostName, const char* macAddress, bool bIsopen);

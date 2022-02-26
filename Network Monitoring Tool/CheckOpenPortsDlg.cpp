@@ -185,8 +185,6 @@ BEGIN_MESSAGE_MAP(CCheckOpenPortsDlg, CDialogEx)
 	ON_WM_LBUTTONDOWN()
 	ON_WM_MOVE()
 	ON_MESSAGE(WM_CLEAR_TREADS, OnClearThreads)
-	ON_MESSAGE(WM_UPDATE_DOWNSPEED, OnUpdateDownloadSpeed)
-	ON_MESSAGE(WM_UPDATE_UPSPEED, OnUpdateUploadSpeed)
 	ON_BN_CLICKED(IDC_CHECK_DEBUG, &CCheckOpenPortsDlg::OnBnClickedCheckDebug)
 	ON_CBN_SELCHANGE(IDC_COMBO_LIST_ADAPTER, &CCheckOpenPortsDlg::OnCbnSelchangeComboListAdapter)
 END_MESSAGE_MAP()
@@ -227,101 +225,7 @@ unsigned __stdcall  CCheckOpenPortsDlg::OpenPortListenerThread(void* parg)
 
 	return 0;
 }
-LRESULT CCheckOpenPortsDlg::OnUpdateDownloadSpeed(WPARAM wParam, LPARAM lParam)
-{
-	CDeviceConnected* pDevice = (CDeviceConnected*)wParam;
-	CString format;
 
-	LVFINDINFO lvFindInfo;
-	lvFindInfo.flags = LVFI_PARTIAL | LVFI_STRING;
-	lvFindInfo.psz = pDevice->m_szIPAddress;
-
-
-	LVITEM lvItem;
-	lvItem.mask = LVIF_TEXT;
-	int findResult = -1;
-
-	for (int i = 0; i < m_ctrlLANConnected.GetItemCount(); ++i)
-	{
-		CString szText = g_dlg->m_ctrlLANConnected.GetItemText(i, 1);
-		if (szText == pDevice->m_szIPAddress)
-		{
-			findResult = i;
-			break;
-		}
-	}
-
-	if (findResult != -1)
-	{
-		if (pDevice->m_lfDownloadSpeed <= 1000)
-			format.Format(_T("%.2f Kbps"), pDevice->m_lfDownloadSpeed);
-		else
-			format.Format(_T("%.2f Mbps"), pDevice->m_lfDownloadSpeed / 1000);
-		lvItem.iItem = findResult;
-		lvItem.iSubItem = 4;
-		lvItem.pszText = format.GetBuffer();
-		m_ctrlLANConnected.SetItem(&lvItem);
-
-		if (pDevice->m_lfMaxDownloadSpeed <= 1000)
-			format.Format(_T("%.2f Kbps"), pDevice->m_lfMaxDownloadSpeed);
-		else
-			format.Format(_T("%.2f Mbps"), pDevice->m_lfMaxDownloadSpeed / 1000);
-		lvItem.iItem = findResult;
-		lvItem.iSubItem = 6;
-		lvItem.pszText = format.GetBuffer();
-		m_ctrlLANConnected.SetItem(&lvItem);
-
-	}
-	return 0;
-}
-LRESULT CCheckOpenPortsDlg::OnUpdateUploadSpeed(WPARAM wParam, LPARAM lParam)
-{
-	CDeviceConnected* pDevice = (CDeviceConnected*)wParam;
-	CString format;
-
-	LVFINDINFO lvFindInfo;
-	lvFindInfo.flags = LVFI_PARTIAL | LVFI_STRING;
-	lvFindInfo.psz = pDevice->m_szIPAddress;
-
-
-	LVITEM lvItem;
-	lvItem.mask = LVIF_TEXT;
-	int findResult = -1;
-
-	for (int i = 0; i < m_ctrlLANConnected.GetItemCount(); ++i)
-	{
-		CString szText = g_dlg->m_ctrlLANConnected.GetItemText(i, 1);
-		if (szText == pDevice->m_szIPAddress)
-		{
-			findResult = i;
-			break;
-		}
-	}
-
-	if (findResult != -1)
-	{
-
-		if (pDevice->m_lfUploadSpeed <= 1000)
-			format.Format(_T("%.2f Kbps"), pDevice->m_lfUploadSpeed);
-		else
-			format.Format(_T("%.2f Mbps"), pDevice->m_lfUploadSpeed / 1000);
-		lvItem.iItem = findResult;
-		lvItem.iSubItem = 5;
-		lvItem.pszText = format.GetBuffer();
-		m_ctrlLANConnected.SetItem(&lvItem);
-
-		if (pDevice->m_lfMaxUploadSpeed <= 1000)
-			format.Format(_T("%.2f Kbps"), pDevice->m_lfMaxUploadSpeed);
-		else
-			format.Format(_T("%.2f Mbps"), pDevice->m_lfMaxUploadSpeed / 1000);
-		lvItem.iItem = findResult;
-		lvItem.iSubItem = 7;
-		lvItem.pszText = format.GetBuffer();
-		m_ctrlLANConnected.SetItem(&lvItem);
-
-	}
-	return 0;
-}
 LRESULT CCheckOpenPortsDlg::OnClearThreads(WPARAM wParam, LPARAM lParam)
 {
 	if (m_hThreadRouter)
