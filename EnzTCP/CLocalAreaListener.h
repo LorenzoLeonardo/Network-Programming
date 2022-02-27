@@ -19,6 +19,9 @@ public:
 	~CLocalAreaListener();
 	CallbackLocalAreaListener m_fnptrCallbackLocalAreaListener;
 	
+	static void MainThread(void* args);
+	static void MultiQueryingThread(void* args);
+
 	void Start();
 	void Stop();
 	string GetStartingIPAddress();

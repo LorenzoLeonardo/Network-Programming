@@ -43,7 +43,7 @@ map<thread*, int>* CLocalAreaListener::GetThreads()
 	return &m_mapThreads;
 }
 
-void MultiQueryingThread(void* args)
+void CLocalAreaListener::MultiQueryingThread(void* args)
 {
 	string* p = (string*)args;
 	string hostName;
@@ -58,13 +58,12 @@ void MultiQueryingThread(void* args)
 	p = NULL;
 }
 
-void MainThread(void* args)
+void CLocalAreaListener::MainThread(void* args)
 {
 	DEBUG_LOG("CLocalAreaListener: Thread Started.");
 	CLocalAreaListener* pCLocalAreaListener = (CLocalAreaListener*)args;
 	string ipAddressStart = pCLocalAreaListener->GetStartingIPAddress();
 	string subnetMask = pCLocalAreaListener->GetSubnetMask();
-	int nStart = atoi(ipAddressStart.substr(ipAddressStart.rfind('.', ipAddressStart.size())+1, ipAddressStart.size()).c_str());
 	int nPollTime = pCLocalAreaListener->GetPollingTime();
 	ULONG ulLimit = 0;
 
@@ -80,7 +79,6 @@ void MainThread(void* args)
 	ulStartingIP = ulIP & ulMask;//get the starting address
 	ulLimit = 0xFFFFFFFF - ulMask;//get the max limit of IPAddress that can be search within the subnet.
 
-	ipAddressStart = ipAddressStart.substr(0, ipAddressStart.rfind('.', ipAddressStart.size()) + 1);
 	pCLocalAreaListener->SetMainThreadHasStarted(TRUE);
 
 	char szIP[32];
@@ -93,7 +91,7 @@ void MainThread(void* args)
 		g_pCLocalAreaListener->m_fnptrCallbackLocalAreaListener("start", NULL,NULL, false);
 		for (int i = 1; i <= (ulLimit-1); i++)
 		{
-			ulTemp = ulIP + i;
+			ulTemp = ulStartingIP + i;
 			ulTemp = htonl(ulTemp);
 			inet_ntop(AF_INET, &ulTemp, szIP, sizeof(szIP));
 			string* str = new string;
