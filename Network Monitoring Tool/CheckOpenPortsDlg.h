@@ -320,7 +320,8 @@ protected:
 	static void CallBackEnumPort(char* ipAddress, int nPort, bool bIsopen, int nLastError);
 	static bool CallPacketListener(unsigned char* buffer, int nSize);
 	static void CallBackEnumAdapters(void*);
-	static bool CallbackPacketListenerEx(unsigned char* buffer, int nSize, void* pObject);
+	static bool CallbackPacketListenerDownloadEx(unsigned char* buffer, int nSize, void* pObject);
+	static bool CallbackPacketListenerUploadEx(unsigned char* buffer, int nSize, void* pObject);
 	static unsigned __stdcall  RouterThread(void* parg);
 	static unsigned __stdcall  DownloadSpeedThreadList(void* parg);
 	static unsigned __stdcall  UploadSpeedThreadList(void* parg);

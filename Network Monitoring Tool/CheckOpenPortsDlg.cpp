@@ -639,8 +639,10 @@ void CCheckOpenPortsDlg::OnClose()
 
 		while (it != m_mConnected.end())
 		{
-			m_fnptrStopPacketListenerEx(it->second->m_hPacketListener);
-			m_fnptrDeletePacketListenerEx(it->second->m_hPacketListener);
+			m_fnptrStopPacketListenerEx(it->second->m_hPacketListenerDownload);
+			m_fnptrDeletePacketListenerEx(it->second->m_hPacketListenerDownload);
+			m_fnptrStopPacketListenerEx(it->second->m_hPacketListenerUpload);
+			m_fnptrDeletePacketListenerEx(it->second->m_hPacketListenerUpload);
 
 			delete it->second;
 			it++;
@@ -1766,10 +1768,14 @@ void CCheckOpenPortsDlg::CallbackLANListenerEx(const char* ipAddress, const char
 			tDeviceDetails->m_lfMaxUploadSpeed = 0;
 			tDeviceDetails->m_ullDownloadStartTime = GetTickCount64();
 			tDeviceDetails->m_ullUploadStartTime = GetTickCount64();
-			tDeviceDetails->m_hPacketListener = g_dlg->m_fnptrCreatePacketListenerEx(CallbackPacketListenerEx, (void*)tDeviceDetails);
+			tDeviceDetails->m_hPacketListenerDownload = g_dlg->m_fnptrCreatePacketListenerEx(CallbackPacketListenerDownloadEx, (void*)tDeviceDetails);
+			tDeviceDetails->m_hPacketListenerUpload = g_dlg->m_fnptrCreatePacketListenerEx(CallbackPacketListenerUploadEx, (void*)tDeviceDetails);
 			
-			if(!g_dlg->m_bStopPacketListener)
-				g_dlg->m_fnptrStartPacketListenerEx(tDeviceDetails->m_hPacketListener);
+			if (!g_dlg->m_bStopPacketListener)
+			{
+				g_dlg->m_fnptrStartPacketListenerEx(tDeviceDetails->m_hPacketListenerDownload);
+				g_dlg->m_fnptrStartPacketListenerEx(tDeviceDetails->m_hPacketListenerUpload);
+			}
 
 			if (tDeviceDetails->m_szIPAddress == tDeviceDetails->m_szHostName)
 			{
@@ -2210,7 +2216,8 @@ void CCheckOpenPortsDlg::OnBnClickedButtonStartPacket()
 	map<ULONG, CDeviceConnected*>::iterator it = m_mConnected.begin();
 	while (it != m_mConnected.end())
 	{
-		m_fnptrStartPacketListenerEx(it->second->m_hPacketListener);
+		m_fnptrStartPacketListenerEx(it->second->m_hPacketListenerDownload);
+		m_fnptrStartPacketListenerEx(it->second->m_hPacketListenerUpload);
 		it++;
 	}
 	//m_bStart = true;
@@ -2227,7 +2234,8 @@ void CCheckOpenPortsDlg::OnBnClickedButtonStopPacket()
 	map<ULONG, CDeviceConnected*>::iterator it = m_mConnected.begin();
 	while (it != m_mConnected.end())
 	{
-		m_fnptrStopPacketListenerEx(it->second->m_hPacketListener);
+		m_fnptrStopPacketListenerEx(it->second->m_hPacketListenerDownload);
+		m_fnptrStopPacketListenerEx(it->second->m_hPacketListenerUpload);
 		it++;
 	}
 }
@@ -2577,7 +2585,41 @@ inline void CCheckOpenPortsDlg::DisplayUploadSpeed(CDeviceConnected* pDeviceConn
 	}
 }
 
-bool CCheckOpenPortsDlg::CallbackPacketListenerEx(unsigned char* buffer, int nSize, void* pObject)
+bool CCheckOpenPortsDlg::CallbackPacketListenerDownloadEx(unsigned char* buffer, int nSize, void* pObject)
+{
+	CDeviceConnected* pDevice = (CDeviceConnected*)pObject;
+	CString sourceIP, destIP;
+	int iphdrlen = 0;
+	IPV4_HDR* iphdr;
+	TCP_HDR* tcpheader = NULL;
+	UDP_HDR* udpheader = NULL;
+	char sztemp[32];
+
+	memset(sztemp, 0, sizeof(sztemp));
+	iphdr = (IPV4_HDR*)buffer;
+	iphdrlen = iphdr->ucIPHeaderLen * 4;
+	inet_ntop(AF_INET, (const void*)&iphdr->unDestaddress, sztemp, sizeof(sztemp));
+	destIP = sztemp;
+	inet_ntop(AF_INET, (const void*)&iphdr->unSrcaddress, sztemp, sizeof(sztemp));
+	sourceIP = sztemp;
+
+	ULONGLONG timeCurrent = GetTickCount64();
+	if (pDevice->m_szIPAddress == destIP)
+		pDevice->m_ulDataSizeDownload += nSize;
+
+	if ((timeCurrent - pDevice->m_ullDownloadStartTime) >= POLLING_TIME)
+	{
+		pDevice->m_lfDownloadSpeed = ((double)pDevice->m_ulDataSizeDownload / (double)(timeCurrent - pDevice->m_ullDownloadStartTime)) * 8;
+		if (pDevice->m_lfMaxDownloadSpeed < pDevice->m_lfDownloadSpeed)
+			pDevice->m_lfMaxDownloadSpeed = pDevice->m_lfDownloadSpeed;
+		pDevice->m_ulDataSizeDownload = 0;
+		g_dlg->DisplayDownloadSpeed(pDevice);
+		pDevice->m_ullDownloadStartTime = GetTickCount64();
+	}
+	return true;
+}
+
+bool CCheckOpenPortsDlg::CallbackPacketListenerUploadEx(unsigned char* buffer, int nSize, void* pObject)
 {
 	CDeviceConnected* pDevice = (CDeviceConnected*)pObject;
 	CString sourceIP, destIP;
@@ -2598,18 +2640,6 @@ bool CCheckOpenPortsDlg::CallbackPacketListenerEx(unsigned char* buffer, int nSi
 	ULONGLONG timeCurrent = GetTickCount64();
 	if (pDevice->m_szIPAddress == sourceIP)
 		pDevice->m_ulDataSizeUpload += nSize;
-	else if (pDevice->m_szIPAddress == destIP)
-		pDevice->m_ulDataSizeDownload += nSize;
-
-	if ((timeCurrent - pDevice->m_ullDownloadStartTime) >= POLLING_TIME)
-	{
-		pDevice->m_lfDownloadSpeed = ((double)pDevice->m_ulDataSizeDownload / (double)(timeCurrent - pDevice->m_ullDownloadStartTime)) * 8;
-		if (pDevice->m_lfMaxDownloadSpeed < pDevice->m_lfDownloadSpeed)
-			pDevice->m_lfMaxDownloadSpeed = pDevice->m_lfDownloadSpeed;
-		pDevice->m_ulDataSizeDownload = 0;
-		g_dlg->DisplayDownloadSpeed(pDevice);
-		pDevice->m_ullDownloadStartTime = GetTickCount64();
-	}
 
 	if ((timeCurrent - pDevice->m_ullUploadStartTime) >= POLLING_TIME)
 	{

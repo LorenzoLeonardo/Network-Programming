@@ -14,7 +14,8 @@ public:
     CString m_szMACAddress;
     ULONGLONG m_ullDownloadStartTime;
     ULONGLONG m_ullUploadStartTime;
-    HANDLE m_hPacketListener;
+    HANDLE m_hPacketListenerDownload;
+    HANDLE m_hPacketListenerUpload;
 
     CDeviceConnected();
     ~CDeviceConnected();

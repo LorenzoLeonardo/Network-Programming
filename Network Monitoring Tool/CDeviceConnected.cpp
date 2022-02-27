@@ -17,7 +17,7 @@ CDeviceConnected::CDeviceConnected()
     m_szMACAddress = _T("");
     m_ullDownloadStartTime = 0;
     m_ullUploadStartTime = 0;
-    m_hPacketListener = NULL;
+    m_hPacketListenerDownload = NULL;
 
 
 
@@ -40,6 +40,6 @@ CDeviceConnected CDeviceConnected::operator=(const CDeviceConnected& b)
     this->m_szMACAddress = b.m_szMACAddress;
     this->m_ullDownloadStartTime = b.m_ullDownloadStartTime;
     this->m_ullUploadStartTime = b.m_ullUploadStartTime;
-    this->m_hPacketListener = b.m_hPacketListener;
+    this->m_hPacketListenerDownload = b.m_hPacketListenerDownload;
     return *this;
 }
