@@ -8,7 +8,7 @@
 #include "CheckOpenPortsDlg.h"
 #include "afxdialogex.h"
 #include "CSaveDeviceInfoDlg.h"
-
+#include "../EnzTCP/DebugLog.h"
 
 CCheckOpenPortsDlg* g_dlg;
 
@@ -1766,8 +1766,7 @@ void CCheckOpenPortsDlg::CallbackLANListenerEx(const char* ipAddress, const char
 			tDeviceDetails->m_lfUploadSpeed = 0;
 			tDeviceDetails->m_lfMaxDownloadSpeed = 0;
 			tDeviceDetails->m_lfMaxUploadSpeed = 0;
-			tDeviceDetails->m_ullDownloadStartTime = GetTickCount64();
-			tDeviceDetails->m_ullUploadStartTime = GetTickCount64();
+			tDeviceDetails->m_ullDownloadStartTime = tDeviceDetails->m_ullUploadStartTime = GetTickCount64();
 			tDeviceDetails->m_hPacketListenerDownload = g_dlg->m_fnptrCreatePacketListenerEx(CallbackPacketListenerDownloadEx, (void*)tDeviceDetails);
 			tDeviceDetails->m_hPacketListenerUpload = g_dlg->m_fnptrCreatePacketListenerEx(CallbackPacketListenerUploadEx, (void*)tDeviceDetails);
 			
@@ -2588,7 +2587,7 @@ inline void CCheckOpenPortsDlg::DisplayUploadSpeed(CDeviceConnected* pDeviceConn
 bool CCheckOpenPortsDlg::CallbackPacketListenerDownloadEx(unsigned char* buffer, int nSize, void* pObject)
 {
 	CDeviceConnected* pDevice = (CDeviceConnected*)pObject;
-	CString sourceIP, destIP;
+	CString sourceIP, destIP, csText, csSrcPort, csDestPort, csReport;
 	int iphdrlen = 0;
 	IPV4_HDR* iphdr;
 	TCP_HDR* tcpheader = NULL;

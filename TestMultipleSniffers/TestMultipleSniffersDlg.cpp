@@ -134,36 +134,38 @@ BOOL CTestMultipleSniffersDlg::OnInitDialog()
 	obj->m_hPacketListener = m_fnptrCreatePacketListenerEx(CallbackPacketListenerEx, (void*)obj);
 	m_mapListConnected[obj->m_szIPAddress] = obj;
 
-
 	obj = new CDeviceConnected();
+
 	obj->m_ulDataSizeDownload = 0;
 	obj->m_ulDataSizeUpload = 0;
 	obj->m_lfDownloadSpeed = 0;
 	obj->m_lfUploadSpeed = 0;
 	obj->m_lfMaxDownloadSpeed = 0;
 	obj->m_lfMaxUploadSpeed = 0;
-	obj->m_szHostName = _T("192.168.0.109");
+	obj->m_szHostName = _T("192.168.0.101");
 	obj->m_szIPAddress = _T("192.168.0.109");
-	obj->m_szMACAddress = _T("192.168.0.109");
+	obj->m_szMACAddress = _T("192.168.0.101");
 	obj->m_ullDownloadStartTime = GetTickCount64();
 	obj->m_ullUploadStartTime = GetTickCount64();
 	obj->m_hPacketListener = m_fnptrCreatePacketListenerEx(CallbackPacketListenerEx, (void*)obj);
 	m_mapListConnected[obj->m_szIPAddress] = obj;
 
 	obj = new CDeviceConnected();
+
 	obj->m_ulDataSizeDownload = 0;
 	obj->m_ulDataSizeUpload = 0;
 	obj->m_lfDownloadSpeed = 0;
 	obj->m_lfUploadSpeed = 0;
 	obj->m_lfMaxDownloadSpeed = 0;
 	obj->m_lfMaxUploadSpeed = 0;
-	obj->m_szHostName = _T("192.168.0.102");
-	obj->m_szIPAddress = _T("192.168.0.102");
-	obj->m_szMACAddress = _T("192.168.0.102");
+	obj->m_szHostName = _T("192.168.0.101");
+	obj->m_szIPAddress = _T("192.168.0.104");
+	obj->m_szMACAddress = _T("192.168.0.101");
 	obj->m_ullDownloadStartTime = GetTickCount64();
 	obj->m_ullUploadStartTime = GetTickCount64();
 	obj->m_hPacketListener = m_fnptrCreatePacketListenerEx(CallbackPacketListenerEx, (void*)obj);
 	m_mapListConnected[obj->m_szIPAddress] = obj;
+	
 
 	/*CDeviceConnected* obj1 = new CDeviceConnected();
 
