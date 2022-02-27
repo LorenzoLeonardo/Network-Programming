@@ -196,8 +196,6 @@ bool CTestMultipleSniffersDlg::CallbackPacketListener(unsigned char* buffer, int
 	memset(sztemp, 0, sizeof(sztemp));
 	iphdr = (IPV4_HDR*)buffer;
 	iphdrlen = iphdr->ucIPHeaderLen * 4;
-
-
 	inet_ntop(AF_INET, (const void*)&iphdr->unDestaddress, sztemp, sizeof(sztemp));
 	destIP = sztemp;
 	inet_ntop(AF_INET, (const void*)&iphdr->unSrcaddress, sztemp, sizeof(sztemp));
@@ -210,10 +208,11 @@ bool CTestMultipleSniffersDlg::CallbackPacketListener(unsigned char* buffer, int
 		if ((timeCurrent - pDevice->m_ullUploadStartTime) >= 500)
 		{
 			pDevice->m_lfUploadSpeed = ((double)pDevice->m_ulDataSizeUpload / (double)(timeCurrent - pDevice->m_ullUploadStartTime)) * 8;
+			if (pDevice->m_lfMaxUploadSpeed < pDevice->m_lfUploadSpeed)
+				pDevice->m_lfMaxUploadSpeed = pDevice->m_lfUploadSpeed;
 			pDevice->m_ulDataSizeUpload = 0;
 			g_dlg->DisplayUploadSpeed(pDevice->m_szIPAddress, pDevice->m_lfDownloadSpeed);
 			pDevice->m_ullUploadStartTime = GetTickCount64();
-			
 		}
 	}
 	if (pDevice->m_szIPAddress == destIP)
@@ -223,6 +222,8 @@ bool CTestMultipleSniffersDlg::CallbackPacketListener(unsigned char* buffer, int
 		if ((timeCurrent - pDevice->m_ullDownloadStartTime) >= 500)
 		{
 			pDevice->m_lfDownloadSpeed = ((double)pDevice->m_ulDataSizeDownload / (double)(timeCurrent - pDevice->m_ullDownloadStartTime)) * 8;
+			if (pDevice->m_lfMaxDownloadSpeed < pDevice->m_lfDownloadSpeed)
+				pDevice->m_lfMaxDownloadSpeed = pDevice->m_lfDownloadSpeed;
 			pDevice->m_ulDataSizeDownload = 0;
 			g_dlg->DisplayDownloadSpeed(pDevice->m_szIPAddress, pDevice->m_lfDownloadSpeed);
 			pDevice->m_ullDownloadStartTime = GetTickCount64();

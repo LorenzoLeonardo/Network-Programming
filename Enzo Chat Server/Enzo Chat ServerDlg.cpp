@@ -137,7 +137,7 @@ UINT HandleClientThreadFunc(LPVOID pParam)
 		while (!(sData = pSocket->Receive()).empty())
 		{
 			string text = pSocket->GetIP();
-			text +="(" + to_string(pSocket->GetSocket()) + ")" + " : " + sData + "\r\n";
+			text +="(" + to_string(pSocket->GetSocket()) + ")" + " : " + sData+ "\r\n";
 			
 			CString csText(text.c_str());
 			g_dlgPtr->UpdateChatAreaText(csText);

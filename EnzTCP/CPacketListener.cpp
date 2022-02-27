@@ -55,7 +55,7 @@ void CPacketListener::PollingThread(void* args)
 	DEBUG_LOG("CPacketListener: Thread Started.");
 	CPacketListener* pListener = (CPacketListener*)args;
 	int nBytes = 0;
-	char* pBuffer = (char*)malloc(65536);
+	char* pBuffer = (char*)malloc(MAX_PACKET_SIZE);
 	unsigned char* upBuffer = NULL;
 	
 	if (pBuffer == NULL)
@@ -65,7 +65,7 @@ void CPacketListener::PollingThread(void* args)
 		nBytes = recvfrom(pListener->GetSocket(), pBuffer, 65536, 0, NULL, 0);
 		upBuffer = reinterpret_cast<unsigned char*> (pBuffer);
 		pListener->m_fnCallbackDisplay(upBuffer, nBytes);
-		memset(upBuffer, 0, 65536);
+		memset(upBuffer, 0, MAX_PACKET_SIZE);
 	} while ((nBytes > 0) && !pListener->IsStopped());
 
 	free(pBuffer);
@@ -81,7 +81,7 @@ unsigned _stdcall CPacketListener::PollingThreadEx(void* args)
 	DEBUG_LOG("CPacketListener: PollingThreadEx (" + to_string((ULONG_PTR)pListener->GetCustomObject()) + ") Thread Started.");
 	
 	int nBytes = 0;
-	char* pBuffer = (char*)malloc(65536);
+	char* pBuffer = (char*)malloc(MAX_PACKET_SIZE);
 	unsigned char* upBuffer = NULL;
 
 	if (pBuffer == NULL)
@@ -94,7 +94,7 @@ unsigned _stdcall CPacketListener::PollingThreadEx(void* args)
 		nBytes = recvfrom(pListener->GetSocket(), pBuffer, 65536, 0, NULL, 0);
 		upBuffer = reinterpret_cast<unsigned char*> (pBuffer);
 		pListener->m_fnCallbackDisplayEx(upBuffer, nBytes, pListener->GetCustomObject());
-		memset(upBuffer, 0, 65536);
+		memset(upBuffer, 0, MAX_PACKET_SIZE);
 	} while ((nBytes > 0) && (WaitForSingleObject(pListener->GetStopEventHandle(),0)!= WAIT_OBJECT_0));
 
 	free(pBuffer);

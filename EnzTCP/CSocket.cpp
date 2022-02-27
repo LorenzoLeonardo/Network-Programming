@@ -172,17 +172,27 @@ const char* CSocket::Receive()
     int iResult = 0;
     int nError = 0;
 
-    char recvbuf[MAX_BUFFER_SIZE];
+    char* recvbuf = NULL;
+    recvbuf = (char*)malloc(MAX_PACKET_SIZE);
 
-    memset(recvbuf, 0, sizeof(recvbuf));
+    if (recvbuf)
+    {
+        memset(recvbuf, 0, MAX_PACKET_SIZE);
 
-    iResult = recv(m_socket, recvbuf, sizeof(recvbuf), 0);
-    if (iResult == SOCKET_ERROR) {
-        nError = WSAGetLastError();
-        throw nError;
+        iResult = recv(m_socket, recvbuf, MAX_PACKET_SIZE, 0);
+        if (iResult == SOCKET_ERROR) {
+            nError = WSAGetLastError();
+            throw nError;
+        }
+        dataRecv = recvbuf;
+        free(recvbuf);
+        recvbuf = NULL;
+        return dataRecv.c_str();
     }
-    dataRecv = recvbuf;
-    return dataRecv.c_str();
+    else
+    {
+        return NULL;
+    }
 }
 void CSocket::Send(char* sendbuf)
 {

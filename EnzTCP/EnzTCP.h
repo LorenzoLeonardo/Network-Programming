@@ -22,7 +22,7 @@
 #include  <ws2tcpip.h>
 #include  <iphlpapi.h>
 
-#define MAX_BUFFER_SIZE 1024
+#define MAX_PACKET_SIZE 65536
 #define SIO_RCVALL _WSAIOW(IOC_VENDOR,1)
 #define ICMP_PROTOCOL 1 
 #define IGMP_PROTOCOL 2
