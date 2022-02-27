@@ -105,7 +105,18 @@ public:
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_CHECKOPENPORST_DIALOG };
 #endif
-	HMODULE dll_handle;
+	enum
+	{
+		COL_NUMBER =0,
+		COL_IPADDRESS,
+		COL_DEVICENAME,
+		COL_MACADDRESS,
+		COL_DOWNLOADSPEED,
+		COL_UPLOADSPEED,
+		COL_DOWNLOADMAXSPEED,
+		COL_UPLOADMAXSPEED
+	};
+	HMODULE m_hDLLhandle;
 	int m_nCurrentRowSelected;
 	HANDLE Handle[MAX_PORT];
 	CIPAddressCtrl m_ctrlIPAddress;
@@ -133,8 +144,8 @@ public:
 	void Increment();
 	int IsInTheList(CString csIPAddress);
 	void UpdateClock();
-	inline void DisplayUploadSpeed(CDeviceConnected* pDeviceConnected);
-	inline void DisplayDownloadSpeed(CDeviceConnected* pDeviceConnected);
+	inline void DisplayUploadSpeed(CString szIPAddress, int nColumn, double ldData);
+	inline void DisplayDownloadSpeed(CString szIPAddress, int nColumn, double ldData);
 	bool HasClickClose()
 	{
 		return m_bHasClickClose;
@@ -332,6 +343,7 @@ protected:
 	static unsigned __stdcall  NICListenerThread(void* parg);
 	// Generated message map functions
 	virtual BOOL OnInitDialog();
+	bool InitDLL();
 public:
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	CStatic m_ctrlStaticLogo;
