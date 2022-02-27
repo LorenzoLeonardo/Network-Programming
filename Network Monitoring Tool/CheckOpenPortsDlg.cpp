@@ -2599,9 +2599,9 @@ bool CCheckOpenPortsDlg::CallbackPacketListenerDownloadEx(unsigned char* buffer,
 	iphdr = (IPV4_HDR*)buffer;
 	iphdrlen = iphdr->ucIPHeaderLen * 4;
 	inet_ntop(AF_INET, (const void*)&iphdr->unDestaddress, sztemp, sizeof(sztemp));
-	destIP = sztemp;
+	destIP = CA2W(sztemp);
 	inet_ntop(AF_INET, (const void*)&iphdr->unSrcaddress, sztemp, sizeof(sztemp));
-	sourceIP = sztemp;
+	sourceIP = CA2W(sztemp);
 
 	ULONGLONG timeCurrent = GetTickCount64();
 	if (pDevice->m_szIPAddress == destIP)
@@ -2633,9 +2633,9 @@ bool CCheckOpenPortsDlg::CallbackPacketListenerUploadEx(unsigned char* buffer, i
 	iphdr = (IPV4_HDR*)buffer;
 	iphdrlen = iphdr->ucIPHeaderLen * 4;
 	inet_ntop(AF_INET, (const void*)&iphdr->unDestaddress, sztemp, sizeof(sztemp));
-	destIP = sztemp;
+	destIP = CA2W(sztemp);
 	inet_ntop(AF_INET, (const void*)&iphdr->unSrcaddress, sztemp, sizeof(sztemp));
-	sourceIP = sztemp;
+	sourceIP = CA2W(sztemp);
 
 	ULONGLONG timeCurrent = GetTickCount64();
 	if (pDevice->m_szIPAddress == sourceIP)

@@ -32,7 +32,7 @@
 using namespace std;
 
 #define MAX_PORT 65535
-#define POLLING_TIME 1000
+#define POLLING_TIME 500
 #define WM_CLEAR_TREADS WM_USER + 1
 
 typedef  void(*LPEnumOpenPorts)(const char*, int, FuncFindOpenPort);

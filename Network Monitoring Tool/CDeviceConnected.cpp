@@ -18,7 +18,7 @@ CDeviceConnected::CDeviceConnected()
     m_ullDownloadStartTime = 0;
     m_ullUploadStartTime = 0;
     m_hPacketListenerDownload = NULL;
-
+    m_hPacketListenerUpload = NULL;
 
 
 }
@@ -41,5 +41,6 @@ CDeviceConnected CDeviceConnected::operator=(const CDeviceConnected& b)
     this->m_ullDownloadStartTime = b.m_ullDownloadStartTime;
     this->m_ullUploadStartTime = b.m_ullUploadStartTime;
     this->m_hPacketListenerDownload = b.m_hPacketListenerDownload;
+    this->m_hPacketListenerUpload = b.m_hPacketListenerUpload;
     return *this;
 }
