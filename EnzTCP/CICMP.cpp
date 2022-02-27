@@ -363,7 +363,7 @@ bool CICMP::CheckDevice(string ipAddress, string& hostname, string& sMacAddress)
             inet_ntop(AF_INET, &ipDest, szIP, sizeof(szIP));
             string sIP(szIP);
 
-            DEBUG_LOG("CICMP::CheckDevice(): SendARP("+ sIP +") Error:"+to_string(dwRetVal));
+           // DEBUG_LOG("CICMP::CheckDevice(): SendARP("+ sIP +") Error:"+to_string(dwRetVal));
             bRet = false;
         }
    // }
@@ -446,7 +446,7 @@ bool CICMP::CheckDevice(string ipAddress, string& hostname, string& sMacAddress,
         inet_ntop(AF_INET, &ipDest, szIP, sizeof(szIP));
         string sIP(szIP);
 
-        DEBUG_LOG("CICMP::CheckDevice(): SendARP(" + sIP + ") Error:" + to_string(dwRetVal));
+        //DEBUG_LOG("CICMP::CheckDevice(): SendARP(" + sIP + ") Error:" + to_string(dwRetVal));
         bRet = false;
     }
     return bRet;

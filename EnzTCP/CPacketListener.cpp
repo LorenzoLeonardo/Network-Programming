@@ -62,7 +62,7 @@ void CPacketListener::PollingThread(void* args)
 		return;
 	do
 	{
-		nBytes = recvfrom(pListener->GetSocket(), pBuffer, 65536, 0, NULL, 0);
+		nBytes = recvfrom(pListener->GetSocket(), pBuffer, MAX_PACKET_SIZE, 0, NULL, 0);
 		upBuffer = reinterpret_cast<unsigned char*> (pBuffer);
 		pListener->m_fnCallbackDisplay(upBuffer, nBytes);
 		memset(upBuffer, 0, MAX_PACKET_SIZE);
@@ -78,7 +78,7 @@ void CPacketListener::PollingThread(void* args)
 unsigned _stdcall CPacketListener::PollingThreadEx(void* args)
 {
 	CPacketListener* pListener = (CPacketListener*)args;
-	DEBUG_LOG("CPacketListener: PollingThreadEx (" + to_string((ULONG_PTR)pListener->GetCustomObject()) + ") Thread Started.");
+	DEBUG_LOG("CPacketListener: PollingThreadEx (" + to_string((ULONG_PTR)pListener->m_pObject) + ") Thread Started.");
 	
 	int nBytes = 0;
 	char* pBuffer = (char*)malloc(MAX_PACKET_SIZE);
@@ -86,21 +86,21 @@ unsigned _stdcall CPacketListener::PollingThreadEx(void* args)
 
 	if (pBuffer == NULL)
 	{
-		SetEvent(pListener->GetWaitEventHandle());
+		SetEvent(pListener->m_hWaitThread);
 		return 0;
 	}
 	do
 	{
-		nBytes = recvfrom(pListener->GetSocket(), pBuffer, 65536, 0, NULL, 0);
+		nBytes = recvfrom(pListener->GetSocket(), pBuffer, MAX_PACKET_SIZE, 0, NULL, 0);
 		upBuffer = reinterpret_cast<unsigned char*> (pBuffer);
-		pListener->m_fnCallbackDisplayEx(upBuffer, nBytes, pListener->GetCustomObject());
+		pListener->m_fnCallbackDisplayEx(upBuffer, nBytes, pListener->m_pObject);
 		memset(upBuffer, 0, MAX_PACKET_SIZE);
-	} while ((nBytes > 0) && (WaitForSingleObject(pListener->GetStopEventHandle(),0)!= WAIT_OBJECT_0));
+	} while ((nBytes > 0) && (WaitForSingleObject(pListener->m_hStopThread,0)!= WAIT_OBJECT_0));
 
 	free(pBuffer);
 	pBuffer = NULL;
-	DEBUG_LOG("CPacketListener: PollingThreadEx ("+ to_string((ULONG_PTR)pListener->GetCustomObject()) + ") Thread Ended.");
-	SetEvent(pListener->GetWaitEventHandle());
+	DEBUG_LOG("CPacketListener: PollingThreadEx ("+ to_string((ULONG_PTR)pListener->m_pObject) + ") Thread Ended.");
+	SetEvent(pListener->m_hWaitThread);
 	return 0;
 }
 

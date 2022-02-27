@@ -133,8 +133,8 @@ public:
 	void Increment();
 	int IsInTheList(CString csIPAddress);
 	void UpdateClock();
-	void DisplayUploadSpeed(CDeviceConnected* pDeviceConnected);
-	void DisplayDownloadSpeed(CDeviceConnected* pDeviceConnected);
+	inline void DisplayUploadSpeed(CDeviceConnected* pDeviceConnected);
+	inline void DisplayDownloadSpeed(CDeviceConnected* pDeviceConnected);
 	bool HasClickClose()
 	{
 		return m_bHasClickClose;

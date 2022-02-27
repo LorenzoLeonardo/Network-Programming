@@ -2489,7 +2489,7 @@ void CCheckOpenPortsDlg::EndProgram()
 	CDialog::OnClose();
 }
 
-void CCheckOpenPortsDlg::DisplayDownloadSpeed(CDeviceConnected* pDeviceConnected)
+inline void CCheckOpenPortsDlg::DisplayDownloadSpeed(CDeviceConnected* pDeviceConnected)
 {
 	CString csFormat;
 	LVFINDINFO lvFindInfo;
@@ -2509,7 +2509,7 @@ void CCheckOpenPortsDlg::DisplayDownloadSpeed(CDeviceConnected* pDeviceConnected
 			break;
 		}
 	}
-	if (IsInTheList(pDeviceConnected->m_szIPAddress)!=-1)
+	if (findResult != -1)
 	{
 		if (pDeviceConnected->m_lfDownloadSpeed <= 1000)
 			csFormat.Format(_T("%.2lf Kbps"), pDeviceConnected->m_lfDownloadSpeed);
@@ -2533,7 +2533,7 @@ void CCheckOpenPortsDlg::DisplayDownloadSpeed(CDeviceConnected* pDeviceConnected
 	}
 }
 
-void CCheckOpenPortsDlg::DisplayUploadSpeed(CDeviceConnected* pDeviceConnected)
+inline void CCheckOpenPortsDlg::DisplayUploadSpeed(CDeviceConnected* pDeviceConnected)
 {
 	CString csFormat;
 	LVFINDINFO lvFindInfo;
@@ -2595,33 +2595,30 @@ bool CCheckOpenPortsDlg::CallbackPacketListenerEx(unsigned char* buffer, int nSi
 	inet_ntop(AF_INET, (const void*)&iphdr->unSrcaddress, sztemp, sizeof(sztemp));
 	sourceIP = sztemp;
 
+	ULONGLONG timeCurrent = GetTickCount64();
 	if (pDevice->m_szIPAddress == sourceIP)
-	{
 		pDevice->m_ulDataSizeUpload += nSize;
-		ULONGLONG timeCurrent = GetTickCount64();
-		if ((timeCurrent - pDevice->m_ullUploadStartTime) >= POLLING_TIME)
-		{
-			pDevice->m_lfUploadSpeed = ((double)pDevice->m_ulDataSizeUpload / (double)(timeCurrent - pDevice->m_ullUploadStartTime)) * 8;
-			if (pDevice->m_lfMaxUploadSpeed < pDevice->m_lfUploadSpeed)
-				pDevice->m_lfMaxUploadSpeed = pDevice->m_lfUploadSpeed;
-			pDevice->m_ulDataSizeUpload = 0;
-			pDevice->m_ullUploadStartTime = GetTickCount64();
-			g_dlg->DisplayUploadSpeed(pDevice);
-		}
-	}
 	else if (pDevice->m_szIPAddress == destIP)
-	{
 		pDevice->m_ulDataSizeDownload += nSize;
-		ULONGLONG timeCurrent = GetTickCount64();
-		if ((timeCurrent - pDevice->m_ullDownloadStartTime) >= POLLING_TIME)
-		{
-			pDevice->m_lfDownloadSpeed = ((double)pDevice->m_ulDataSizeDownload / (double)(timeCurrent - pDevice->m_ullDownloadStartTime)) * 8;
-			if (pDevice->m_lfMaxDownloadSpeed < pDevice->m_lfDownloadSpeed)
-				pDevice->m_lfMaxDownloadSpeed = pDevice->m_lfDownloadSpeed;
-			pDevice->m_ulDataSizeDownload = 0;
-			pDevice->m_ullDownloadStartTime = GetTickCount64();
-			g_dlg->DisplayDownloadSpeed(pDevice);
-		}
+
+	if ((timeCurrent - pDevice->m_ullDownloadStartTime) >= POLLING_TIME)
+	{
+		pDevice->m_lfDownloadSpeed = ((double)pDevice->m_ulDataSizeDownload / (double)(timeCurrent - pDevice->m_ullDownloadStartTime)) * 8;
+		if (pDevice->m_lfMaxDownloadSpeed < pDevice->m_lfDownloadSpeed)
+			pDevice->m_lfMaxDownloadSpeed = pDevice->m_lfDownloadSpeed;
+		pDevice->m_ulDataSizeDownload = 0;
+		g_dlg->DisplayDownloadSpeed(pDevice);
+		pDevice->m_ullDownloadStartTime = GetTickCount64();
+	}
+
+	if ((timeCurrent - pDevice->m_ullUploadStartTime) >= POLLING_TIME)
+	{
+		pDevice->m_lfUploadSpeed = ((double)pDevice->m_ulDataSizeUpload / (double)(timeCurrent - pDevice->m_ullUploadStartTime)) * 8;
+		if (pDevice->m_lfMaxUploadSpeed < pDevice->m_lfUploadSpeed)
+			pDevice->m_lfMaxUploadSpeed = pDevice->m_lfUploadSpeed;
+		pDevice->m_ulDataSizeUpload = 0;
+		g_dlg->DisplayUploadSpeed(pDevice);
+		pDevice->m_ullUploadStartTime = GetTickCount64();
 	}
 	return true;
 }

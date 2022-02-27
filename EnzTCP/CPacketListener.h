@@ -44,17 +44,5 @@ public :
 	{
 		return m_threadListening;
 	}
-	void* GetCustomObject()
-	{
-		return m_pObject;
-	}
-	HANDLE GetStopEventHandle()
-	{
-		return m_hStopThread;
-	}
-	HANDLE GetWaitEventHandle()
-	{
-		return m_hWaitThread;
-	}
 };
 
