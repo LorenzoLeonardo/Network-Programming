@@ -131,7 +131,7 @@ BOOL CTestMultipleSniffersDlg::OnInitDialog()
 	obj->m_szMACAddress = _T("192.168.0.101");
 	obj->m_ullDownloadStartTime = GetTickCount64();
 	obj->m_ullUploadStartTime = GetTickCount64();
-	obj->m_hPacketListener = m_fnptrCreatePacketListenerEx(CallbackPacketListener, (void*)obj);
+	obj->m_hPacketListener = m_fnptrCreatePacketListenerEx(CallbackPacketListenerEx, (void*)obj);
 	m_mapListConnected[obj->m_szIPAddress] = obj;
 
 
@@ -147,7 +147,7 @@ BOOL CTestMultipleSniffersDlg::OnInitDialog()
 	obj->m_szMACAddress = _T("192.168.0.109");
 	obj->m_ullDownloadStartTime = GetTickCount64();
 	obj->m_ullUploadStartTime = GetTickCount64();
-	obj->m_hPacketListener = m_fnptrCreatePacketListenerEx(CallbackPacketListener, (void*)obj);
+	obj->m_hPacketListener = m_fnptrCreatePacketListenerEx(CallbackPacketListenerEx, (void*)obj);
 	m_mapListConnected[obj->m_szIPAddress] = obj;
 
 	obj = new CDeviceConnected();
@@ -162,7 +162,7 @@ BOOL CTestMultipleSniffersDlg::OnInitDialog()
 	obj->m_szMACAddress = _T("192.168.0.102");
 	obj->m_ullDownloadStartTime = GetTickCount64();
 	obj->m_ullUploadStartTime = GetTickCount64();
-	obj->m_hPacketListener = m_fnptrCreatePacketListenerEx(CallbackPacketListener, (void*)obj);
+	obj->m_hPacketListener = m_fnptrCreatePacketListenerEx(CallbackPacketListenerEx, (void*)obj);
 	m_mapListConnected[obj->m_szIPAddress] = obj;
 
 	/*CDeviceConnected* obj1 = new CDeviceConnected();
@@ -179,11 +179,11 @@ BOOL CTestMultipleSniffersDlg::OnInitDialog()
 	obj1->m_ullDownloadStartTime = GetTickCount64();
 	obj1->m_ullUploadStartTime = GetTickCount64();
 
-	m_hPacketHandle2 = m_fnptrCreatePacketListenerEx(CallbackPacketListener, (void*)obj);*/
+	m_hPacketHandle2 = m_fnptrCreatePacketListenerEx(CallbackPacketListenerEx, (void*)obj);*/
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
-bool CTestMultipleSniffersDlg::CallbackPacketListener(unsigned char* buffer, int nSize, void* pObject)
+bool CTestMultipleSniffersDlg::CallbackPacketListenerEx(unsigned char* buffer, int nSize, void* pObject)
 {
 	CDeviceConnected* pDevice = (CDeviceConnected*)pObject;
 	CString sourceIP, destIP;
@@ -211,7 +211,7 @@ bool CTestMultipleSniffersDlg::CallbackPacketListener(unsigned char* buffer, int
 			if (pDevice->m_lfMaxUploadSpeed < pDevice->m_lfUploadSpeed)
 				pDevice->m_lfMaxUploadSpeed = pDevice->m_lfUploadSpeed;
 			pDevice->m_ulDataSizeUpload = 0;
-			g_dlg->DisplayUploadSpeed(pDevice->m_szIPAddress, pDevice->m_lfDownloadSpeed);
+			g_dlg->DisplayUploadSpeed(pDevice);
 			pDevice->m_ullUploadStartTime = GetTickCount64();
 		}
 	}
@@ -225,30 +225,30 @@ bool CTestMultipleSniffersDlg::CallbackPacketListener(unsigned char* buffer, int
 			if (pDevice->m_lfMaxDownloadSpeed < pDevice->m_lfDownloadSpeed)
 				pDevice->m_lfMaxDownloadSpeed = pDevice->m_lfDownloadSpeed;
 			pDevice->m_ulDataSizeDownload = 0;
-			g_dlg->DisplayDownloadSpeed(pDevice->m_szIPAddress, pDevice->m_lfDownloadSpeed);
+			g_dlg->DisplayDownloadSpeed(pDevice);
 			pDevice->m_ullDownloadStartTime = GetTickCount64();
 		}
 	}
 	return true;
 }
 
-void CTestMultipleSniffersDlg::DisplayDownloadSpeed(CString ipAddress, double ldDownloadSpeed)
+void CTestMultipleSniffersDlg::DisplayDownloadSpeed(CDeviceConnected* pDeviceConnected)
 {
 	CString csFormat;
-	if (ldDownloadSpeed <= 1000)
-		csFormat.Format(_T("%.2lf Kbps"), ldDownloadSpeed);
+	if (pDeviceConnected->m_lfDownloadSpeed <= 1000)
+		csFormat.Format(_T("%.2lf Kbps"), pDeviceConnected->m_lfDownloadSpeed);
 	else
-		csFormat.Format(_T("%.2lf Mbps"), ldDownloadSpeed / 1000);
+		csFormat.Format(_T("%.2lf Mbps"), pDeviceConnected->m_lfDownloadSpeed / 1000);
 	m_ctrlEdit1.SetWindowText(csFormat);
 }
 
-void CTestMultipleSniffersDlg::DisplayUploadSpeed(CString ipAddress, double ldUploadSpeed)
+void CTestMultipleSniffersDlg::DisplayUploadSpeed(CDeviceConnected *pDeviceConnected)
 {
 	CString csFormat;
-	if (ldUploadSpeed <= 1000)
-		csFormat.Format(_T("%.2lf Kbps"), ldUploadSpeed);
+	if (pDeviceConnected->m_lfUploadSpeed <= 1000)
+		csFormat.Format(_T("%.2lf Kbps"), pDeviceConnected->m_lfUploadSpeed);
 	else
-		csFormat.Format(_T("%.2lf Mbps"), ldUploadSpeed / 1000);
+		csFormat.Format(_T("%.2lf Mbps"), pDeviceConnected->m_lfUploadSpeed / 1000);
 	m_ctrlEdit2.SetWindowText(csFormat);
 }
 

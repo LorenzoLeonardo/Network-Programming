@@ -32,7 +32,7 @@
 using namespace std;
 
 #define MAX_PORT 65535
-#define POLLING_TIME 500
+#define POLLING_TIME 1000
 #define WM_CLEAR_TREADS WM_USER + 1
 
 typedef  void(*LPEnumOpenPorts)(const char*, int, FuncFindOpenPort);
@@ -49,6 +49,10 @@ typedef bool (*FNStartPacketListener)(FNCallbackPacketListener);
 typedef void (*FNStopPacketListener)();
 typedef bool (*FNGetNetworkDeviceStatus)(const char* ipAddress, char* hostname, int nSizeHostName, char* macAddress, int nSizeMacAddress, DWORD * pError);
 typedef bool (*FNEnumNetworkAdapters)(FuncAdapterList);
+typedef HANDLE(*FNPTRCreatePacketListenerEx)(FNCallbackPacketListenerEx, void*);
+typedef bool (*FNPTRStartPacketListenerEx)(HANDLE);
+typedef void (*FNPTRStopPacketListenerEx)(HANDLE);
+typedef void (*FNPTRDeletePacketListenerEx)(HANDLE);
 
 inline void GetLastErrorMessageString(_tstring& str, int nGetLastError);
 template <typename Map>
@@ -92,6 +96,10 @@ public:
 	FNGetNetworkDeviceStatus m_pfnPtrGetNetworkDeviceStatus;
 	FNEnumNetworkAdapters m_pfnPtrEnumNetworkAdapters;
 	FNGetDefaultGatewayEx m_pfnPtrGetDefaultGatewayEx;
+	FNPTRCreatePacketListenerEx m_fnptrCreatePacketListenerEx;
+	FNPTRStartPacketListenerEx m_fnptrStartPacketListenerEx;
+	FNPTRStopPacketListenerEx m_fnptrStopPacketListenerEx;
+	FNPTRDeletePacketListenerEx m_fnptrDeletePacketListenerEx;
 	CPacketInfoDlg* m_pmodeless;
 // Dialog Data
 #ifdef AFX_DESIGN_TIME
@@ -103,7 +111,7 @@ public:
 	CIPAddressCtrl m_ctrlIPAddress;
 	CEdit m_ctrlResult;
 	CListCtrlCustom m_ctrlLANConnected;
-	map<ULONG, CDeviceConnected> m_mConnected;
+	map<ULONG, CDeviceConnected*> m_mConnected;
 	map<ULONG, CDeviceConnected> m_mConnectedBefore;
 	vector<IP_ADAPTER_INFO> m_vAdapterInfo;
 	CEdit m_ctrlEditPacketReportArea;
@@ -123,8 +131,10 @@ public:
 	inline string UnicodeToMultiByte(wstring& wstr);
 	inline wstring MultiByteToUnicode(string& wstr);
 	void Increment();
-	bool IsInTheList(CString csIPAddress);
+	int IsInTheList(CString csIPAddress);
 	void UpdateClock();
+	void DisplayUploadSpeed(CDeviceConnected* pDeviceConnected);
+	void DisplayDownloadSpeed(CDeviceConnected* pDeviceConnected);
 	bool HasClickClose()
 	{
 		return m_bHasClickClose;
@@ -306,10 +316,11 @@ protected:
 	DECLARE_MESSAGE_MAP()
 
 	static void CallbackLANListener(const char* ipAddress, const char* hostName, const char* macAddress, bool bIsopen);
+	static void CallbackLANListenerEx(const char* ipAddress, const char* hostName, const char* macAddress, bool bIsopen);
 	static void CallBackEnumPort(char* ipAddress, int nPort, bool bIsopen, int nLastError);
 	static bool CallPacketListener(unsigned char* buffer, int nSize);
 	static void CallBackEnumAdapters(void*);
-	
+	static bool CallbackPacketListenerEx(unsigned char* buffer, int nSize, void* pObject);
 	static unsigned __stdcall  RouterThread(void* parg);
 	static unsigned __stdcall  DownloadSpeedThreadList(void* parg);
 	static unsigned __stdcall  UploadSpeedThreadList(void* parg);

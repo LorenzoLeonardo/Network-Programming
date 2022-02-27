@@ -56,10 +56,10 @@ public:
 	HANDLE m_hPacketHandle2;
 
 
-	static bool CallbackPacketListener(unsigned char* buffer, int nSize, void* pObject);
+	static bool CallbackPacketListenerEx(unsigned char* buffer, int nSize, void* pObject);
 	
-	void DisplayDownloadSpeed(CString ipAddress, double ldDownloadSpeed);
-	void DisplayUploadSpeed(CString ipAddress, double ldUploadSpeed);
+	void DisplayDownloadSpeed(CDeviceConnected* pDeviceConnected);
+	void DisplayUploadSpeed(CDeviceConnected *pDeviceConnected);
 
 	afx_msg void OnBnClickedButtonStartStop();
 	afx_msg void OnClose();
