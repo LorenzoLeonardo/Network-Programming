@@ -2195,8 +2195,6 @@ bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 			}
 		}
 	}
-	g_dlg->SetDownloadSize(iphdr->unDestaddress, g_dlg->GetDownloadSize(iphdr->unDestaddress) + nSize);
-	g_dlg->SetUploadSize(iphdr->unSrcaddress, g_dlg->GetUploadSize(iphdr->unSrcaddress) + nSize);
 
 	if (g_dlg->GetIPFilterULONG() == iphdr->unDestaddress)
 	{
@@ -2225,13 +2223,13 @@ void CCheckOpenPortsDlg::OnBnClickedButtonStartPacket()
 	m_ctrlBtnListenPackets.EnableWindow(FALSE);
 	m_ctrlBtnUnlistenPackets.EnableWindow(TRUE);
 
-/*	if (m_hThreadPacketListener)
+	if (m_hThreadPacketListener)
 	{
 		WaitForSingleObject(m_hThreadPacketListener, INFINITE);
 		CloseHandle(m_hThreadPacketListener);
 		m_hThreadPacketListener = NULL;
 	}
-	m_hThreadPacketListener = (HANDLE)_beginthreadex(NULL, 0, PacketListenerThread, this, 0, NULL);*/
+	m_hThreadPacketListener = (HANDLE)_beginthreadex(NULL, 0, PacketListenerThread, this, 0, NULL);
 
 	map<ULONG, CDeviceConnected*>::iterator it = m_mConnected.begin();
 	while (it != m_mConnected.end())
@@ -2248,7 +2246,7 @@ void CCheckOpenPortsDlg::OnBnClickedButtonStopPacket()
 {
 	// TODO: Add your control notification handler code here
 	m_bStopPacketListener = true;
-	//m_pfnPtrStopPacketListener();
+	m_pfnPtrStopPacketListener();
 	m_ctrlBtnListenPackets.EnableWindow(TRUE);
 	m_ctrlBtnUnlistenPackets.EnableWindow(FALSE);
 	map<ULONG, CDeviceConnected*>::iterator it = m_mConnected.begin();
