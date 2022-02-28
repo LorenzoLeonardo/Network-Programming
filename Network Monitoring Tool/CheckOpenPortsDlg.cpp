@@ -94,7 +94,6 @@ CCheckOpenPortsDlg::CCheckOpenPortsDlg(CWnd* pParent /*=nullptr*/)
 	m_bHasClickClose = FALSE;
 	m_hDLLhandle = NULL;
 
-	
 	m_hThreadDownloadSpeedList = NULL;
 	m_hThreadRouter = NULL;
 	m_hThreadUploadSpeedList = NULL;
@@ -104,6 +103,7 @@ CCheckOpenPortsDlg::CCheckOpenPortsDlg(CWnd* pParent /*=nullptr*/)
 	m_hThreadOpenPortListener = NULL;
 	m_hThreadNICListener = NULL;
 
+	//m_pTemp = new CDeviceConnected();
 	m_bOnCloseWasCalled = false;
 	m_hBrushBackGround = CreateSolidBrush(RGB(93, 107, 153));
 	m_hBrushEditArea = CreateSolidBrush(RGB(255, 255, 255));
@@ -802,17 +802,35 @@ void CCheckOpenPortsDlg::OnNMDblclkListLan(NMHDR* pNMHDR, LRESULT* pResult)
 
 	if (pNMItemActivate->iItem >= 0)
 	{
+
+		OnBnClickedButtonStopPacket();
+
 		CSaveDeviceInfoDlg saveDlg;
+		CString csIP = m_ctrlLANConnected.GetItemText(pNMItemActivate->iItem, 1);
+		ULONG ulIP;
 		
-		saveDlg.SetInformation(m_ctrlLANConnected.GetItemText(pNMItemActivate->iItem, 1),
+		inet_pton(AF_INET, CW2A(csIP.GetBuffer()), &ulIP);
+	
+		
+		saveDlg.m_fnptrCreatePacketListenerEx = m_fnptrCreatePacketListenerEx;
+		saveDlg.m_fnptrStartPacketListenerEx = m_fnptrStartPacketListenerEx;
+		saveDlg.m_fnptrStopPacketListenerEx = m_fnptrStopPacketListenerEx;
+		saveDlg.m_fnptrDeletePacketListenerEx = m_fnptrDeletePacketListenerEx;
+
+		saveDlg.SetInformation(csIP,
 			m_ctrlLANConnected.GetItemText(pNMItemActivate->iItem, 3),
 			m_ctrlLANConnected.GetItemText(pNMItemActivate->iItem, 2));
 
 		INT_PTR nPtr = saveDlg.DoModal();
 		if (nPtr == IDOK)
 		{
-			m_ctrlLANConnected.SetItemText(pNMItemActivate->iItem, 2, saveDlg.GetDeviceName());
+			if (m_mConnected.find(ulIP) != m_mConnected.end())
+			{
+				m_mConnected[ulIP]->m_szHostName = saveDlg.GetDeviceName();
+				m_ctrlLANConnected.SetItemText(pNMItemActivate->iItem, 2, saveDlg.GetDeviceName());
+			}
 		}
+		OnBnClickedButtonStartPacket();
 	}
 }
 
@@ -2041,10 +2059,13 @@ void CCheckOpenPortsDlg::CallbackLANListenerEx(const char* ipAddress, const char
 					g_dlg->m_fnptrStopPacketListenerEx(g_dlg->m_mConnected[ipaddr]->m_hPacketListenerUpload);
 					g_dlg->m_fnptrDeletePacketListenerEx(g_dlg->m_mConnected[ipaddr]->m_hPacketListenerDownload);
 					g_dlg->m_fnptrDeletePacketListenerEx(g_dlg->m_mConnected[ipaddr]->m_hPacketListenerUpload);
-					
-					delete g_dlg->m_mConnected[ipaddr];
-					g_dlg->m_mConnected.erase(ipaddr);
-					//g_dlg->m_ctrlLANConnected.RedrawWindow();
+
+						CDeviceConnected* pDevice;
+						pDevice = g_dlg->m_mConnected[ipaddr];
+						g_dlg->m_mConnected[ipaddr] = NULL;
+						delete pDevice;
+						pDevice = NULL;
+						g_dlg->m_mConnected.erase(ipaddr);
 				}
 			}
 			if ((g_dlg->m_mConnected.size() - 1) < g_dlg->m_nCurrentRowSelected)

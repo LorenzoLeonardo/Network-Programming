@@ -51,6 +51,9 @@
     <ClInclude Include="CCustomClock.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="CCustomText.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CheckOpenPorts.cpp">
@@ -75,6 +78,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="CCustomClock.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CCustomText.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

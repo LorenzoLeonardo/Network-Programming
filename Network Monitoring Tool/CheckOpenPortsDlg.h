@@ -139,6 +139,7 @@ public:
 	CButton m_ctrlBtnStopListening;
 	CCustomClock m_customClock;
 	RECT m_rectModeless;
+	
 	inline string UnicodeToMultiByte(wstring& wstr);
 	inline wstring MultiByteToUnicode(string& wstr);
 	void Increment();

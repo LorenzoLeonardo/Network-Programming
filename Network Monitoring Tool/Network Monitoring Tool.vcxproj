@@ -187,6 +187,7 @@
   <ItemGroup>
     <ClInclude Include="..\EnzTCP\EnzTCP.h" />
     <ClInclude Include="CCustomClock.h" />
+    <ClInclude Include="CCustomText.h" />
     <ClInclude Include="CDeviceConnected.h" />
     <ClInclude Include="CheckOpenPorts.h" />
     <ClInclude Include="CheckOpenPortsDlg.h" />
@@ -200,6 +201,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CCustomClock.cpp" />
+    <ClCompile Include="CCustomText.cpp" />
     <ClCompile Include="CDeviceConnected.cpp" />
     <ClCompile Include="CheckOpenPorts.cpp" />
     <ClCompile Include="CheckOpenPortsDlg.cpp" />
