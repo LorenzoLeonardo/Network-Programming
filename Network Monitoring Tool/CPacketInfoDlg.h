@@ -17,7 +17,7 @@ public:
 
 	CWnd* m_pParent;
 	afx_msg void OnBnClickedCancel();
-	void UpdatePacketInfo(CString);
+	void UpdatePacketInfo(CString, int nProtocol);
 	void SetPacketInfo(CString csInfo)
 	{
 		m_csPacketInfo = csInfo;

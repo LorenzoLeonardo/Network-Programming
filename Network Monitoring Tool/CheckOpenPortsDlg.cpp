@@ -2174,6 +2174,7 @@ bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 	iphdr = (IPV4_HDR*)buffer;
 	iphdrlen = iphdr->ucIPHeaderLen * 4;
 	
+
 	if (!g_dlg->ShowPacketInfo())
 	{
 		inet_ntop(AF_INET, (const void*)&iphdr->unDestaddress, sztemp, sizeof(sztemp));
@@ -2223,7 +2224,7 @@ bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 		{
 			csReport = csText + sourceIP + _T(":") + csSrcPort + _T(" -> ") + destIP + _T(":") + csDestPort + _T(" Size: ") + to_wstring(nSize).c_str() + _T(" bytes\r\n");
 			if (g_dlg->m_pmodeless)
-				g_dlg->m_pmodeless->UpdatePacketInfo(csReport);
+				g_dlg->m_pmodeless->UpdatePacketInfo(csReport, iphdr->ucIPProtocol);
 		}
 	}
 	if (g_dlg->GetIPFilterULONG() == iphdr->unSrcaddress)
@@ -2232,7 +2233,7 @@ bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 		{
 			csReport = csText + sourceIP + _T(":") + csSrcPort + _T(" -> ") + destIP + _T(":") + csDestPort + _T(" Size: ") + to_wstring(nSize).c_str() + _T(" bytes\r\n");
 			if(g_dlg->m_pmodeless)
-				g_dlg->m_pmodeless->UpdatePacketInfo(csReport);
+				g_dlg->m_pmodeless->UpdatePacketInfo(csReport, iphdr->ucIPProtocol);
 		}
 	}
 	return true;

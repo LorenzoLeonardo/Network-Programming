@@ -58,10 +58,27 @@ void CPacketInfoDlg::OnBnClickedCancel()
 	DestroyWindow();
 }
 
-void CPacketInfoDlg::UpdatePacketInfo(CString csPacketInfo)
+void CPacketInfoDlg::UpdatePacketInfo(CString csPacketInfo, int nProtocol)
 {
 	if (m_ctrlEditPacketReportArea.m_hWnd)
 	{
+
+		if (((CButton*)GetDlgItem(IDC_CHECK_IGMP))->GetCheck() == BST_UNCHECKED
+			&& nProtocol == IGMP_PROTOCOL)
+			return;
+		else if (((CButton*)GetDlgItem(IDC_CHECK_TCP))->GetCheck() == BST_UNCHECKED
+			&& nProtocol == TCP_PROTOCOL)
+			return;
+		else if (((CButton*)GetDlgItem(IDC_CHECK_UDP))->GetCheck() == BST_UNCHECKED
+			&& nProtocol == UDP_PROTOCOL)
+			return;
+		else if (((CButton*)GetDlgItem(IDC_CHECK_ICMP))->GetCheck() == BST_UNCHECKED
+			&& nProtocol == ICMP_PROTOCOL)
+			return;
+
+
+
+
 		CString csText;
 		if (m_ctrlEditPacketReportArea.m_hWnd)
 			m_ctrlEditPacketReportArea.GetWindowText(csText);
@@ -94,7 +111,10 @@ BOOL CPacketInfoDlg::OnInitDialog()
 	GetClientRect(&thisRect);
 	MoveWindow(rect.right-8,rect.top+32, thisRect.right, thisRect.bottom);
 
-
+	//::SetWindowTheme(GetDlgItem(IDC_CHECK_IGMP)->GetSafeHwnd(), _T(""), _T(""));
+	//::SetWindowTheme(GetDlgItem(IDC_CHECK_ICMP)->GetSafeHwnd(), _T(""), _T(""));
+	//::SetWindowTheme(GetDlgItem(IDC_CHECK_TCP)->GetSafeHwnd(), _T(""), _T(""));
+	//::SetWindowTheme(GetDlgItem(IDC_CHECK_UDP)->GetSafeHwnd(), _T(""), _T(""));
 	m_bThisObjDeleted = false;
 	// TODO:  Add extra initialization here
 	//m_hPacketInfoThread = (HANDLE)_beginthreadex(NULL, 0, PacketInfoThread, this, 0, NULL);
@@ -107,7 +127,7 @@ unsigned __stdcall  CPacketInfoDlg::PacketInfoThread(void* parg)
 	CPacketInfoDlg* pDlg = (CPacketInfoDlg*)parg;
 	while (pDlg)
 	{
-		pDlg->UpdatePacketInfo(_T(""));
+		pDlg->UpdatePacketInfo(_T(""),0);
 	}
 	return 0;
 }
@@ -118,18 +138,31 @@ HBRUSH CPacketInfoDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 
 	switch (nCtlColor)
 	{
-		case CTLCOLOR_DLG:
+/*		case CTLCOLOR_DLG:
 		{
 			//pDC->SetTextColor(ENZO_COLOR_WHITE);
 			pDC->SetBkColor(RGB(64, 86, 141));
 			//pDC->SetBkMode(TRANSPARENT);
 			return m_hBrushBackGround;
-		}
+		}*/
 		case CTLCOLOR_EDIT:
 		{
 			pDC->SetBkColor(RGB(255, 255, 255));
 			return m_hBrushEditArea;
 			//pDC->SetBkMode(TRANSPARENT);
+		}
+		
+		case CTLCOLOR_BTN: 
+		{
+			int id = pWnd->GetDlgCtrlID();
+			if (id == IDC_CHECK_IGMP || id == IDC_CHECK_ICMP || id == IDC_CHECK_TCP || id == IDC_CHECK_UDP)
+			{
+				pDC->SetTextColor(RGB(255, 255, 255));
+				pDC->SetBkColor(RGB(93, 107, 153));
+				pDC->SetBkMode(TRANSPARENT);
+				return m_hBrushBackGround;
+			}
+			break;
 		}
 		default:
 		return CDialog::OnCtlColor(pDC, pWnd, nCtlColor);

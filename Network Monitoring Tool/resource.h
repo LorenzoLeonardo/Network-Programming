@@ -48,8 +48,13 @@
 #define IDC_EDIT_DEVICE_NAME            1027
 #define IDC_CHECK1                      1028
 #define IDC_CHECK_DEBUG                 1028
+#define IDC_CHECK_TCP                   1028
+#define IDC_CHECK_UDP                   1029
 #define IDC_COMBO_LIST_ADAPTER          1030
+#define IDC_CHECK_ICMP                  1030
 #define IDC_EDIT_ADAPTER_INFO           1031
+#define IDC_CHECK_UDP2                  1031
+#define IDC_CHECK_IGMP                  1031
 #define IDC_STATIC_OPEN_PORTS           1032
 #define IDC_STATIC_ADAPTER_INFO         1033
 #define IDC_STATIC_DEVAREA              1035

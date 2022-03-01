@@ -73,5 +73,6 @@ public:
 	static bool CallbackPacketListener(unsigned char* buffer, int nSize, void* pObject);
 	afx_msg void OnClose();
 	CButton m_ctrlStaticArea;
+	afx_msg void OnBnClickedCancel();
 };
 
