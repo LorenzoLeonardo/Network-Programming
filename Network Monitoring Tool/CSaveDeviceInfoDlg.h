@@ -18,6 +18,8 @@ class CSpeedObj
 public:
 	double m_lfDownloadSpeed;
 	double m_lfUploadSpeed;
+	double m_lfMaxDownloadSpeed;
+	double m_lfMaxUploadSpeed;
 	ULONGLONG m_ullDownloadSize;
 	ULONGLONG m_ullUploadSize;
 	ULONGLONG m_ullTimeStarted;
@@ -70,5 +72,6 @@ public:
 	afx_msg void OnPaint();
 	static bool CallbackPacketListener(unsigned char* buffer, int nSize, void* pObject);
 	afx_msg void OnClose();
+	CButton m_ctrlStaticArea;
 };
 

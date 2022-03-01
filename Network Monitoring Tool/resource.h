@@ -52,6 +52,7 @@
 #define IDC_EDIT_ADAPTER_INFO           1031
 #define IDC_STATIC_OPEN_PORTS           1032
 #define IDC_STATIC_ADAPTER_INFO         1033
+#define IDC_STATIC_DEVAREA              1035
 
 // Next default values for new objects
 // 
@@ -59,7 +60,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        139
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1034
+#define _APS_NEXT_CONTROL_VALUE         1036
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

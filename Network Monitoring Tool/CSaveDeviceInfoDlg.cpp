@@ -1,4 +1,4 @@
-// CSaveDeviceInfoDlg.cpp : implementation file
+﻿// CSaveDeviceInfoDlg.cpp : implementation file
 //
 
 #include "pch.h"
@@ -46,6 +46,7 @@ void CSaveDeviceInfoDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT_DEVICE_NAME, m_ctrlEditDevicename);
 	DDX_Control(pDX, IDC_EDIT_MAC, m_ctrlEditMACAddress);
 	DDX_Control(pDX, IDC_IPADDRESS_IPINFO, m_ctrlEditIPAddress);
+	DDX_Control(pDX, IDC_STATIC_DEVAREA, m_ctrlStaticArea);
 }
 
 
@@ -99,9 +100,10 @@ void CSaveDeviceInfoDlg::DisplaySpeed(unsigned char* buffer, int nSize, void* pO
 	CSpeedObj* pDevice = (CSpeedObj*)pObj;
 	CClientDC cdc(this);
 	CString csFormat;
-	CCustomText cText(30, FW_NORMAL);
+	CString csTitle = _T("");
+	CCustomText cText(14, FW_BOLD);
 	cText.SetTextColor(RGB(0, 0, 0));
-
+	int nRow = 220;
 	CString sourceIP, destIP;
 	int iphdrlen = 0;
 	IPV4_HDR* iphdr;
@@ -129,30 +131,29 @@ void CSaveDeviceInfoDlg::DisplaySpeed(unsigned char* buffer, int nSize, void* pO
 
 		pDevice->m_lfDownloadSpeed = ((double)pDevice->m_ullDownloadSize / (double)(timeCurrent - pDevice->m_ullTimeStarted)) * 8;
 		pDevice->m_ullDownloadSize = 0;
-		CCustomText cText(50, FW_NORMAL);
-		CClientDC cDC(this);
-		CString csFormat;
-
-		if (pDevice->m_lfUploadSpeed < 1000)
-			csFormat.Format(_T("Send: %.2lf Kbps"), pDevice->m_lfUploadSpeed);
-		else
-			csFormat.Format(_T("Send: %.2lf Mbps"), pDevice->m_lfUploadSpeed/1000);
-		cText.SetTextBKColor(GetSysColor(COLOR_3DFACE));
-		cText.SetTextColor(RGB(0,0,0));
-		cText.DrawCustomText(&cDC, 250, 10, csFormat);
-
-		if (pDevice->m_lfDownloadSpeed < 1000)
-			csFormat.Format(_T("Receive: %.2lf Kbps"), pDevice->m_lfDownloadSpeed);
-		else
-			csFormat.Format(_T("Receive: %.2lf Mbps"), pDevice->m_lfDownloadSpeed / 1000);
-		cText.SetTextBKColor(GetSysColor(COLOR_3DFACE));
-		cText.SetTextColor(RGB(0, 0, 0));
-		cText.DrawCustomText(&cDC, 250, 60, csFormat);
 	
 		pDevice->m_ullTimeStarted = GetTickCount64();
+		m_ctrlStaticArea.RedrawWindow();
+		if (pDevice->m_lfUploadSpeed < 1000)
+			csFormat.Format(_T("%.2lf Kbps"), pDevice->m_lfUploadSpeed);
+		else
+			csFormat.Format(_T("%.2lf Mbps"), pDevice->m_lfUploadSpeed / 1000);
+		//cText.SetTextBKColor(GetSysColor(COLOR_3DFACE));
+		//cText.SetTextColor(RGB(0, 0, 0));
+	//	cText.DrawCustomText(&cdc, 20, 20+ nRow, csFormat);
+
+		csTitle = csTitle + _T(" ↑") + csFormat +_T("    ");
+		if (pDevice->m_lfDownloadSpeed < 1000)
+			csFormat.Format(_T("%.2lf Kbps"), pDevice->m_lfDownloadSpeed);
+		else
+			csFormat.Format(_T("%.2lf Mbps"), pDevice->m_lfDownloadSpeed / 1000);
+		cText.SetTextBKColor(GetSysColor(COLOR_3DFACE));
+		cText.SetTextColor(RGB(0, 0, 0));
+		
+		csTitle = csTitle + _T("↓") + csFormat;
+		this->SetWindowText(csTitle);
+		cText.DrawCustomText(&cdc, 30, nRow, csTitle);
 	}
-
-
 }
 void CSaveDeviceInfoDlg::OnPaint()
 {
