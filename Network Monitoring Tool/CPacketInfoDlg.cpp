@@ -60,6 +60,7 @@ void CPacketInfoDlg::OnBnClickedCancel()
 
 void CPacketInfoDlg::UpdatePacketInfo(CString csPacketInfo, int nProtocol)
 {
+	
 	if (m_ctrlEditPacketReportArea.m_hWnd)
 	{
 
@@ -125,7 +126,7 @@ BOOL CPacketInfoDlg::OnInitDialog()
 	((CButton*)GetDlgItem(IDC_CHECK_TCP))->SetCheck(BST_CHECKED);
 	((CButton*)GetDlgItem(IDC_CHECK_UDP))->SetCheck(BST_CHECKED);
 	((CButton*)GetDlgItem(IDC_CHECK_ICMP))->SetCheck(BST_CHECKED);
-	
+	SetForegroundWindow();
 	return TRUE;  // return TRUE unless you set the focus to a control
 				  // EXCEPTION: OCX Property Pages should return FALSE
 }

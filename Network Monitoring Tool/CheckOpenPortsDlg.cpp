@@ -187,6 +187,18 @@ BEGIN_MESSAGE_MAP(CCheckOpenPortsDlg, CDialogEx)
 	ON_MESSAGE(WM_CLEAR_TREADS, OnClearThreads)
 	ON_BN_CLICKED(IDC_CHECK_DEBUG, &CCheckOpenPortsDlg::OnBnClickedCheckDebug)
 	ON_CBN_SELCHANGE(IDC_COMBO_LIST_ADAPTER, &CCheckOpenPortsDlg::OnCbnSelchangeComboListAdapter)
+	ON_WM_SETFOCUS()
+	ON_WM_NCLBUTTONUP()
+	ON_WM_NCLBUTTONDOWN()
+	ON_WM_LBUTTONUP()
+	ON_WM_MOVING()
+	ON_WM_LBUTTONDBLCLK()
+	ON_WM_RBUTTONDBLCLK()
+	ON_WM_RBUTTONDOWN()
+	ON_WM_RBUTTONUP()
+	ON_WM_NCHITTEST()
+	ON_WM_NCMOUSEHOVER()
+	ON_WM_NCMOUSEMOVE()
 END_MESSAGE_MAP()
 
 
@@ -2360,7 +2372,8 @@ void CCheckOpenPortsDlg::OnLButtonDown(UINT nFlags, CPoint point)
 	{
 		ShellExecute(NULL, _T("open"), _T("https://m.me/Lorenzo.Leonardo.92"), NULL, NULL, SW_SHOWNORMAL);
 	}
-	
+	if (m_pmodeless)
+		m_pmodeless->SetForegroundWindow();
 	CDialogEx::OnLButtonDown(nFlags, point);
 }
 
@@ -2369,12 +2382,29 @@ void CCheckOpenPortsDlg::OnMove(int x, int y)
 {
 	CDialogEx::OnMove(x, y);
 
+	
+	// TODO: Add your message handler code here
+	/*static CPoint Point(0, 0);
+	if (Point != CPoint(x, y))
+	{
+		CDialog* pDlg = ((CModelessApp*)AfxGetApp())->pDlg;
+		CRect Rect;
+		pDlg->GetWindowRect(Rect);
+		Rect.OffsetRect(x - Point.x, y - Point.y);
+		pDlg->MoveWindow(Rect);
+		Point.x = x;
+		Point.y = y;
+	}*/
+
 	if (m_pmodeless)
 	{
-		RECT  rectParent;
-		GetClientRect(&rectParent);
-		m_pmodeless->MoveWindow(x + rectParent.right, y, m_rectModeless.right, m_rectModeless.bottom+3);
-		// TODO: Add your message handler code here
+
+			RECT  rectParent;
+			GetClientRect(&rectParent);
+			m_pmodeless->MoveWindow(x + rectParent.right, y, m_rectModeless.right, m_rectModeless.bottom+3);
+			m_pmodeless->SetForegroundWindow();
+			// TODO: Add your message handler code here
+
 	}
 }
 
@@ -2677,4 +2707,114 @@ bool CCheckOpenPortsDlg::CallbackPacketListenerUploadEx(unsigned char* buffer, i
 		pDevice->m_ullUploadStartTime = GetTickCount64();
 	}
 	return true;
+}
+
+void CCheckOpenPortsDlg::OnSetFocus(CWnd* pOldWnd)
+{
+	CDialogEx::OnSetFocus(pOldWnd);
+	if (m_pmodeless)
+		m_pmodeless->SetForegroundWindow();
+	
+	// TODO: Add your message handler code here
+}
+
+
+void CCheckOpenPortsDlg::OnNcLButtonUp(UINT nHitTest, CPoint point)
+{
+	// TODO: Add your message handler code here and/or call default
+	if (m_pmodeless)
+		m_pmodeless->SetForegroundWindow();
+	CDialogEx::OnNcLButtonUp(nHitTest, point);
+}
+
+
+void CCheckOpenPortsDlg::OnNcLButtonDown(UINT nHitTest, CPoint point)
+{
+	// TODO: Add your message handler code here and/or call default
+	if (m_pmodeless)
+		m_pmodeless->SetForegroundWindow();
+	CDialogEx::OnNcLButtonDown(nHitTest, point);
+}
+
+
+void CCheckOpenPortsDlg::OnLButtonUp(UINT nFlags, CPoint point)
+{
+	// TODO: Add your message handler code here and/or call default
+	if(m_pmodeless)
+		m_pmodeless->SetForegroundWindow();
+	CDialogEx::OnLButtonUp(nFlags, point);
+}
+
+
+void CCheckOpenPortsDlg::OnMoving(UINT fwSide, LPRECT pRect)
+{
+	CDialogEx::OnMoving(fwSide, pRect);
+	if (m_pmodeless)
+		m_pmodeless->SetForegroundWindow();
+	// TODO: Add your message handler code here
+}
+
+
+void CCheckOpenPortsDlg::OnLButtonDblClk(UINT nFlags, CPoint point)
+{
+	// TODO: Add your message handler code here and/or call default
+	if (m_pmodeless)
+		m_pmodeless->SetForegroundWindow();
+	CDialogEx::OnLButtonDblClk(nFlags, point);
+}
+
+
+void CCheckOpenPortsDlg::OnRButtonDblClk(UINT nFlags, CPoint point)
+{
+	// TODO: Add your message handler code here and/or call default
+	if (m_pmodeless)
+		m_pmodeless->SetForegroundWindow();
+	CDialogEx::OnRButtonDblClk(nFlags, point);
+}
+
+
+void CCheckOpenPortsDlg::OnRButtonDown(UINT nFlags, CPoint point)
+{
+	// TODO: Add your message handler code here and/or call default
+	if (m_pmodeless)
+		m_pmodeless->SetForegroundWindow();
+	CDialogEx::OnRButtonDown(nFlags, point);
+}
+
+
+void CCheckOpenPortsDlg::OnRButtonUp(UINT nFlags, CPoint point)
+{
+	// TODO: Add your message handler code here and/or call default
+	if (m_pmodeless)
+		m_pmodeless->SetForegroundWindow();
+	CDialogEx::OnRButtonUp(nFlags, point);
+}
+
+
+LRESULT CCheckOpenPortsDlg::OnNcHitTest(CPoint point)
+{
+	// TODO: Add your message handler code here and/or call default
+	if (m_pmodeless)
+		m_pmodeless->SetForegroundWindow();
+	return CDialogEx::OnNcHitTest(point);
+}
+
+
+void CCheckOpenPortsDlg::OnNcMouseHover(UINT nFlags, CPoint point)
+{
+	// This feature requires Windows 2000 or greater.
+	// The symbols _WIN32_WINNT and WINVER must be >= 0x0500.
+	// TODO: Add your message handler code here and/or call default
+	if (m_pmodeless)
+		m_pmodeless->SetForegroundWindow();
+	CDialogEx::OnNcMouseHover(nFlags, point);
+}
+
+
+void CCheckOpenPortsDlg::OnNcMouseMove(UINT nHitTest, CPoint point)
+{
+	// TODO: Add your message handler code here and/or call default
+	if (m_pmodeless)
+		m_pmodeless->SetForegroundWindow();
+	CDialogEx::OnNcMouseMove(nHitTest, point);
 }

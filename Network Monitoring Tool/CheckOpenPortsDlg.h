@@ -358,4 +358,17 @@ public:
 protected:
 	CEdit m_ctrlEditAdapterInfo;
 	CComboBox m_ctrlComboAdapterList;
+public:
+	afx_msg void OnSetFocus(CWnd* pOldWnd);
+	afx_msg void OnNcLButtonUp(UINT nHitTest, CPoint point);
+	afx_msg void OnNcLButtonDown(UINT nHitTest, CPoint point);
+	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
+	afx_msg void OnMoving(UINT fwSide, LPRECT pRect);
+	afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
+	afx_msg void OnRButtonDblClk(UINT nFlags, CPoint point);
+	afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
+	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
+	afx_msg LRESULT OnNcHitTest(CPoint point);
+	afx_msg void OnNcMouseHover(UINT nFlags, CPoint point);
+	afx_msg void OnNcMouseMove(UINT nHitTest, CPoint point);
 };
