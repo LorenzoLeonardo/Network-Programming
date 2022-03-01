@@ -53,6 +53,11 @@ typedef HANDLE(*FNPTRCreatePacketListenerEx)(FNCallbackPacketListenerEx, void*);
 typedef bool (*FNPTRStartPacketListenerEx)(HANDLE);
 typedef void (*FNPTRStopPacketListenerEx)(HANDLE);
 typedef void (*FNPTRDeletePacketListenerEx)(HANDLE);
+typedef HANDLE (*FNPTRCreateLocalAreaListenerEx)(const char* ipAddress, const char* subNetMask, CallbackLocalAreaListener fnpPtr, int nPollingTimeMS);
+typedef	bool (*FNPTRStartLocalAreaListenerEx)(HANDLE);
+typedef void (*FNPTRStopLocalAreaListenerEx)(HANDLE);
+typedef void (*FNPTRDeleteLocalAreaListenerEx)(HANDLE);
+
 
 inline void GetLastErrorMessageString(_tstring& str, int nGetLastError);
 template <typename Map>
@@ -100,6 +105,10 @@ public:
 	FNPTRStartPacketListenerEx m_fnptrStartPacketListenerEx;
 	FNPTRStopPacketListenerEx m_fnptrStopPacketListenerEx;
 	FNPTRDeletePacketListenerEx m_fnptrDeletePacketListenerEx;
+	FNPTRCreateLocalAreaListenerEx m_fnptrCreateLocalAreaListenerEx;
+	FNPTRStartLocalAreaListenerEx m_fnptrStartLocalAreaListenerEx;
+	FNPTRStopLocalAreaListenerEx m_fnptrStopLocalAreaListenerEx;
+	FNPTRDeleteLocalAreaListenerEx m_fnptrDeleteLocalAreaListenerEx;
 	CPacketInfoDlg* m_pmodeless;
 // Dialog Data
 #ifdef AFX_DESIGN_TIME
@@ -296,6 +305,7 @@ protected:
 	HANDLE m_hThreadOpenPortListener;
 	HANDLE m_hThreadNICListener;
 
+	HANDLE m_hLocalAreaListener;
 	CButton m_ctrlBtnCheckOpenPorts;
 	CButton m_ctrlBtnStopSearchingPort;
 	CProgressCtrl m_ctrlProgressStatus;
@@ -314,8 +324,8 @@ protected:
 	afx_msg void OnBnClickedButtonStartSearchingOpenPort();
 	afx_msg void OnClose();
 	afx_msg void OnEnChangeEditArea();
-	afx_msg void OnBnClickedButtonListenLan();
-	afx_msg void OnBnClickedButtonStopLan();
+	afx_msg void OnBnClickedButtonStartListenLan();
+	afx_msg void OnBnClickedButtonStopListenLan();
 	afx_msg void OnNMClickListLan(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 	afx_msg void OnHdnItemKeyDownListLan(NMHDR* pNMHDR, LRESULT* pResult);

@@ -47,9 +47,17 @@ public:
 	{
 		return m_szSubnetMask;
 	}
+	HANDLE  m_hStopThread;
+	HANDLE  m_hWaitThread;
+	HANDLE  m_hMainThread;
+	static unsigned _stdcall MainThreadEx(void* args);
+	static unsigned _stdcall MultiQueryingThreadEx(void* args);
+	bool StartEx();
+	void StopEx();
 private:
 
 	map<thread*, int> m_mapThreads;
+	map<HANDLE, int> m_mapThreadsEx;
 	thread* m_threadMain;
 	string  m_szStartingIP;
 	string  m_szSubnetMask;
@@ -58,4 +66,12 @@ private:
 	bool    m_bMainThreadStarted;
 	CICMP*	m_objICMP;
 
+
+};
+
+class CLANObject
+{
+public:
+	CLocalAreaListener* m_pCLocalAreaListener;
+	string ipAddress;
 };

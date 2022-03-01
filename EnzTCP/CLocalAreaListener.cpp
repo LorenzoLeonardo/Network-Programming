@@ -14,6 +14,9 @@ CLocalAreaListener::CLocalAreaListener(const char* szStartingIPAddress, const ch
 	m_nPollingTimeMS = nPollingTimeMS;
 	m_bMainThreadStarted = FALSE;
 	m_objICMP = NULL;
+	m_hStopThread = NULL;
+	m_hWaitThread = NULL;
+	m_hMainThread = NULL;
 	try
 	{
 		m_objICMP = new CICMP();
@@ -36,6 +39,18 @@ CLocalAreaListener::~CLocalAreaListener()
 	{
 		delete m_objICMP;
 		m_objICMP = NULL;
+	}
+
+	if (m_hMainThread)
+	{
+		SetEvent(m_hStopThread);
+		WaitForSingleObject(m_hWaitThread, INFINITE);
+		CloseHandle(m_hStopThread);
+		CloseHandle(m_hWaitThread);
+		CloseHandle(m_hMainThread);
+		m_hStopThread = NULL;
+		m_hWaitThread = NULL;
+		m_hMainThread = NULL;
 	}
 }
 map<thread*, int>* CLocalAreaListener::GetThreads()
@@ -89,7 +104,7 @@ void CLocalAreaListener::MainThread(void* args)
 	do
 	{
 		g_pCLocalAreaListener->m_fnptrCallbackLocalAreaListener("start", NULL,NULL, false);
-		for (int i = 1; i <= (ulLimit-1); i++)
+		for (ULONG i = 1; i <= (ulLimit-1); i++)
 		{
 			ulTemp = ulStartingIP + i;
 			ulTemp = htonl(ulTemp);
@@ -153,4 +168,120 @@ bool CLocalAreaListener::CheckIPDeviceConnected(string ipAddress,string &hostNam
 		return 	m_objICMP->CheckDevice(ipAddress, hostName, macAddress);
 	else
 		return false;
+}
+
+unsigned _stdcall CLocalAreaListener::MultiQueryingThreadEx(void* args)
+{
+	CLANObject* obj = (CLANObject*)args;
+	string hostName;
+	string macAddress = "";
+
+	if (obj->m_pCLocalAreaListener->CheckIPDeviceConnected(obj->ipAddress, hostName, macAddress))
+	{
+		if (!(hostName.empty() || macAddress.empty()))
+			obj->m_pCLocalAreaListener->m_fnptrCallbackLocalAreaListener((const char*)(obj->ipAddress).c_str(), (const char*)hostName.c_str(), (const char*)macAddress.c_str(), true);
+	}
+	delete obj;
+	obj = NULL;
+	return 0;
+}
+
+unsigned _stdcall CLocalAreaListener::MainThreadEx(void* args)
+{
+	DEBUG_LOG("CLocalAreaListener:MainThreadEx() Thread Started.");
+	CLocalAreaListener* pCLocalAreaListener = (CLocalAreaListener*)args;
+	string ipAddressStart = pCLocalAreaListener->GetStartingIPAddress();
+	string subnetMask = pCLocalAreaListener->GetSubnetMask();
+	int nPollTime = pCLocalAreaListener->GetPollingTime();
+	ULONG ulLimit = 0;
+	ULONG ulIP;
+	ULONG ulMask;
+	ULONG ulStartingIP;
+	ULONG ulTemp;
+	inet_pton(AF_INET, ipAddressStart.c_str(), &ulIP);
+	inet_pton(AF_INET, subnetMask.c_str(), &ulMask);
+	ulIP = htonl(ulIP);
+	ulMask = htonl(ulMask);
+	ulStartingIP = ulIP & ulMask;//get the starting address
+	ulLimit = 0xFFFFFFFF - ulMask;//get the max limit of IPAddress that can be search within the subnet.
+	char szIP[32];
+	memset(szIP, 0, sizeof(szIP));
+
+	ulIP = ulStartingIP;
+	DWORD dwRetSingleObject = 0;
+	do
+	{
+		pCLocalAreaListener->m_fnptrCallbackLocalAreaListener("start", NULL, NULL, false);
+		dwRetSingleObject = WaitForSingleObject(pCLocalAreaListener->m_hStopThread, 0);
+		for (ULONG i = 1; (i <= (ulLimit - 1)) && (dwRetSingleObject != WAIT_OBJECT_0); i++)
+		{
+			ulTemp = ulStartingIP + i;
+			ulTemp = htonl(ulTemp);
+			inet_ntop(AF_INET, &ulTemp, szIP, sizeof(szIP));
+			CLANObject* obj = new CLANObject();
+			obj->m_pCLocalAreaListener = pCLocalAreaListener;
+			obj->ipAddress = szIP;
+			HANDLE hThread = (HANDLE)_beginthreadex(NULL, 0, MultiQueryingThreadEx, obj, 0, NULL);
+			pCLocalAreaListener->m_mapThreadsEx[hThread] = i;
+		}
+		map<HANDLE, int>::iterator it = pCLocalAreaListener->m_mapThreadsEx.begin();
+
+		while (it != pCLocalAreaListener->m_mapThreadsEx.end())
+		{
+			WaitForSingleObject(it->first,INFINITE);
+			it++;
+		}
+		it = pCLocalAreaListener->m_mapThreadsEx.begin();
+		while (it != pCLocalAreaListener->m_mapThreadsEx.end())
+		{
+			CloseHandle(it->first);
+			it++;
+		}
+		pCLocalAreaListener->m_mapThreadsEx.clear();
+		pCLocalAreaListener->m_fnptrCallbackLocalAreaListener("end", NULL, NULL, false);
+		Sleep(nPollTime);
+	} while (dwRetSingleObject != WAIT_OBJECT_0);
+	SetEvent(pCLocalAreaListener->m_hWaitThread);
+	
+	DEBUG_LOG("CLocalAreaListener:MainThreadEx() Thread Ended.");
+	pCLocalAreaListener->m_fnptrCallbackLocalAreaListener("stop", NULL, NULL, false);
+	return 0;
+}
+bool CLocalAreaListener::StartEx()
+{
+	if (m_hMainThread)
+	{
+		SetEvent(m_hStopThread);
+		WaitForSingleObject(m_hWaitThread, INFINITE);
+		CloseHandle(m_hStopThread);
+		CloseHandle(m_hWaitThread);
+		CloseHandle(m_hMainThread);
+		m_hStopThread = NULL;
+		m_hWaitThread = NULL;
+		m_hMainThread = NULL;
+	}
+	m_hStopThread = CreateEvent(NULL,TRUE, FALSE,NULL);
+	if (!m_hStopThread)
+		return false;
+	m_hWaitThread = CreateEvent(NULL, TRUE, FALSE, NULL);
+	if (!m_hWaitThread)
+	{
+		CloseHandle(m_hStopThread);
+		return false;
+	}
+	m_hMainThread = (HANDLE)_beginthreadex(NULL, 0, MainThreadEx, this, 0, NULL);
+	if (!m_hMainThread)
+	{
+		CloseHandle(m_hStopThread);
+		CloseHandle(m_hWaitThread);
+		return false;
+	}
+	return true;
+}
+void CLocalAreaListener::StopEx()
+{
+	if (m_hMainThread)
+	{
+		SetEvent(m_hStopThread);
+	}
 }

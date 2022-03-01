@@ -138,3 +138,7 @@ extern "C" ENZTCPLIBRARY_API    HANDLE      CreatePacketListenerEx(FNCallbackPac
 extern "C" ENZTCPLIBRARY_API	bool		StartPacketListenerEx(HANDLE);
 extern "C" ENZTCPLIBRARY_API	void		StopPacketListenerEx(HANDLE);
 extern "C" ENZTCPLIBRARY_API    void        DeletePacketListenerEx(HANDLE);
+extern "C" ENZTCPLIBRARY_API    HANDLE      CreateLocalAreaListenerEx(const char* ipAddress, const char* subNetMask, CallbackLocalAreaListener fnpPtr, int nPollingTimeMS);
+extern "C" ENZTCPLIBRARY_API	bool		StartLocalAreaListenerEx(HANDLE);
+extern "C" ENZTCPLIBRARY_API	void		StopLocalAreaListenerEx(HANDLE);
+extern "C" ENZTCPLIBRARY_API    void        DeleteLocalAreaListenerEx(HANDLE);

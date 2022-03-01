@@ -416,3 +416,41 @@ void ENZTCPLIBRARY_API DeletePacketListenerEx(HANDLE hHandle)
         pPacketListener = NULL;
     }
 }
+
+HANDLE ENZTCPLIBRARY_API CreateLocalAreaListenerEx(const char* ipAddress, const char* subNetMask, CallbackLocalAreaListener fnpPtr, int nPollingTimeMS)
+{
+    CLocalAreaListener* pLanListener = NULL;
+    try
+    {
+        pLanListener = new CLocalAreaListener(ipAddress, subNetMask, fnpPtr, nPollingTimeMS);
+        return pLanListener;
+    }
+    catch (int nError)
+    {
+        DEBUG_LOG("CreateLocalAreaListenerEx(): Exception (" + to_string(nError) + ")");
+        return pLanListener;
+    }
+}
+bool ENZTCPLIBRARY_API StartLocalAreaListenerEx(HANDLE hHandle) 
+{
+    CLocalAreaListener* pLanListener = (CLocalAreaListener*)hHandle;
+    if (pLanListener)
+        return pLanListener->StartEx();
+    else
+        return false;
+}
+void ENZTCPLIBRARY_API StopLocalAreaListenerEx(HANDLE hHandle)
+{
+    CLocalAreaListener* pLanListener = (CLocalAreaListener*)hHandle;
+    if (pLanListener)
+        return pLanListener->StopEx();
+}
+void ENZTCPLIBRARY_API DeleteLocalAreaListenerEx(HANDLE hHandle)
+{
+    CLocalAreaListener* pLanListener = (CLocalAreaListener*)hHandle;
+    if (pLanListener)
+    {
+        delete pLanListener;
+        pLanListener = NULL;
+    }
+}

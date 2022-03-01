@@ -102,7 +102,7 @@ CCheckOpenPortsDlg::CCheckOpenPortsDlg(CWnd* pParent /*=nullptr*/)
 	m_hThreadClock = NULL;
 	m_hThreadOpenPortListener = NULL;
 	m_hThreadNICListener = NULL;
-
+	m_hLocalAreaListener = NULL;
 	//m_pTemp = new CDeviceConnected();
 	m_bOnCloseWasCalled = false;
 	m_hBrushBackGround = CreateSolidBrush(RGB(93, 107, 153));
@@ -169,8 +169,8 @@ BEGIN_MESSAGE_MAP(CCheckOpenPortsDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_CHECKPORT, &CCheckOpenPortsDlg::OnBnClickedButtonCheckIfPortOpen)
 	ON_WM_CLOSE()
 	ON_EN_CHANGE(IDC_EDIT_AREA, &CCheckOpenPortsDlg::OnEnChangeEditArea)
-	ON_BN_CLICKED(IDC_BUTTON_LISTEN_LAN, &CCheckOpenPortsDlg::OnBnClickedButtonListenLan)
-	ON_BN_CLICKED(IDC_BUTTON_STOP_LAN, &CCheckOpenPortsDlg::OnBnClickedButtonStopLan)
+	ON_BN_CLICKED(IDC_BUTTON_LISTEN_LAN, &CCheckOpenPortsDlg::OnBnClickedButtonStartListenLan)
+	ON_BN_CLICKED(IDC_BUTTON_STOP_LAN, &CCheckOpenPortsDlg::OnBnClickedButtonStopListenLan)
 	ON_NOTIFY(NM_CLICK, IDC_LIST_LAN, &CCheckOpenPortsDlg::OnNMClickListLan)
 	ON_WM_KEYDOWN()
 	ON_NOTIFY(HDN_ITEMKEYDOWN, 0, &CCheckOpenPortsDlg::OnHdnItemKeyDownListLan)
@@ -303,6 +303,10 @@ bool CCheckOpenPortsDlg::InitDLL()
 		m_fnptrStartPacketListenerEx = (FNPTRStartPacketListenerEx)GetProcAddress(m_hDLLhandle, "StartPacketListenerEx");
 		m_fnptrStopPacketListenerEx = (FNPTRStopPacketListenerEx)GetProcAddress(m_hDLLhandle, "StopPacketListenerEx");
 		m_fnptrDeletePacketListenerEx = (FNPTRDeletePacketListenerEx)GetProcAddress(m_hDLLhandle, "DeletePacketListenerEx");
+		m_fnptrCreateLocalAreaListenerEx = (FNPTRCreateLocalAreaListenerEx)GetProcAddress(m_hDLLhandle, "CreateLocalAreaListenerEx");
+		m_fnptrStartLocalAreaListenerEx = (FNPTRStartLocalAreaListenerEx)GetProcAddress(m_hDLLhandle, "StartLocalAreaListenerEx");
+		m_fnptrStopLocalAreaListenerEx = (FNPTRStopLocalAreaListenerEx)GetProcAddress(m_hDLLhandle, "StopLocalAreaListenerEx");
+		m_fnptrDeleteLocalAreaListenerEx = (FNPTRDeleteLocalAreaListenerEx)GetProcAddress(m_hDLLhandle, "DeleteLocalAreaListenerEx");
 		return true;
 	}
 	return false;
@@ -410,9 +414,10 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	m_hThreadRouter = (HANDLE)_beginthreadex(NULL, 0, RouterThread, this, 0, NULL);
 	m_hThreadNICListener = (HANDLE)_beginthreadex(NULL, 0, NICListenerThread, this, 0, NULL);
 	m_bShowPacketInfo = false;
+	
 	OnBnClickedButtonStartPacket();
 	OnBnClickedButtonShowPackets();
-	OnBnClickedButtonListenLan();
+	OnBnClickedButtonStartListenLan();
 	
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
@@ -608,7 +613,7 @@ void CCheckOpenPortsDlg::OnBnClickedButtonCheckIfPortOpen()
 
 void CCheckOpenPortsDlg::OnClose()
 {
-	OnBnClickedButtonStopLan();
+	OnBnClickedButtonStopListenLan();
 	OnBnClickedButtonStopSearchingOpenPorts();
 	OnBnClickedButtonStopPacket();
 	
@@ -671,6 +676,8 @@ void CCheckOpenPortsDlg::OnClose()
 			it++;
 		}
 		m_mConnected.clear();
+		if(m_hLocalAreaListener)
+			m_fnptrDeleteLocalAreaListenerEx(m_hLocalAreaListener);
 		CDialogEx::OnClose();
 
 		if(m_hDLLhandle)
@@ -721,26 +728,70 @@ unsigned __stdcall  CCheckOpenPortsDlg::LANListenerThread(void* parg)
 
 	return 0;
 }
-void CCheckOpenPortsDlg::OnBnClickedButtonListenLan()
+void CCheckOpenPortsDlg::OnBnClickedButtonStartListenLan()
 {
 	m_ctrlBtnListen.EnableWindow(FALSE);
 	m_ctrlBtnStopListening.EnableWindow(TRUE);
 	SetLANStop(false);
 
+	CString csText;
+	CString csPollTime;
+
+	
+	string ip = m_vAdapterInfo[m_ctrlComboAdapterList.GetCurSel()].IpAddressList.IpAddress.String;
+	string mask = m_vAdapterInfo[m_ctrlComboAdapterList.GetCurSel()].IpAddressList.IpMask.String;
+	wstring wstr(csText.GetBuffer());
+
+	m_ctrlEditPollingTime.GetWindowText(csPollTime);
+	if (csPollTime.IsEmpty())
+	{
+		m_ctrlEditPollingTime.SetWindowText(_T("50"));
+		if (!m_hLocalAreaListener)
+		{
+			m_hLocalAreaListener = m_fnptrCreateLocalAreaListenerEx(ip.c_str(), mask.c_str(), CallbackLANListenerEx, 50);
+			if (!m_hLocalAreaListener)
+				::MessageBox(GetSafeHwnd(), _T("Failed to start Local Area Listener."), _T("Local Area Network Listener"), MB_ICONERROR);
+			else
+				m_fnptrStartLocalAreaListenerEx(m_hLocalAreaListener);
+		}
+		else
+			m_fnptrStartLocalAreaListenerEx(m_hLocalAreaListener);
+	}
+	else
+	{
+		int nPollTime = _ttoi(csPollTime);
+		if (!m_hLocalAreaListener)
+		{
+			m_hLocalAreaListener = m_fnptrCreateLocalAreaListenerEx(ip.c_str(), mask.c_str(), CallbackLANListenerEx, nPollTime);
+			if (!m_hLocalAreaListener)
+				::MessageBox(GetSafeHwnd(), _T("Failed to start Local Area Listener."), _T("Local Area Network Listener"), MB_ICONERROR);
+			else
+				m_fnptrStartLocalAreaListenerEx(m_hLocalAreaListener);
+		}
+		else
+			m_fnptrStartLocalAreaListenerEx(m_hLocalAreaListener);
+	}
+
+
+	
+
+		/*
 	if (m_hThreadLANListener)
 	{
 		WaitForSingleObject(m_hThreadLANListener,INFINITE);
 		CloseHandle(m_hThreadLANListener);
 		m_hThreadLANListener = NULL;
 	}
-	m_hThreadLANListener = (HANDLE)_beginthreadex(NULL, 0, LANListenerThread, this, 0, 0);
+	m_hThreadLANListener = (HANDLE)_beginthreadex(NULL, 0, LANListenerThread, this, 0, 0);*/
 }
 
-void CCheckOpenPortsDlg::OnBnClickedButtonStopLan()
+void CCheckOpenPortsDlg::OnBnClickedButtonStopListenLan()
 {
 	// TODO: Add your control notification handler code here
-	m_pfnPtrStopLocalAreaListening();
+	//m_pfnPtrStopLocalAreaListening();
 	m_ctrlBtnStopListening.EnableWindow(FALSE);
+	m_fnptrStopLocalAreaListenerEx(m_hLocalAreaListener);
+
 }
 
 void CCheckOpenPortsDlg::OnNMClickListLan(NMHDR* pNMHDR, LRESULT* pResult)
@@ -2505,7 +2556,7 @@ void CCheckOpenPortsDlg::OnCbnSelchangeComboListAdapter()
 	else
 	{
 		AfxMessageBox(_T("All Network Interfaces are disconnected. Please check your ethernet ports or WIFI adapters."));
-		OnBnClickedButtonStopLan();
+		OnBnClickedButtonStopListenLan();
 		OnBnClickedButtonStopSearchingOpenPorts();
 		OnBnClickedButtonStopPacket();
 	}
