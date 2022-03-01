@@ -2186,12 +2186,12 @@ bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 		{
 			case ICMP_PROTOCOL:
 			{
-				csText = _T("ICMP : ");
+				csText = _T("ICMP:\t");
 				break;
 			}
 			case IGMP_PROTOCOL:
 			{
-				csText = _T("IGMP : ");
+				csText = _T("IGMP:\t");
 				break;
 			}
 			case TCP_PROTOCOL:
@@ -2199,7 +2199,7 @@ bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 				tcpheader = (TCP_HDR*)(buffer + iphdrlen);
 				csSrcPort = to_wstring(ntohs(tcpheader->usSourcePort)).c_str();
 				csDestPort = to_wstring(ntohs(tcpheader->usDestPort)).c_str();
-				csText = _T("TCP : ");
+				csText = _T("TCP:\t");
 				break;
 			}
 			case UDP_PROTOCOL:
@@ -2207,12 +2207,12 @@ bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 				udpheader = (UDP_HDR*)(buffer + iphdrlen);
 				csSrcPort = to_wstring(ntohs(udpheader->usSourcePort)).c_str();
 				csDestPort = to_wstring(ntohs(udpheader->usDestPort)).c_str();
-				csText = _T("UDP : ");
+				csText = _T("UDP:\t");
 				break;
 			}
 			default:
 			{
-				csText = _T("OTHERS : ");
+				csText = _T("OTHERS:\t");
 				break;
 			}
 		}
@@ -2222,7 +2222,7 @@ bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 	{
 		if (!g_dlg->ShowPacketInfo())
 		{
-			csReport = csText + sourceIP + _T(":") + csSrcPort + _T(" -> ") + destIP + _T(":") + csDestPort + _T(" Size: ") + to_wstring(nSize).c_str() + _T(" bytes\r\n");
+			csReport = csText + sourceIP + _T(":") + csSrcPort + _T("->") + destIP + _T(":") + csDestPort + _T("\t\tSize: ") + to_wstring(nSize).c_str() + _T(" bytes\r\n");
 			if (g_dlg->m_pmodeless)
 				g_dlg->m_pmodeless->UpdatePacketInfo(csReport, iphdr->ucIPProtocol);
 		}
@@ -2231,7 +2231,7 @@ bool CCheckOpenPortsDlg::CallPacketListener(unsigned char* buffer, int nSize)
 	{
 		if (!g_dlg->ShowPacketInfo())
 		{
-			csReport = csText + sourceIP + _T(":") + csSrcPort + _T(" -> ") + destIP + _T(":") + csDestPort + _T(" Size: ") + to_wstring(nSize).c_str() + _T(" bytes\r\n");
+			csReport = csText + sourceIP + _T(":") + csSrcPort + _T("->") + destIP + _T(":") + csDestPort + _T("\t\tSize: ") + to_wstring(nSize).c_str() + _T(" bytes\r\n");
 			if(g_dlg->m_pmodeless)
 				g_dlg->m_pmodeless->UpdatePacketInfo(csReport, iphdr->ucIPProtocol);
 		}

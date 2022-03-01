@@ -77,28 +77,30 @@ void CPacketInfoDlg::UpdatePacketInfo(CString csPacketInfo, int nProtocol)
 			return;
 
 
-
-
 		CString csText;
+		int nLineLimit = 50;
 		if (m_ctrlEditPacketReportArea.m_hWnd)
 			m_ctrlEditPacketReportArea.GetWindowText(csText);
 		csText += csPacketInfo;
-		long nLength = csText.GetLength();
-		if (nLength < 5000)
-		{
-			if (m_ctrlEditPacketReportArea.m_hWnd)
-				m_ctrlEditPacketReportArea.SetSel(0, 0);
-			if (m_ctrlEditPacketReportArea.m_hWnd)
-				m_ctrlEditPacketReportArea.ReplaceSel(csPacketInfo);
-		}
-		else
-		{
-			if (m_ctrlEditPacketReportArea.m_hWnd)
-				m_ctrlEditPacketReportArea.GetWindowText(csText);
-			csText = csText.Left(csText.ReverseFind(_T('\r')));
-			if (m_ctrlEditPacketReportArea.m_hWnd)
-				m_ctrlEditPacketReportArea.SetWindowText(csText);
-		}
+		//long nLength = m_ctrlEditPacketReportArea.GetLineCount();
+		//if (nLength < nLineLimit)
+		//{
+			m_ctrlEditPacketReportArea.SetSel(0, 0);
+			m_ctrlEditPacketReportArea.ReplaceSel(csPacketInfo);
+			long nLength = m_ctrlEditPacketReportArea.GetLineCount();
+			if (nLength == nLineLimit)
+			{
+				if (m_ctrlEditPacketReportArea.m_hWnd)
+					m_ctrlEditPacketReportArea.GetWindowText(csText);
+
+				int len = csText.ReverseFind(_T('\r'));
+				int nBegin = m_ctrlEditPacketReportArea.LineIndex(nLength - 2);
+				int nEnd = nBegin + len;
+				m_ctrlEditPacketReportArea.SetSel(nBegin, nEnd, TRUE);
+				m_ctrlEditPacketReportArea.ReplaceSel(_T(""));
+				m_ctrlEditPacketReportArea.SetSel(0, 0, TRUE);
+			}
+		//}
 	}
 }
 
@@ -118,6 +120,12 @@ BOOL CPacketInfoDlg::OnInitDialog()
 	m_bThisObjDeleted = false;
 	// TODO:  Add extra initialization here
 	//m_hPacketInfoThread = (HANDLE)_beginthreadex(NULL, 0, PacketInfoThread, this, 0, NULL);
+
+	((CButton*)GetDlgItem(IDC_CHECK_IGMP))->SetCheck(BST_CHECKED);
+	((CButton*)GetDlgItem(IDC_CHECK_TCP))->SetCheck(BST_CHECKED);
+	((CButton*)GetDlgItem(IDC_CHECK_UDP))->SetCheck(BST_CHECKED);
+	((CButton*)GetDlgItem(IDC_CHECK_ICMP))->SetCheck(BST_CHECKED);
+	
 	return TRUE;  // return TRUE unless you set the focus to a control
 				  // EXCEPTION: OCX Property Pages should return FALSE
 }
@@ -138,18 +146,31 @@ HBRUSH CPacketInfoDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 
 	switch (nCtlColor)
 	{
-/*		case CTLCOLOR_DLG:
+		case CTLCOLOR_DLG:
 		{
-			//pDC->SetTextColor(ENZO_COLOR_WHITE);
-			pDC->SetBkColor(RGB(64, 86, 141));
-			//pDC->SetBkMode(TRANSPARENT);
-			return m_hBrushBackGround;
-		}*/
-		case CTLCOLOR_EDIT:
-		{
-			pDC->SetBkColor(RGB(255, 255, 255));
+			pDC->SetTextColor(RGB(0, 0, 0));
+			pDC->SetBkColor(RGB(255, 255, 255));//RGB(64, 86, 141));
+			pDC->SetBkMode(OPAQUE);
 			return m_hBrushEditArea;
-			//pDC->SetBkMode(TRANSPARENT);
+		}
+		case CTLCOLOR_STATIC:
+		{
+			int id = pWnd->GetDlgCtrlID();
+
+			if (id == IDC_EDIT_PACKET_INFO)
+			{
+				pDC->SetTextColor(RGB(0, 0, 0));
+				pDC->SetBkColor(RGB(255, 255, 255));
+				return m_hBrushEditArea;
+			}
+
+			else
+			{
+				pDC->SetTextColor(RGB(255, 255, 255));
+				pDC->SetBkColor(RGB(255, 255, 255));//RGB(204, 213, 240));
+				pDC->SetBkMode(OPAQUE);
+				return m_hBrushEditArea;
+			}
 		}
 		
 		case CTLCOLOR_BTN: 
@@ -157,8 +178,8 @@ HBRUSH CPacketInfoDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 			int id = pWnd->GetDlgCtrlID();
 			if (id == IDC_CHECK_IGMP || id == IDC_CHECK_ICMP || id == IDC_CHECK_TCP || id == IDC_CHECK_UDP)
 			{
-				pDC->SetTextColor(RGB(255, 255, 255));
-				pDC->SetBkColor(RGB(93, 107, 153));
+				//pDC->SetTextColor(RGB(255, 255, 255));
+				//pDC->SetBkColor(RGB(93, 107, 153));
 				pDC->SetBkMode(TRANSPARENT);
 				return m_hBrushBackGround;
 			}
