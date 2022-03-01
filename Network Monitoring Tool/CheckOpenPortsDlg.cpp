@@ -415,6 +415,15 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	m_hThreadNICListener = (HANDLE)_beginthreadex(NULL, 0, NICListenerThread, this, 0, NULL);
 	m_bShowPacketInfo = false;
 	
+	m_hLocalAreaListener = m_fnptrCreateLocalAreaListenerEx();
+	if (!m_hLocalAreaListener)
+	{
+		::MessageBox(GetSafeHwnd(), _T("Failed to start Local Area Listener."), _T("Local Area Network Listener"), MB_ICONERROR);
+		OnOK();
+		return false;
+	}
+
+
 	OnBnClickedButtonStartPacket();
 	OnBnClickedButtonShowPackets();
 	OnBnClickedButtonStartListenLan();
@@ -746,30 +755,15 @@ void CCheckOpenPortsDlg::OnBnClickedButtonStartListenLan()
 	if (csPollTime.IsEmpty())
 	{
 		m_ctrlEditPollingTime.SetWindowText(_T("50"));
-		if (!m_hLocalAreaListener)
-		{
-			m_hLocalAreaListener = m_fnptrCreateLocalAreaListenerEx(ip.c_str(), mask.c_str(), CallbackLANListenerEx, 50);
-			if (!m_hLocalAreaListener)
-				::MessageBox(GetSafeHwnd(), _T("Failed to start Local Area Listener."), _T("Local Area Network Listener"), MB_ICONERROR);
-			else
-				m_fnptrStartLocalAreaListenerEx(m_hLocalAreaListener);
-		}
-		else
-			m_fnptrStartLocalAreaListenerEx(m_hLocalAreaListener);
+		if (m_hLocalAreaListener)
+			m_fnptrStartLocalAreaListenerEx(m_hLocalAreaListener, ip.c_str(), mask.c_str(), CallbackLANListenerEx, 50);
 	}
 	else
 	{
 		int nPollTime = _ttoi(csPollTime);
-		if (!m_hLocalAreaListener)
-		{
-			m_hLocalAreaListener = m_fnptrCreateLocalAreaListenerEx(ip.c_str(), mask.c_str(), CallbackLANListenerEx, nPollTime);
-			if (!m_hLocalAreaListener)
-				::MessageBox(GetSafeHwnd(), _T("Failed to start Local Area Listener."), _T("Local Area Network Listener"), MB_ICONERROR);
-			else
-				m_fnptrStartLocalAreaListenerEx(m_hLocalAreaListener);
-		}
-		else
-			m_fnptrStartLocalAreaListenerEx(m_hLocalAreaListener);
+		if (m_hLocalAreaListener)
+			m_fnptrStartLocalAreaListenerEx(m_hLocalAreaListener, ip.c_str(), mask.c_str(), CallbackLANListenerEx, nPollTime);
+
 	}
 
 

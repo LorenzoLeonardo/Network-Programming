@@ -3,7 +3,28 @@
 #include "DebugLog.h"
 
 CLocalAreaListener* g_pCLocalAreaListener = NULL;
-
+CLocalAreaListener::CLocalAreaListener()
+{
+	m_fnptrCallbackLocalAreaListener = NULL;
+	m_szStartingIP = "";
+	m_szSubnetMask = "";
+	m_threadMain = NULL;
+	m_bHasStarted = false;
+	m_nPollingTimeMS = 0;
+	m_bMainThreadStarted = FALSE;
+	m_objICMP = NULL;
+	m_hStopThread = NULL;
+	m_hWaitThread = NULL;
+	m_hMainThread = NULL;
+	try
+	{
+		m_objICMP = new CICMP();
+	}
+	catch (int nError)
+	{
+		throw nError;
+	}
+}
 CLocalAreaListener::CLocalAreaListener(const char* szStartingIPAddress, const char* subNetMask, CallbackLocalAreaListener pFncPtr, int nPollingTimeMS)
 {
 	m_fnptrCallbackLocalAreaListener = pFncPtr;
@@ -247,8 +268,13 @@ unsigned _stdcall CLocalAreaListener::MainThreadEx(void* args)
 	pCLocalAreaListener->m_fnptrCallbackLocalAreaListener("stop", NULL, NULL, false);
 	return 0;
 }
-bool CLocalAreaListener::StartEx()
+bool CLocalAreaListener::StartEx(const char* szStartingIPAddress, const char* subNetMask, CallbackLocalAreaListener pFncPtr, int nPollingTimeMS)
 {
+	m_fnptrCallbackLocalAreaListener = pFncPtr;
+	m_szStartingIP = szStartingIPAddress;
+	m_szSubnetMask = subNetMask;
+	m_nPollingTimeMS = nPollingTimeMS;
+
 	if (m_hMainThread)
 	{
 		SetEvent(m_hStopThread);

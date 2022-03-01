@@ -15,6 +15,8 @@ typedef void (*CallbackLocalAreaListener)(const char* ipAddress, const char* hos
 class CLocalAreaListener
 {
 public:
+	CLocalAreaListener();
+
 	CLocalAreaListener(const char *szStartingIPAddress, const char* subNetMask, CallbackLocalAreaListener pFncPtr, int nPollingTimesMS);
 	~CLocalAreaListener();
 	CallbackLocalAreaListener m_fnptrCallbackLocalAreaListener;
@@ -52,7 +54,7 @@ public:
 	HANDLE  m_hMainThread;
 	static unsigned _stdcall MainThreadEx(void* args);
 	static unsigned _stdcall MultiQueryingThreadEx(void* args);
-	bool StartEx();
+	bool StartEx(const char* szStartingIPAddress, const char* subNetMask, CallbackLocalAreaListener pFncPtr, int nPollingTimeMS);
 	void StopEx();
 private:
 

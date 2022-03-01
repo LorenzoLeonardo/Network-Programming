@@ -417,12 +417,12 @@ void ENZTCPLIBRARY_API DeletePacketListenerEx(HANDLE hHandle)
     }
 }
 
-HANDLE ENZTCPLIBRARY_API CreateLocalAreaListenerEx(const char* ipAddress, const char* subNetMask, CallbackLocalAreaListener fnpPtr, int nPollingTimeMS)
+HANDLE ENZTCPLIBRARY_API CreateLocalAreaListenerEx()
 {
     CLocalAreaListener* pLanListener = NULL;
     try
     {
-        pLanListener = new CLocalAreaListener(ipAddress, subNetMask, fnpPtr, nPollingTimeMS);
+        pLanListener = new CLocalAreaListener();
         return pLanListener;
     }
     catch (int nError)
@@ -431,11 +431,11 @@ HANDLE ENZTCPLIBRARY_API CreateLocalAreaListenerEx(const char* ipAddress, const 
         return pLanListener;
     }
 }
-bool ENZTCPLIBRARY_API StartLocalAreaListenerEx(HANDLE hHandle) 
+bool ENZTCPLIBRARY_API StartLocalAreaListenerEx(HANDLE hHandle,const char* szStartingIPAddress, const char* subNetMask, CallbackLocalAreaListener pFncPtr, int nPollingTimeMS)
 {
     CLocalAreaListener* pLanListener = (CLocalAreaListener*)hHandle;
     if (pLanListener)
-        return pLanListener->StartEx();
+        return pLanListener->StartEx(szStartingIPAddress, subNetMask, pFncPtr, nPollingTimeMS);
     else
         return false;
 }

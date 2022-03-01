@@ -53,8 +53,8 @@ typedef HANDLE(*FNPTRCreatePacketListenerEx)(FNCallbackPacketListenerEx, void*);
 typedef bool (*FNPTRStartPacketListenerEx)(HANDLE);
 typedef void (*FNPTRStopPacketListenerEx)(HANDLE);
 typedef void (*FNPTRDeletePacketListenerEx)(HANDLE);
-typedef HANDLE (*FNPTRCreateLocalAreaListenerEx)(const char* ipAddress, const char* subNetMask, CallbackLocalAreaListener fnpPtr, int nPollingTimeMS);
-typedef	bool (*FNPTRStartLocalAreaListenerEx)(HANDLE);
+typedef HANDLE (*FNPTRCreateLocalAreaListenerEx)();
+typedef	bool (*FNPTRStartLocalAreaListenerEx)(HANDLE, const char* ipAddress, const char* subNetMask, CallbackLocalAreaListener fnpPtr, int nPollingTimeMS);
 typedef void (*FNPTRStopLocalAreaListenerEx)(HANDLE);
 typedef void (*FNPTRDeleteLocalAreaListenerEx)(HANDLE);
 
