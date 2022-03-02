@@ -132,7 +132,7 @@ inline void DEBUG_LOG(wstring logMsg, ...)
         va_copy(copy, arg);
         len = _vsnwprintf(NULL, 0, logMsg.c_str(), arg);
         va_end(copy);
-        if (len >= sizeof(loc_buf)) {
+        if (len >= (sizeof(loc_buf)/sizeof(wchar_t))) {
             temp = (wchar_t*)malloc(len + 1);
             if (temp == NULL) {
                 g_mutxLog.unlock();
@@ -140,10 +140,10 @@ inline void DEBUG_LOG(wstring logMsg, ...)
             }
         }
         _vsnwprintf(temp, (len + 1) ,logMsg.c_str(), arg);
-        //printf(temp); // replace with any print function you want
-        logMsg  = temp;
+        logMsg = temp;
         wstring filePath = getCurrentDateTime(L"date") + L".txt";
         wstring now = getCurrentDateTime(L"now");
+     // string filepathA = CW2A(filePath.c_str());
         wofstream ofs(filePath.c_str(), std::ios_base::out | std::ios_base::app);
         ofs << now << L'\t' << logMsg << L'\n';
         ofs.close();

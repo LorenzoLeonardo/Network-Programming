@@ -657,12 +657,12 @@ int CFirewall::ImplementFirewall(LPCTSTR szFileNamePath, LPCTSTR szProgramName)
     }
 
     // Add TCP::80 to list of globally open ports.
-    hr = WindowsFirewallPortAdd(fwProfile, 80, NET_FW_IP_PROTOCOL_TCP, L"WWW");
-    if (FAILED(hr))
-    {
-        DEBUG_LOG(_T("WindowsFirewallPortAdd failed: 0x%08lx\n"), hr);
-        goto error;
-    }
+  //  hr = WindowsFirewallPortAdd(fwProfile, 80, NET_FW_IP_PROTOCOL_TCP, L"WWW");
+  //  if (FAILED(hr))
+   // {
+   //     DEBUG_LOG(_T("WindowsFirewallPortAdd failed: 0x%08lx\n"), hr);
+   //     goto error;
+   // }
 
 error:
 
