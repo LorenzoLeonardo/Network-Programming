@@ -14,7 +14,7 @@ class CFirewall
 public:
     CFirewall();
     ~CFirewall();
-    int ImplementFirewall();
+    int ImplementFirewall(LPCTSTR szFileNamePath, LPCTSTR szProgramName);
         HRESULT WindowsFirewallPortAdd(
             IN INetFwProfile* fwProfile,
             IN LONG portNumber,

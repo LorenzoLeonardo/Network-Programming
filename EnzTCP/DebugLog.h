@@ -130,7 +130,7 @@ inline void DEBUG_LOG(wstring logMsg, ...)
         va_list copy;
         va_start(arg, logMsg);
         va_copy(copy, arg);
-        len = _vsnwprintf_s(NULL, 0,0, logMsg.c_str(), arg);
+        len = _vsnwprintf(NULL, 0, logMsg.c_str(), arg);
         va_end(copy);
         if (len >= sizeof(loc_buf)) {
             temp = (wchar_t*)malloc(len + 1);
@@ -139,7 +139,7 @@ inline void DEBUG_LOG(wstring logMsg, ...)
                 return;
             }
         }
-        _vsnwprintf_s(temp, (len + 1) * sizeof(wchar_t), (len + 1) * sizeof(wchar_t), logMsg.c_str(), arg);
+        _vsnwprintf(temp, (len + 1) ,logMsg.c_str(), arg);
         //printf(temp); // replace with any print function you want
         logMsg  = temp;
         wstring filePath = getCurrentDateTime(L"date") + L".txt";

@@ -31,7 +31,7 @@ HRESULT CFirewall::WindowsFirewallInitialize(OUT INetFwProfile** fwProfile)
     );
     if (FAILED(hr))
     {
-        printf("CoCreateInstance failed: 0x%08lx\n", hr);
+        DEBUG_LOG(_T("CoCreateInstance failed: 0x%08lx\n"), hr);
         goto error;
     }
 
@@ -39,7 +39,7 @@ HRESULT CFirewall::WindowsFirewallInitialize(OUT INetFwProfile** fwProfile)
     hr = fwMgr->get_LocalPolicy(&fwPolicy);
     if (FAILED(hr))
     {
-        printf("get_LocalPolicy failed: 0x%08lx\n", hr);
+        DEBUG_LOG(_T("get_LocalPolicy failed: 0x%08lx\n"), hr);
         goto error;
     }
 
@@ -47,7 +47,7 @@ HRESULT CFirewall::WindowsFirewallInitialize(OUT INetFwProfile** fwProfile)
     hr = fwPolicy->get_CurrentProfile(fwProfile);
     if (FAILED(hr))
     {
-        printf("get_CurrentProfile failed: 0x%08lx\n", hr);
+        DEBUG_LOG(_T("get_CurrentProfile failed: 0x%08lx\n"), hr);
         goto error;
     }
 
@@ -92,7 +92,7 @@ HRESULT CFirewall::WindowsFirewallIsOn(IN INetFwProfile* fwProfile, OUT BOOL* fw
     hr = fwProfile->get_FirewallEnabled(&fwEnabled);
     if (FAILED(hr))
     {
-        printf("get_FirewallEnabled failed: 0x%08lx\n", hr);
+        DEBUG_LOG(_T("get_FirewallEnabled failed: 0x%08lx\n"), hr);
         goto error;
     }
 
@@ -100,11 +100,11 @@ HRESULT CFirewall::WindowsFirewallIsOn(IN INetFwProfile* fwProfile, OUT BOOL* fw
     if (fwEnabled != VARIANT_FALSE)
     {
         *fwOn = TRUE;
-        printf("The firewall is on.\n");
+        DEBUG_LOG(_T("The firewall is on.\n"));
     }
     else
     {
-        printf("The firewall is off.\n");
+        DEBUG_LOG(_T("The firewall is off.\n"));
     }
 
 error:
@@ -124,7 +124,7 @@ HRESULT CFirewall::WindowsFirewallTurnOn(IN INetFwProfile* fwProfile)
     hr = WindowsFirewallIsOn(fwProfile, &fwOn);
     if (FAILED(hr))
     {
-        printf("WindowsFirewallIsOn failed: 0x%08lx\n", hr);
+        DEBUG_LOG(_T("WindowsFirewallIsOn failed: 0x%08lx\n"), hr);
         goto error;
     }
 
@@ -135,11 +135,11 @@ HRESULT CFirewall::WindowsFirewallTurnOn(IN INetFwProfile* fwProfile)
         hr = fwProfile->put_FirewallEnabled(VARIANT_TRUE);
         if (FAILED(hr))
         {
-            printf("put_FirewallEnabled failed: 0x%08lx\n", hr);
+            DEBUG_LOG(_T("put_FirewallEnabled failed: 0x%08lx\n"), hr);
             goto error;
         }
 
-        printf("The firewall is now on.\n");
+        DEBUG_LOG(_T("The firewall is now on.\n"));
     }
 
 error:
@@ -159,7 +159,7 @@ HRESULT CFirewall::WindowsFirewallTurnOff(IN INetFwProfile* fwProfile)
     hr = WindowsFirewallIsOn(fwProfile, &fwOn);
     if (FAILED(hr))
     {
-        printf("WindowsFirewallIsOn failed: 0x%08lx\n", hr);
+        DEBUG_LOG(_T("WindowsFirewallIsOn failed: 0x%08lx\n"), hr);
         goto error;
     }
 
@@ -170,11 +170,11 @@ HRESULT CFirewall::WindowsFirewallTurnOff(IN INetFwProfile* fwProfile)
         hr = fwProfile->put_FirewallEnabled(VARIANT_FALSE);
         if (FAILED(hr))
         {
-            printf("put_FirewallEnabled failed: 0x%08lx\n", hr);
+            DEBUG_LOG(_T("put_FirewallEnabled failed: 0x%08lx\n"), hr);
             goto error;
         }
 
-        printf("The firewall is now off.\n");
+        DEBUG_LOG(_T("The firewall is now off.\n"));
     }
 
 error:
@@ -205,7 +205,7 @@ HRESULT CFirewall::WindowsFirewallAppIsEnabled(
     hr = fwProfile->get_AuthorizedApplications(&fwApps);
     if (FAILED(hr))
     {
-        printf("get_AuthorizedApplications failed: 0x%08lx\n", hr);
+        DEBUG_LOG(_T("get_AuthorizedApplications failed: 0x%08lx\n"), hr);
         goto error;
     }
 
@@ -214,7 +214,7 @@ HRESULT CFirewall::WindowsFirewallAppIsEnabled(
     if (fwBstrProcessImageFileName == NULL)
     {
         hr = E_OUTOFMEMORY;
-        printf("SysAllocString failed: 0x%08lx\n", hr);
+        DEBUG_LOG(_T("SysAllocString failed: 0x%08lx\n"), hr);
         goto error;
     }
 
@@ -226,7 +226,7 @@ HRESULT CFirewall::WindowsFirewallAppIsEnabled(
         hr = fwApp->get_Enabled(&fwEnabled);
         if (FAILED(hr))
         {
-            printf("get_Enabled failed: 0x%08lx\n", hr);
+            DEBUG_LOG(_T("get_Enabled failed: 0x%08lx\n"), hr);
             goto error;
         }
 
@@ -235,15 +235,15 @@ HRESULT CFirewall::WindowsFirewallAppIsEnabled(
             // The authorized application is enabled.
             *fwAppEnabled = TRUE;
 
-            printf(
-                "Authorized application %lS is enabled in the firewall.\n",
+            DEBUG_LOG(
+                _T("Authorized application %lS is enabled in the firewall.\n"),
                 fwProcessImageFileName
             );
         }
         else
         {
-            printf(
-                "Authorized application %lS is disabled in the firewall.\n",
+            DEBUG_LOG(
+                _T("Authorized application %lS is disabled in the firewall.\n"),
                 fwProcessImageFileName
             );
         }
@@ -253,8 +253,8 @@ HRESULT CFirewall::WindowsFirewallAppIsEnabled(
         // The authorized application was not in the collection.
         hr = S_OK;
 
-        printf(
-            "Authorized application %lS is disabled in the firewall.\n",
+        DEBUG_LOG(
+            _T("Authorized application %lS is disabled in the firewall.\n"),
             fwProcessImageFileName
         );
     }
@@ -304,7 +304,7 @@ HRESULT CFirewall::WindowsFirewallAddApp(
     );
     if (FAILED(hr))
     {
-        printf("WindowsFirewallAppIsEnabled failed: 0x%08lx\n", hr);
+        DEBUG_LOG(_T("WindowsFirewallAppIsEnabled failed: 0x%08lx\n"), hr);
         goto error;
     }
 
@@ -315,7 +315,7 @@ HRESULT CFirewall::WindowsFirewallAddApp(
         hr = fwProfile->get_AuthorizedApplications(&fwApps);
         if (FAILED(hr))
         {
-            printf("get_AuthorizedApplications failed: 0x%08lx\n", hr);
+            DEBUG_LOG(_T("get_AuthorizedApplications failed: 0x%08lx\n"), hr);
             goto error;
         }
 
@@ -329,7 +329,7 @@ HRESULT CFirewall::WindowsFirewallAddApp(
         );
         if (FAILED(hr))
         {
-            printf("CoCreateInstance failed: 0x%08lx\n", hr);
+            DEBUG_LOG(_T("CoCreateInstance failed: 0x%08lx\n"), hr);
             goto error;
         }
 
@@ -338,7 +338,7 @@ HRESULT CFirewall::WindowsFirewallAddApp(
         if (fwBstrProcessImageFileName == NULL)
         {
             hr = E_OUTOFMEMORY;
-            printf("SysAllocString failed: 0x%08lx\n", hr);
+            DEBUG_LOG(_T("SysAllocString failed: 0x%08lx\n"), hr);
             goto error;
         }
 
@@ -346,7 +346,7 @@ HRESULT CFirewall::WindowsFirewallAddApp(
         hr = fwApp->put_ProcessImageFileName(fwBstrProcessImageFileName);
         if (FAILED(hr))
         {
-            printf("put_ProcessImageFileName failed: 0x%08lx\n", hr);
+            DEBUG_LOG(_T("put_ProcessImageFileName failed: 0x%08lx\n"), hr);
             goto error;
         }
 
@@ -355,7 +355,7 @@ HRESULT CFirewall::WindowsFirewallAddApp(
         if (SysStringLen(fwBstrName) == 0)
         {
             hr = E_OUTOFMEMORY;
-            printf("SysAllocString failed: 0x%08lx\n", hr);
+            DEBUG_LOG(_T("SysAllocString failed: 0x%08lx\n"), hr);
             goto error;
         }
 
@@ -363,7 +363,7 @@ HRESULT CFirewall::WindowsFirewallAddApp(
         hr = fwApp->put_Name(fwBstrName);
         if (FAILED(hr))
         {
-            printf("put_Name failed: 0x%08lx\n", hr);
+            DEBUG_LOG(_T("put_Name failed: 0x%08lx\n"), hr);
             goto error;
         }
 
@@ -371,12 +371,12 @@ HRESULT CFirewall::WindowsFirewallAddApp(
         hr = fwApps->Add(fwApp);
         if (FAILED(hr))
         {
-            printf("Add failed: 0x%08lx\n", hr);
+            DEBUG_LOG(_T("Add failed: 0x%08lx\n"), hr);
             goto error;
         }
 
-        printf(
-            "Authorized application %lS is now enabled in the firewall.\n",
+        DEBUG_LOG(
+            _T("Authorized application %lS is now enabled in the firewall.\n"),
             fwProcessImageFileName
         );
     }
@@ -423,7 +423,7 @@ HRESULT CFirewall::WindowsFirewallPortIsEnabled(
     hr = fwProfile->get_GloballyOpenPorts(&fwOpenPorts);
     if (FAILED(hr))
     {
-        printf("get_GloballyOpenPorts failed: 0x%08lx\n", hr);
+        DEBUG_LOG(_T("get_GloballyOpenPorts failed: 0x%08lx\n"), hr);
         goto error;
     }
 
@@ -435,7 +435,7 @@ HRESULT CFirewall::WindowsFirewallPortIsEnabled(
         hr = fwOpenPort->get_Enabled(&fwEnabled);
         if (FAILED(hr))
         {
-            printf("get_Enabled failed: 0x%08lx\n", hr);
+            DEBUG_LOG(_T("get_Enabled failed: 0x%08lx\n"), hr);
             goto error;
         }
 
@@ -444,11 +444,11 @@ HRESULT CFirewall::WindowsFirewallPortIsEnabled(
             // The globally open port is enabled.
             *fwPortEnabled = TRUE;
 
-            printf("Port %ld is open in the firewall.\n", portNumber);
+            DEBUG_LOG(_T("Port %ld is open in the firewall.\n"), portNumber);
         }
         else
         {
-            printf("Port %ld is not open in the firewall.\n", portNumber);
+            DEBUG_LOG(_T("Port %ld is not open in the firewall.\n"), portNumber);
         }
     }
     else
@@ -456,7 +456,7 @@ HRESULT CFirewall::WindowsFirewallPortIsEnabled(
         // The globally open port was not in the collection.
         hr = S_OK;
 
-        printf("Port %ld is not open in the firewall.\n", portNumber);
+        DEBUG_LOG(_T("Port %ld is not open in the firewall.\n"), portNumber);
     }
 
 error:
@@ -501,7 +501,7 @@ HRESULT CFirewall::WindowsFirewallPortAdd(
     );
     if (FAILED(hr))
     {
-        printf("WindowsFirewallPortIsEnabled failed: 0x%08lx\n", hr);
+        DEBUG_LOG(_T("WindowsFirewallPortIsEnabled failed: 0x%08lx\n"), hr);
         goto error;
     }
 
@@ -512,7 +512,7 @@ HRESULT CFirewall::WindowsFirewallPortAdd(
         hr = fwProfile->get_GloballyOpenPorts(&fwOpenPorts);
         if (FAILED(hr))
         {
-            printf("get_GloballyOpenPorts failed: 0x%08lx\n", hr);
+            DEBUG_LOG(_T("get_GloballyOpenPorts failed: 0x%08lx\n"), hr);
             goto error;
         }
 
@@ -526,7 +526,7 @@ HRESULT CFirewall::WindowsFirewallPortAdd(
         );
         if (FAILED(hr))
         {
-            printf("CoCreateInstance failed: 0x%08lx\n", hr);
+            DEBUG_LOG(_T("CoCreateInstance failed: 0x%08lx\n"), hr);
             goto error;
         }
 
@@ -534,7 +534,7 @@ HRESULT CFirewall::WindowsFirewallPortAdd(
         hr = fwOpenPort->put_Port(portNumber);
         if (FAILED(hr))
         {
-            printf("put_Port failed: 0x%08lx\n", hr);
+            DEBUG_LOG(_T("put_Port failed: 0x%08lx\n"), hr);
             goto error;
         }
 
@@ -542,7 +542,7 @@ HRESULT CFirewall::WindowsFirewallPortAdd(
         hr = fwOpenPort->put_Protocol(ipProtocol);
         if (FAILED(hr))
         {
-            printf("put_Protocol failed: 0x%08lx\n", hr);
+            DEBUG_LOG(_T("put_Protocol failed: 0x%08lx\n"), hr);
             goto error;
         }
 
@@ -551,7 +551,7 @@ HRESULT CFirewall::WindowsFirewallPortAdd(
         if (SysStringLen(fwBstrName) == 0)
         {
             hr = E_OUTOFMEMORY;
-            printf("SysAllocString failed: 0x%08lx\n", hr);
+            DEBUG_LOG(_T("SysAllocString failed: 0x%08lx\n"), hr);
             goto error;
         }
 
@@ -559,7 +559,7 @@ HRESULT CFirewall::WindowsFirewallPortAdd(
         hr = fwOpenPort->put_Name(fwBstrName);
         if (FAILED(hr))
         {
-            printf("put_Name failed: 0x%08lx\n", hr);
+            DEBUG_LOG(_T("put_Name failed: 0x%08lx\n"), hr);
             goto error;
         }
 
@@ -567,11 +567,11 @@ HRESULT CFirewall::WindowsFirewallPortAdd(
         hr = fwOpenPorts->Add(fwOpenPort);
         if (FAILED(hr))
         {
-            printf("Add failed: 0x%08lx\n", hr);
+            DEBUG_LOG(_T("Add failed: 0x%08lx\n"), hr);
             goto error;
         }
 
-        printf("Port %ld is now open in the firewall.\n", portNumber);
+        DEBUG_LOG(_T("Port %ld is now open in the firewall.\n"), portNumber);
     }
 
 error:
@@ -595,7 +595,7 @@ error:
 }
 
 
-int CFirewall::ImplementFirewall()
+int CFirewall::ImplementFirewall(LPCTSTR szFileNamePath, LPCTSTR szProgramName)
 {
     HRESULT hr = S_OK;
     HRESULT comInit = E_FAIL;
@@ -615,7 +615,7 @@ int CFirewall::ImplementFirewall()
         hr = comInit;
         if (FAILED(hr))
         {
-            printf("CoInitializeEx failed: 0x%08lx\n", hr);
+            DEBUG_LOG(_T("CoInitializeEx failed: 0x%08lx\n"), hr);
             goto error;
         }
     }
@@ -624,15 +624,15 @@ int CFirewall::ImplementFirewall()
     hr = WindowsFirewallInitialize(&fwProfile);
     if (FAILED(hr))
     {
-        printf("WindowsFirewallInitialize failed: 0x%08lx\n", hr);
+        DEBUG_LOG(_T("WindowsFirewallInitialize failed: 0x%08lx\n"), hr);
         goto error;
     }
 
     // Turn off the firewall.
-    hr = WindowsFirewallTurnOff(fwProfile);
+  /*  hr = WindowsFirewallTurnOff(fwProfile);
     if (FAILED(hr))
     {
-        printf("WindowsFirewallTurnOff failed: 0x%08lx\n", hr);
+        DEBUG_LOG(_T("WindowsFirewallTurnOff failed: 0x%08lx\n"), hr);
         goto error;
     }
 
@@ -640,19 +640,19 @@ int CFirewall::ImplementFirewall()
     hr = WindowsFirewallTurnOn(fwProfile);
     if (FAILED(hr))
     {
-        printf("WindowsFirewallTurnOn failed: 0x%08lx\n", hr);
+        DEBUG_LOG(_T("WindowsFirewallTurnOn failed: 0x%08lx\n"), hr);
         goto error;
-    }
+    }*/
 
     // Add Windows Messenger to the authorized application collection.
     hr = WindowsFirewallAddApp(
         fwProfile,
-        L"%ProgramFiles%\\Messenger\\msmsgs.exe",
-        L"Windows Messenger"
+        szFileNamePath,//L"%ProgramFiles%\\Messenger\\msmsgs.exe",
+        szProgramName//L"Windows Messenger"
     );
     if (FAILED(hr))
     {
-        printf("WindowsFirewallAddApp failed: 0x%08lx\n", hr);
+        DEBUG_LOG(_T("WindowsFirewallAddApp failed: 0x%08lx\n"), hr);
         goto error;
     }
 
@@ -660,7 +660,7 @@ int CFirewall::ImplementFirewall()
     hr = WindowsFirewallPortAdd(fwProfile, 80, NET_FW_IP_PROTOCOL_TCP, L"WWW");
     if (FAILED(hr))
     {
-        printf("WindowsFirewallPortAdd failed: 0x%08lx\n", hr);
+        DEBUG_LOG(_T("WindowsFirewallPortAdd failed: 0x%08lx\n"), hr);
         goto error;
     }
 

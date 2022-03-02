@@ -8,6 +8,7 @@
 #include "CheckOpenPortsDlg.h"
 #include <tlhelp32.h>
 #include "..\EnzTCP\DebugLog.h"
+#include "CFirewall.h"
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -188,7 +189,11 @@ BOOL CCheckOpenPortsApp::InitInstance()
 	// in your application.
 //	InitCtrls.dwICC = ICC_WIN95_CLASSES;
 //	InitCommonControlsEx(&InitCtrls);
+	CFirewall firewall;
+	TCHAR szpath[MAX_PATH];
+	GetModuleFileName(NULL, szpath, sizeof(szpath));
 
+	firewall.ImplementFirewall(szpath,_T("Enzo Tech Network Monitoring Tool"));
 	CWinApp::InitInstance();
 
 	if (!IsRunAsAdministrator())
