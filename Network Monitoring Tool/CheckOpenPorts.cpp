@@ -37,7 +37,7 @@ CCheckOpenPortsApp::CCheckOpenPortsApp()
 
 CCheckOpenPortsApp theApp;
 
-BOOL IsRunAsAdministrator()
+BOOL IsAdministrator()
 {
 	BOOL fIsRunAsAdmin = FALSE;
 	DWORD dwError = ERROR_SUCCESS;
@@ -58,8 +58,6 @@ BOOL IsRunAsAdministrator()
 		goto Cleanup;
 	}
 
-	// Determine whether the SID of administrators group is enabled in 
-	// the primary access token of the process.
 	if (!CheckTokenMembership(NULL, pAdministratorsGroup, &fIsRunAsAdmin))
 	{
 		dwError = GetLastError();
@@ -68,14 +66,12 @@ BOOL IsRunAsAdministrator()
 	}
 
 Cleanup:
-	// Centralized cleanup for all allocated resources.
 	if (pAdministratorsGroup)
 	{
 		FreeSid(pAdministratorsGroup);
 		pAdministratorsGroup = NULL;
 	}
 
-	// Throw the error if something failed in the function.
 	if (ERROR_SUCCESS != dwError)
 	{
 		throw dwError;
@@ -84,16 +80,15 @@ Cleanup:
 	return fIsRunAsAdmin;
 }
 
-void ElevateNow()
+void ElevateProcess()
 {
 	BOOL bAlreadyRunningAsAdministrator = FALSE;
 	try
 	{
-		bAlreadyRunningAsAdministrator = IsRunAsAdministrator();
+		bAlreadyRunningAsAdministrator = IsAdministrator();
 	}
 	catch (...)
 	{
-		//std::cout << "Failed to determine if application was running with admin rights" << std::endl;
 		DWORD dwErrorCode = GetLastError();
 		TCHAR szMessage[256];
 		_stprintf_s(szMessage, ARRAYSIZE(szMessage), L"Error code returned was 0x%08lx", dwErrorCode);
@@ -117,9 +112,7 @@ void ElevateNow()
 				DWORD dwError = GetLastError();
 				if (dwError == ERROR_CANCELLED)
 				{
-					// The user refused to allow privileges elevation.
-					//std::cout << "End user did not allow elevation" << std::endl;
-					DEBUG_LOG(_T("Network Monitoring Tool : End user did not allow elevation"));
+					DEBUG_LOG(_T("Network Monitoring Tool : Elevation was not allowed."));
 				}
 			}
 			else
@@ -129,147 +122,73 @@ void ElevateNow()
 		}
 	}
 }
-
-// CCheckOpenPortsApp initialization
-/*BOOL EnableWindowsPrivilege(WCHAR* Privilege)
+int ProcessAppToFirewall(LPCTSTR szAppName)
 {
-	LUID luid = {};
-	TOKEN_PRIVILEGES tp;
-	HANDLE currentProcess = GetCurrentProcess();
-	HANDLE currentToken = {};
-	tp.PrivilegeCount = 1;
-	tp.Privileges[0].Luid = luid;
-	tp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
-	if (!LookupPrivilegeValue(NULL, Privilege, &luid)) 
-		return FALSE;
-	if (!OpenProcessToken(currentProcess, TOKEN_ALL_ACCESS, &currentToken)) 
-		return FALSE;
-	if (!AdjustTokenPrivileges(currentToken, FALSE, &tp, sizeof(TOKEN_PRIVILEGES), (PTOKEN_PRIVILEGES)NULL, (PDWORD)NULL)) 
-		return FALSE;
-	return TRUE;
-}
-HANDLE GetAccessToken(DWORD pid)
-{
-
-	
-	HANDLE currentProcess = {};
-	HANDLE AccessToken = {};
-	DWORD LastError;
-
-	if (pid == 0)
-	{
-		currentProcess = GetCurrentProcess();
-	}
-	else
-	{
-		currentProcess = OpenProcess(PROCESS_QUERY_INFORMATION, TRUE, pid);
-		if (!currentProcess)
-		{
-			LastError = GetLastError();
-			wprintf(L"ERROR: OpenProcess(): %d\n", LastError);
-			return (HANDLE)NULL;
-		}
-	}
-	if (!OpenProcessToken(currentProcess, TOKEN_ASSIGN_PRIMARY | TOKEN_DUPLICATE | TOKEN_IMPERSONATE | TOKEN_QUERY, &AccessToken))
-	{
-		LastError = GetLastError();
-		wprintf(L"ERROR: OpenProcessToken(): %d\n", LastError);
-		return (HANDLE)NULL;
-	}
-	return AccessToken;
-}*/
-BOOL CCheckOpenPortsApp::InitInstance()
-{
-	// InitCommonControlsEx() is required on Windows XP if an application
-	// manifest specifies use of ComCtl32.dll version 6 or later to enable
-	// visual styles.  Otherwise, any window creation will fail.
-//	INITCOMMONCONTROLSEX InitCtrls;
-//	InitCtrls.dwSize = sizeof(InitCtrls);
-	// Set this to include all the common control classes you want to use
-	// in your application.
-//	InitCtrls.dwICC = ICC_WIN95_CLASSES;
-//	InitCommonControlsEx(&InitCtrls);
 	CFirewall firewall;
-	TCHAR szpath[MAX_PATH];
-	GetModuleFileName(NULL, szpath, sizeof(szpath));
 
-	firewall.ImplementFirewall(szpath,_T("Enzo Tech Network Monitoring Tool"));
-	CWinApp::InitInstance();
+	HRESULT hr = S_OK;
+	INetFwProfile* fwProfile = NULL;
+	TCHAR szFileNamePath[MAX_PATH];
+	BOOL bIsAppEnable = false;
+	GetModuleFileName(NULL, szFileNamePath, sizeof(szFileNamePath));
 
-	if (!IsRunAsAdministrator())
+	// Initialize COM.
+	if (firewall.InitializeCOM())
 	{
-		if (AfxMessageBox(_T("This tool cannot continue if you don't run as administrator. Are you willing to elevate the process?"), MB_YESNO) == IDNO)
+		hr = firewall.WindowsFirewallInitialize(&fwProfile);
+		if (FAILED(hr))
 		{
-			return FALSE;
+			DEBUG_LOG(_T("WindowsFirewallInitialize failed: 0x%08lx\n"), hr);
+			firewall.UninitializeCOM();
+			return false;
 		}
-		else
+		hr = firewall.WindowsFirewallAppIsEnabled(fwProfile, szFileNamePath, &bIsAppEnable);
+		if (FAILED(hr))
 		{
-			ElevateNow();
+			DEBUG_LOG(_T("WindowsFirewallAddApp failed: 0x%08lx\n"), hr);
+			firewall.WindowsFirewallCleanup(fwProfile);
+			firewall.UninitializeCOM();
+			return false;
 		}
-	}
-
-	/*if (!EnableWindowsPrivilege(SE_ASSIGNPRIMARYTOKEN_NAME))
-	{
-		return FALSE;
-	}
-	PROCESSENTRY32 entry;
-	entry.dwSize = sizeof(PROCESSENTRY32);
-
-	HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, NULL);
-	DWORD dwID = 0;
-	if (Process32First(snapshot, &entry) == TRUE)
-	{
-		while (Process32Next(snapshot, &entry) == TRUE)
+		if (!bIsAppEnable)
 		{
-			if (_wcsicmp(entry.szExeFile, L"explorer.exe") == 0)
+			int bRet = AfxMessageBox(_T("The Network Monitoring Tool is not yet allowed by the Windows firewall. You cannot see all the packets if you will not add it to the Windows firewall. Do you want to add it?"), MB_YESNO);
+			
+			if (IDYES == bRet)
 			{
-				HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, entry.th32ProcessID);
-				dwID = entry.th32ProcessID;
-
-				CloseHandle(hProcess);
+				hr = firewall.WindowsFirewallAddApp(fwProfile, szFileNamePath, szAppName);
+				if (FAILED(hr))
+				{
+					DEBUG_LOG(_T("WindowsFirewallAddApp failed: 0x%08lx\n"), hr);
+					firewall.WindowsFirewallCleanup(fwProfile);
+					firewall.UninitializeCOM();
+					return false;
+				}
+			}
+			else
+			{
+				firewall.WindowsFirewallCleanup(fwProfile);
+				firewall.UninitializeCOM();
 			}
 		}
 	}
+	return true;
+}
+BOOL CCheckOpenPortsApp::InitInstance()
+{
+	CWinApp::InitInstance();
 
-	CloseHandle(snapshot);
-	
-	HANDLE pToken = GetAccessToken(dwID);
-
-	//These are required to call DuplicateTokenEx.
-	SECURITY_IMPERSONATION_LEVEL seImpersonateLevel = SecurityImpersonation;
-	TOKEN_TYPE tokenType = TokenPrimary;
-	HANDLE pNewToken = new HANDLE;
-	if (!DuplicateTokenEx(pToken, MAXIMUM_ALLOWED, NULL, seImpersonateLevel, tokenType, &pNewToken))
+	if (!IsAdministrator())
 	{
-		DWORD LastError = GetLastError();
-		wprintf(L"ERROR: Could not duplicate process token [%d]\n", LastError);
-		return 1;
+		if (AfxMessageBox(_T("This tool cannot continue if you don't run as administrator. Are you willing to elevate the process?"), MB_YESNO) == IDNO)
+			return FALSE;
+		else
+			ElevateProcess();
 	}
-	DWORD dwSessionId = GetCurrentProcessId();
-	
-	if (!SetTokenInformation(pNewToken, TokenSessionId, &dwSessionId, sizeof(dwSessionId)))
-	{
-		DWORD LastError = GetLastError();
-		wprintf(L"ERROR: Could not set token [%d]\n", LastError);
-		return 1;
-	}
-	delete pNewToken;*/
-	//AfxEnableControlContainer();
+	ProcessAppToFirewall(_T("Enzo Tech Network Monitoring Tool"));
 
-	// Create the shell manager, in case the dialog contains
-	// any shell tree view or shell list view controls.
 	CShellManager *pShellManager = new CShellManager;
 
-	// Activate "Windows Native" visual manager for enabling themes in MFC controls
-	//CMFCVisualManager::SetDefaultManager(RUNTIME_CLASS(CMFCVisualManagerWindows));
-
-	// Standard initialization
-	// If you are not using these features and wish to reduce the size
-	// of your final executable, you should remove from the following
-	// the specific initialization routines you do not need
-	// Change the registry key under which our settings are stored
-	// TODO: You should modify this string to be something appropriate
-	// such as the name of your company or organization
 	SetRegistryKey(_T("Local AppWizard-Generated Applications"));
 
 	CCheckOpenPortsDlg dlg;

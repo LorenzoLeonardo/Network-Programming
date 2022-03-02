@@ -4,13 +4,37 @@
 
 CFirewall::CFirewall()
 {
-
+    m_comInit = E_FAIL;
 }
 CFirewall::~CFirewall()
 {
 
 }
 
+bool CFirewall::InitializeCOM()
+{
+    HRESULT hr = S_OK;
+
+    m_comInit = CoInitializeEx(0, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+
+    if (m_comInit != RPC_E_CHANGED_MODE)
+    {
+        hr = m_comInit;
+        if (FAILED(hr))
+        {
+            DEBUG_LOG(_T("CoInitializeEx failed: 0x%08lx\n"), hr);
+            return false;
+        }
+    }
+    return true;
+}
+
+void CFirewall::UninitializeCOM()
+{
+    if (SUCCEEDED(m_comInit))
+        CoUninitialize();
+
+}
 HRESULT CFirewall::WindowsFirewallInitialize(OUT INetFwProfile** fwProfile)
 {
     HRESULT hr = S_OK;
@@ -78,109 +102,6 @@ void CFirewall::WindowsFirewallCleanup(IN INetFwProfile* fwProfile)
     }
 }
 
-HRESULT CFirewall::WindowsFirewallIsOn(IN INetFwProfile* fwProfile, OUT BOOL* fwOn)
-{
-    HRESULT hr = S_OK;
-    VARIANT_BOOL fwEnabled;
-
-    _ASSERT(fwProfile != NULL);
-    _ASSERT(fwOn != NULL);
-
-    *fwOn = FALSE;
-
-    // Get the current state of the firewall.
-    hr = fwProfile->get_FirewallEnabled(&fwEnabled);
-    if (FAILED(hr))
-    {
-        DEBUG_LOG(_T("get_FirewallEnabled failed: 0x%08lx\n"), hr);
-        goto error;
-    }
-
-    // Check to see if the firewall is on.
-    if (fwEnabled != VARIANT_FALSE)
-    {
-        *fwOn = TRUE;
-        DEBUG_LOG(_T("The firewall is on.\n"));
-    }
-    else
-    {
-        DEBUG_LOG(_T("The firewall is off.\n"));
-    }
-
-error:
-
-    return hr;
-}
-
-
-HRESULT CFirewall::WindowsFirewallTurnOn(IN INetFwProfile* fwProfile)
-{
-    HRESULT hr = S_OK;
-    BOOL fwOn;
-
-    _ASSERT(fwProfile != NULL);
-
-    // Check to see if the firewall is off.
-    hr = WindowsFirewallIsOn(fwProfile, &fwOn);
-    if (FAILED(hr))
-    {
-        DEBUG_LOG(_T("WindowsFirewallIsOn failed: 0x%08lx\n"), hr);
-        goto error;
-    }
-
-    // If it is, turn it on.
-    if (!fwOn)
-    {
-        // Turn the firewall on.
-        hr = fwProfile->put_FirewallEnabled(VARIANT_TRUE);
-        if (FAILED(hr))
-        {
-            DEBUG_LOG(_T("put_FirewallEnabled failed: 0x%08lx\n"), hr);
-            goto error;
-        }
-
-        DEBUG_LOG(_T("The firewall is now on.\n"));
-    }
-
-error:
-
-    return hr;
-}
-
-
-HRESULT CFirewall::WindowsFirewallTurnOff(IN INetFwProfile* fwProfile)
-{
-    HRESULT hr = S_OK;
-    BOOL fwOn;
-
-    _ASSERT(fwProfile != NULL);
-
-    // Check to see if the firewall is on.
-    hr = WindowsFirewallIsOn(fwProfile, &fwOn);
-    if (FAILED(hr))
-    {
-        DEBUG_LOG(_T("WindowsFirewallIsOn failed: 0x%08lx\n"), hr);
-        goto error;
-    }
-
-    // If it is, turn it off.
-    if (fwOn)
-    {
-        // Turn the firewall off.
-        hr = fwProfile->put_FirewallEnabled(VARIANT_FALSE);
-        if (FAILED(hr))
-        {
-            DEBUG_LOG(_T("put_FirewallEnabled failed: 0x%08lx\n"), hr);
-            goto error;
-        }
-
-        DEBUG_LOG(_T("The firewall is now off.\n"));
-    }
-
-error:
-
-    return hr;
-}
 
 
 HRESULT CFirewall::WindowsFirewallAppIsEnabled(
@@ -595,21 +516,18 @@ error:
 }
 
 
-int CFirewall::ImplementFirewall(LPCTSTR szFileNamePath, LPCTSTR szProgramName)
+int CFirewall::ProcessAppToFirewall(LPCTSTR szProgramName)
 {
     HRESULT hr = S_OK;
     HRESULT comInit = E_FAIL;
     INetFwProfile* fwProfile = NULL;
+    TCHAR szFileNamePath[MAX_PATH];
+
+    GetModuleFileName(NULL, szFileNamePath, sizeof(szFileNamePath));
 
     // Initialize COM.
-    comInit = CoInitializeEx(
-        0,
-        COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE
-    );
+    comInit = CoInitializeEx(0, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE );
 
-    // Ignore RPC_E_CHANGED_MODE; this just means that COM has already been
-    // initialized with a different mode. Since we don't care what the mode is,
-    // we'll just use the existing mode.
     if (comInit != RPC_E_CHANGED_MODE)
     {
         hr = comInit;
@@ -620,7 +538,6 @@ int CFirewall::ImplementFirewall(LPCTSTR szFileNamePath, LPCTSTR szProgramName)
         }
     }
 
-    // Retrieve the firewall profile currently in effect.
     hr = WindowsFirewallInitialize(&fwProfile);
     if (FAILED(hr))
     {
@@ -628,52 +545,18 @@ int CFirewall::ImplementFirewall(LPCTSTR szFileNamePath, LPCTSTR szProgramName)
         goto error;
     }
 
-    // Turn off the firewall.
-  /*  hr = WindowsFirewallTurnOff(fwProfile);
-    if (FAILED(hr))
-    {
-        DEBUG_LOG(_T("WindowsFirewallTurnOff failed: 0x%08lx\n"), hr);
-        goto error;
-    }
-
-    // Turn on the firewall.
-    hr = WindowsFirewallTurnOn(fwProfile);
-    if (FAILED(hr))
-    {
-        DEBUG_LOG(_T("WindowsFirewallTurnOn failed: 0x%08lx\n"), hr);
-        goto error;
-    }*/
-
-    // Add Windows Messenger to the authorized application collection.
-    hr = WindowsFirewallAddApp(
-        fwProfile,
-        szFileNamePath,//L"%ProgramFiles%\\Messenger\\msmsgs.exe",
-        szProgramName//L"Windows Messenger"
-    );
+    hr = WindowsFirewallAddApp(fwProfile, szFileNamePath, szProgramName);
     if (FAILED(hr))
     {
         DEBUG_LOG(_T("WindowsFirewallAddApp failed: 0x%08lx\n"), hr);
         goto error;
     }
 
-    // Add TCP::80 to list of globally open ports.
-  //  hr = WindowsFirewallPortAdd(fwProfile, 80, NET_FW_IP_PROTOCOL_TCP, L"WWW");
-  //  if (FAILED(hr))
-   // {
-   //     DEBUG_LOG(_T("WindowsFirewallPortAdd failed: 0x%08lx\n"), hr);
-   //     goto error;
-   // }
-
 error:
-
-    // Release the firewall profile.
     WindowsFirewallCleanup(fwProfile);
 
-    // Uninitialize COM.
     if (SUCCEEDED(comInit))
-    {
         CoUninitialize();
-    }
 
     return 0;
 }
