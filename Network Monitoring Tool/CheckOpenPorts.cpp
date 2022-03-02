@@ -23,6 +23,7 @@ END_MESSAGE_MAP()
 
 // CCheckOpenPortsApp construction
 
+
 CCheckOpenPortsApp::CCheckOpenPortsApp()
 {
 	// support Restart Manager
@@ -37,7 +38,7 @@ CCheckOpenPortsApp::CCheckOpenPortsApp()
 
 CCheckOpenPortsApp theApp;
 
-BOOL IsAdministrator()
+inline BOOL IsAdministrator()
 {
 	BOOL fIsRunAsAdmin = FALSE;
 	DWORD dwError = ERROR_SUCCESS;
@@ -80,7 +81,7 @@ Cleanup:
 	return fIsRunAsAdmin;
 }
 
-void ElevateProcess()
+inline void ElevateProcess()
 {
 	BOOL bAlreadyRunningAsAdministrator = FALSE;
 	try
@@ -122,32 +123,38 @@ void ElevateProcess()
 		}
 	}
 }
-int ProcessAppToFirewall(LPCTSTR szAppName)
+inline int ProcessAppToFirewall(LPCTSTR szAppName)
 {
-	CFirewall firewall;
+	CFirewall *firewall = new CFirewall();
 
 	HRESULT hr = S_OK;
 	INetFwProfile* fwProfile = NULL;
-	TCHAR szFileNamePath[MAX_PATH];
+	TCHAR* szFileNamePath = (TCHAR*)malloc (sizeof(TCHAR) * MAX_PATH);
 	BOOL bIsAppEnable = false;
-	GetModuleFileName(NULL, szFileNamePath, sizeof(szFileNamePath));
+
+
+	GetModuleFileName(NULL, szFileNamePath, sizeof(TCHAR) * MAX_PATH);
 
 	// Initialize COM.
-	if (firewall.InitializeCOM())
+	if (firewall->InitializeCOM())
 	{
-		hr = firewall.WindowsFirewallInitialize(&fwProfile);
+		hr = firewall->WindowsFirewallInitialize(&fwProfile);
 		if (FAILED(hr))
 		{
 			DEBUG_LOG(_T("WindowsFirewallInitialize failed: 0x%08lx\n"), hr);
-			firewall.UninitializeCOM();
+			firewall->UninitializeCOM();
+			free(szFileNamePath);
+			delete firewall;
 			return false;
 		}
-		hr = firewall.WindowsFirewallAppIsEnabled(fwProfile, szFileNamePath, &bIsAppEnable);
+		hr = firewall->WindowsFirewallAppIsEnabled(fwProfile, szFileNamePath, &bIsAppEnable);
 		if (FAILED(hr))
 		{
 			DEBUG_LOG(_T("WindowsFirewallAddApp failed: 0x%08lx\n"), hr);
-			firewall.WindowsFirewallCleanup(fwProfile);
-			firewall.UninitializeCOM();
+			firewall->WindowsFirewallCleanup(fwProfile);
+			firewall->UninitializeCOM();
+			free(szFileNamePath);
+			delete firewall;
 			return false;
 		}
 		if (!bIsAppEnable)
@@ -156,22 +163,26 @@ int ProcessAppToFirewall(LPCTSTR szAppName)
 			
 			if (IDYES == bRet)
 			{
-				hr = firewall.WindowsFirewallAddApp(fwProfile, szFileNamePath, szAppName);
+				hr = firewall->WindowsFirewallAddApp(fwProfile, szFileNamePath, szAppName);
 				if (FAILED(hr))
 				{
 					DEBUG_LOG(_T("WindowsFirewallAddApp failed: 0x%08lx\n"), hr);
-					firewall.WindowsFirewallCleanup(fwProfile);
-					firewall.UninitializeCOM();
+					firewall->WindowsFirewallCleanup(fwProfile);
+					firewall->UninitializeCOM();
+					free(szFileNamePath);
+					delete firewall;
 					return false;
 				}
 			}
 			else
 			{
-				firewall.WindowsFirewallCleanup(fwProfile);
-				firewall.UninitializeCOM();
+				firewall->WindowsFirewallCleanup(fwProfile);
+				firewall->UninitializeCOM();
 			}
 		}
 	}
+	free(szFileNamePath);
+	delete firewall;
 	return true;
 }
 BOOL CCheckOpenPortsApp::InitInstance()
@@ -180,18 +191,18 @@ BOOL CCheckOpenPortsApp::InitInstance()
 
 	if (!IsAdministrator())
 	{
-		if (AfxMessageBox(_T("This tool cannot continue if you don't run as administrator. Are you willing to elevate the process?"), MB_YESNO) == IDNO)
+		if (AfxMessageBox(_T("Please run as Administrator. Are you willing to elevate the process?"), MB_YESNO) == IDNO)
 			return FALSE;
 		else
 			ElevateProcess();
 	}
-	ProcessAppToFirewall(_T("Enzo Tech Network Monitoring Tool"));
+	//ProcessAppToFirewall(_T("Enzo Tech Network Monitoring Tool"));
 
-	CShellManager *pShellManager = new CShellManager;
+	//CShellManager *pShellManager = new CShellManager;
 
 	SetRegistryKey(_T("Local AppWizard-Generated Applications"));
-
 	CCheckOpenPortsDlg dlg;
+	
 	m_pMainWnd = &dlg;
 	INT_PTR nResponse = dlg.DoModal();
 	if (nResponse == IDOK)
@@ -209,12 +220,12 @@ BOOL CCheckOpenPortsApp::InitInstance()
 		TRACE(traceAppMsg, 0, "Warning: dialog creation failed, so application is terminating unexpectedly.\n");
 		TRACE(traceAppMsg, 0, "Warning: if you are using MFC controls on the dialog, you cannot #define _AFX_NO_MFC_CONTROLS_IN_DIALOGS.\n");
 	}
-
+	
 	// Delete the shell manager created above.
-	if (pShellManager != nullptr)
-	{
-		delete pShellManager;
-	}
+	//if (pShellManager != nullptr)
+	//{
+	//	delete pShellManager;
+	//}
 
 #if !defined(_AFXDLL) && !defined(_AFX_NO_MFC_CONTROLS_IN_DIALOGS)
 //	ControlBarCleanUp();

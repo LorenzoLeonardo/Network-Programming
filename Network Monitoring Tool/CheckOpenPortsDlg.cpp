@@ -107,7 +107,7 @@ CCheckOpenPortsDlg::CCheckOpenPortsDlg(CWnd* pParent /*=nullptr*/)
 	m_bOnCloseWasCalled = false;
 	m_hBrushBackGround = CreateSolidBrush(RGB(93, 107, 153));
 	m_hBrushEditArea = CreateSolidBrush(RGB(255, 255, 255));
-
+	m_pmodeless = NULL;
 	m_pfnPtrSNMPGet = NULL;
 	m_pfnPtrEndSNMP = NULL;
 	m_pfnPtrGetDefaultGateway = NULL;
@@ -1835,6 +1835,7 @@ void CCheckOpenPortsDlg::CallbackLANListenerEx(const char* ipAddress, const char
 		int nRow = 0;
 
 		inet_pton(AF_INET, ipAddress, &ipaddr);
+		g_dlg->m_mMonitorDeviceCurrent[ipaddr]++;
 		if ((g_dlg->m_mConnected.find(ipaddr) == g_dlg->m_mConnected.end()) && strlen(ipAddress))
 		{
 			CString csTemp, format;
@@ -1861,7 +1862,7 @@ void CCheckOpenPortsDlg::CallbackLANListenerEx(const char* ipAddress, const char
 				g_dlg->m_fnptrStartPacketListenerEx(tDeviceDetails->m_hPacketListenerDownload);
 				g_dlg->m_fnptrStartPacketListenerEx(tDeviceDetails->m_hPacketListenerUpload);
 			}
-
+			
 			if (tDeviceDetails->m_szIPAddress == tDeviceDetails->m_szHostName)
 			{
 				TCHAR value[MAX_PATH];
@@ -1871,7 +1872,7 @@ void CCheckOpenPortsDlg::CallbackLANListenerEx(const char* ipAddress, const char
 					tDeviceDetails->m_szHostName = value;
 			}
 			g_dlg->m_mConnected[ipaddr] = tDeviceDetails;
-
+			
 
 			nRow = g_dlg->m_ctrlLANConnected.GetItemCount();
 			wstring wTemp(tDeviceDetails->m_szIPAddress);
@@ -1974,6 +1975,48 @@ void CCheckOpenPortsDlg::CallbackLANListenerEx(const char* ipAddress, const char
 	{
 		if (strcmp(ipAddress, "end") == 0)
 		{
+			if (!g_dlg->m_mMonitorDeviceBefore.empty())
+			{
+				map<ULONG, int>::iterator it = g_dlg->m_mMonitorDeviceCurrent.begin();
+				while (it != g_dlg->m_mMonitorDeviceCurrent.end())
+				{
+					if (g_dlg->m_mMonitorDeviceBefore.find(it->first) != g_dlg->m_mMonitorDeviceBefore.end())
+						g_dlg->m_mMonitorDeviceBefore.erase(it->first);
+					it++;
+				}
+				it = g_dlg->m_mMonitorDeviceBefore.begin();
+				while (it != g_dlg->m_mMonitorDeviceBefore.end())
+				{
+					char szIP[32];
+					inet_ntop(AF_INET, &(it->first), szIP, sizeof(szIP));
+					CString cs(szIP);
+					int nRow = g_dlg->IsInTheList(cs);
+					if (nRow != -1)
+					{
+						g_dlg->m_ctrlLANConnected.DeleteItem(nRow);
+						for (int j = nRow; j < g_dlg->m_ctrlLANConnected.GetItemCount(); j++)
+						{
+							g_dlg->m_ctrlLANConnected.SetItemText(j, 0, to_wstring(j + 1).c_str());
+						}
+		
+						g_dlg->m_fnptrStopPacketListenerEx(g_dlg->m_mConnected[it->first]->m_hPacketListenerDownload);
+						g_dlg->m_fnptrStopPacketListenerEx(g_dlg->m_mConnected[it->first]->m_hPacketListenerUpload);
+						g_dlg->m_fnptrDeletePacketListenerEx(g_dlg->m_mConnected[it->first]->m_hPacketListenerDownload);
+						g_dlg->m_fnptrDeletePacketListenerEx(g_dlg->m_mConnected[it->first]->m_hPacketListenerUpload);
+
+						CDeviceConnected* pDevice;
+						pDevice = g_dlg->m_mConnected[it->first];
+						g_dlg->m_mConnected[it->first] = NULL;
+						delete pDevice;
+						pDevice = NULL;
+						g_dlg->m_mConnected.erase(it->first);
+					}
+					it++;
+				}
+			}
+			g_dlg->m_mMonitorDeviceBefore = g_dlg->m_mMonitorDeviceCurrent;
+			g_dlg->m_mMonitorDeviceCurrent.clear();
+			/*
 			char szHostName[32], szMacAddress[32];
 			string ipAdd;
 			DWORD dwError;
@@ -2007,7 +2050,7 @@ void CCheckOpenPortsDlg::CallbackLANListenerEx(const char* ipAddress, const char
 					pDevice = NULL;
 					g_dlg->m_mConnected.erase(ipaddr);
 				}
-			}
+			}*/
 			if ((g_dlg->m_mConnected.size() - 1) < g_dlg->m_nCurrentRowSelected)
 				g_dlg->m_nCurrentRowSelected = (int)g_dlg->m_mConnected.size() - 1;
 

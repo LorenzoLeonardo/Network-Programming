@@ -133,6 +133,8 @@ public:
 	CListCtrlCustom m_ctrlLANConnected;
 	map<ULONG, CDeviceConnected*> m_mConnected;
 	map<ULONG, CDeviceConnected> m_mConnectedBefore;
+	map<ULONG, int> m_mMonitorDeviceCurrent;
+	map<ULONG, int> m_mMonitorDeviceBefore;
 	vector<IP_ADAPTER_INFO> m_vAdapterInfo;
 	CEdit m_ctrlEditPacketReportArea;
 	CEdit m_ctrlEditDownloadSpeed;
