@@ -196,7 +196,7 @@ BOOL CCheckOpenPortsApp::InitInstance()
 		else
 			ElevateProcess();
 	}
-	//ProcessAppToFirewall(_T("Enzo Tech Network Monitoring Tool"));
+	ProcessAppToFirewall(_T("Enzo Tech Network Monitoring Tool"));
 
 	//CShellManager *pShellManager = new CShellManager;
 
