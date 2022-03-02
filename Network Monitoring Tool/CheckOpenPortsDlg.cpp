@@ -751,20 +751,20 @@ void CCheckOpenPortsDlg::OnBnClickedButtonStartListenLan()
 	string mask = m_vAdapterInfo[m_ctrlComboAdapterList.GetCurSel()].IpAddressList.IpMask.String;
 	wstring wstr(csText.GetBuffer());
 
-	m_ctrlEditPollingTime.GetWindowText(csPollTime);
-	if (csPollTime.IsEmpty())
-	{
-		m_ctrlEditPollingTime.SetWindowText(_T("50"));
+	//m_ctrlEditPollingTime.GetWindowText(csPollTime);
+	////if (csPollTime.IsEmpty())
+	//{
+	//	m_ctrlEditPollingTime.SetWindowText(_T("50"));
 		if (m_hLocalAreaListener)
-			m_fnptrStartLocalAreaListenerEx(m_hLocalAreaListener, ip.c_str(), mask.c_str(), CallbackLANListenerEx, 50);
-	}
-	else
-	{
-		int nPollTime = _ttoi(csPollTime);
-		if (m_hLocalAreaListener)
-			m_fnptrStartLocalAreaListenerEx(m_hLocalAreaListener, ip.c_str(), mask.c_str(), CallbackLANListenerEx, nPollTime);
+			m_fnptrStartLocalAreaListenerEx(m_hLocalAreaListener, ip.c_str(), mask.c_str(), CallbackLANListenerEx, 0);
+	//}
+	//else
+	//{
+	//	int nPollTime = _ttoi(csPollTime);
+	//	if (m_hLocalAreaListener)
+	//		m_fnptrStartLocalAreaListenerEx(m_hLocalAreaListener, ip.c_str(), mask.c_str(), CallbackLANListenerEx, nPollTime);
 
-	}
+	//}
 
 
 	
@@ -1855,7 +1855,7 @@ void CCheckOpenPortsDlg::CallbackLANListenerEx(const char* ipAddress, const char
 			tDeviceDetails->m_ullDownloadStartTime = tDeviceDetails->m_ullUploadStartTime = GetTickCount64();
 			tDeviceDetails->m_hPacketListenerDownload = g_dlg->m_fnptrCreatePacketListenerEx(CallbackPacketListenerDownloadEx, (void*)tDeviceDetails);
 			tDeviceDetails->m_hPacketListenerUpload = g_dlg->m_fnptrCreatePacketListenerEx(CallbackPacketListenerUploadEx, (void*)tDeviceDetails);
-			
+
 			if (!g_dlg->m_bStopPacketListener)
 			{
 				g_dlg->m_fnptrStartPacketListenerEx(tDeviceDetails->m_hPacketListenerDownload);
@@ -1974,128 +1974,11 @@ void CCheckOpenPortsDlg::CallbackLANListenerEx(const char* ipAddress, const char
 	{
 		if (strcmp(ipAddress, "end") == 0)
 		{
-			int col = 0;
-			int nRow = 0;
-			WCHAR* temp = NULL;
-			CString format;
 			char szHostName[32], szMacAddress[32];
-			DWORD dwError = 0;
 			string ipAdd;
-			map<ULONG, CDeviceConnected*>::iterator it;
-
+			DWORD dwError;
 			memset(szHostName, 0, sizeof(szHostName));
 			memset(szMacAddress, 0, sizeof(szMacAddress));
-
-			it = g_dlg->m_mConnected.begin();
-			while (it != g_dlg->m_mConnected.end())
-			{
-				if ((g_dlg->IsInTheList(it->second->m_szIPAddress) == -1) && !it->second->m_szIPAddress.IsEmpty())
-				{
-					nRow = g_dlg->m_ctrlLANConnected.GetItemCount();
-					wstring wTemp(it->second->m_szIPAddress.GetBuffer());
-
-					ipAdd = g_dlg->UnicodeToMultiByte(wTemp);
-
-					if (g_dlg->m_pfnPtrGetNetworkDeviceStatus(ipAdd.c_str(), szHostName, sizeof(szHostName),
-						szMacAddress, sizeof(szMacAddress), &dwError))
-					{
-						if (nRow == 0)
-						{
-							g_dlg->m_ctrlLANConnected.InsertItem(LVIF_TEXT | LVIF_STATE, nRow,
-								to_wstring(nRow + 1).c_str(), 0, 0, 0, 0);
-							g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 1, it->second->m_szIPAddress);
-							g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 2, it->second->m_szHostName);
-							g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 3, it->second->m_szMACAddress);
-							if (it->second->m_lfDownloadSpeed <= 1000)
-								format.Format(_T("%.2f Kbps"), it->second->m_lfDownloadSpeed);
-							else
-								format.Format(_T("%.2f Mbps"), it->second->m_lfDownloadSpeed / 1000);
-							g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 4, format);
-							if (it->second->m_lfUploadSpeed <= 1000)
-								format.Format(_T("%.2f Kbps"), it->second->m_lfUploadSpeed);
-							else
-								format.Format(_T("%.2f Mbps"), it->second->m_lfUploadSpeed / 1000);
-							g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 5, format);
-							if (it->second->m_lfMaxDownloadSpeed <= 1000)
-								format.Format(_T("%.2f Kbps"), it->second->m_lfMaxDownloadSpeed);
-							else
-								format.Format(_T("%.2f Mbps"), it->second->m_lfMaxDownloadSpeed / 1000);
-							g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 6, format);
-							if (it->second->m_lfMaxUploadSpeed <= 1000)
-								format.Format(_T("%.2f Kbps"), it->second->m_lfMaxUploadSpeed);
-							else
-								format.Format(_T("%.2f Mbps"), it->second->m_lfMaxUploadSpeed / 1000);
-							g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 7, format);
-						}
-						else
-						{
-							for (int i = 0; i < g_dlg->m_ctrlLANConnected.GetItemCount(); i++)
-							{
-								ULONG ulItemBefore = 0, UlIP = 0, ulItemAfter = 0;
-								InetPtonW(AF_INET, g_dlg->m_ctrlLANConnected.GetItemText(i, 1), &ulItemBefore);
-								InetPtonW(AF_INET, g_dlg->m_ctrlLANConnected.GetItemText(i + 1, 1), &ulItemAfter);
-								InetPtonW(AF_INET, it->second->m_szIPAddress, &UlIP);
-								if ((htonl(ulItemBefore) < htonl(UlIP)) && (htonl(UlIP) < htonl(ulItemAfter)))
-								{
-									nRow = i + 1;
-									break;
-								}
-								else if (htonl(ulItemBefore) < htonl(UlIP) && i == g_dlg->m_ctrlLANConnected.GetItemCount() - 1)
-								{
-									nRow = i + 1;
-
-									break;
-								}
-								else if ((htonl(ulItemBefore) > htonl(UlIP)) && (htonl(UlIP) < htonl(ulItemAfter)))
-								{
-									nRow = i;
-									break;
-								}
-								else if (htonl(ulItemBefore) > htonl(UlIP) && i == g_dlg->m_ctrlLANConnected.GetItemCount() - 1)
-								{
-									nRow = i;
-									break;
-								}
-							}
-
-							g_dlg->m_ctrlLANConnected.InsertItem(LVIF_TEXT | LVIF_STATE, nRow,
-								to_wstring(nRow + 1).c_str(), 0, 0, 0, 0);
-							g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 1, it->second->m_szIPAddress);
-							g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 2, it->second->m_szHostName);
-							g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 3, it->second->m_szMACAddress);
-							if (it->second->m_lfDownloadSpeed <= 1000)
-								format.Format(_T("%.2f Kbps"), it->second->m_lfDownloadSpeed);
-							else
-								format.Format(_T("%.2f Mbps"), it->second->m_lfDownloadSpeed / 1000);
-							g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 4, format);
-							if (it->second->m_lfUploadSpeed <= 1000)
-								format.Format(_T("%.2f Kbps"), it->second->m_lfUploadSpeed);
-							else
-								format.Format(_T("%.2f Mbps"), it->second->m_lfUploadSpeed / 1000);
-							g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 5, format);
-							if (it->second->m_lfMaxDownloadSpeed <= 1000)
-								format.Format(_T("%.2f Kbps"), it->second->m_lfMaxDownloadSpeed);
-							else
-								format.Format(_T("%.2f Mbps"), it->second->m_lfMaxDownloadSpeed / 1000);
-							g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 6, format);
-							if (it->second->m_lfMaxUploadSpeed <= 1000)
-								format.Format(_T("%.2f Kbps"), it->second->m_lfMaxUploadSpeed);
-							else
-								format.Format(_T("%.2f Mbps"), it->second->m_lfMaxUploadSpeed / 1000);
-							g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 7, format);
-
-
-							for (int j = nRow; j < g_dlg->m_ctrlLANConnected.GetItemCount(); j++)
-							{
-								g_dlg->m_ctrlLANConnected.SetItemText(j, 0, to_wstring(j + 1).c_str());
-							}
-						}
-					}
-
-				}
-				it++;
-			}
-
 			for (int i = 0; i < g_dlg->m_ctrlLANConnected.GetItemCount(); i++)
 			{
 				wstring wTemp(g_dlg->m_ctrlLANConnected.GetItemText(i, 1).GetBuffer());
@@ -2117,12 +2000,12 @@ void CCheckOpenPortsDlg::CallbackLANListenerEx(const char* ipAddress, const char
 					g_dlg->m_fnptrDeletePacketListenerEx(g_dlg->m_mConnected[ipaddr]->m_hPacketListenerDownload);
 					g_dlg->m_fnptrDeletePacketListenerEx(g_dlg->m_mConnected[ipaddr]->m_hPacketListenerUpload);
 
-						CDeviceConnected* pDevice;
-						pDevice = g_dlg->m_mConnected[ipaddr];
-						g_dlg->m_mConnected[ipaddr] = NULL;
-						delete pDevice;
-						pDevice = NULL;
-						g_dlg->m_mConnected.erase(ipaddr);
+					CDeviceConnected* pDevice;
+					pDevice = g_dlg->m_mConnected[ipaddr];
+					g_dlg->m_mConnected[ipaddr] = NULL;
+					delete pDevice;
+					pDevice = NULL;
+					g_dlg->m_mConnected.erase(ipaddr);
 				}
 			}
 			if ((g_dlg->m_mConnected.size() - 1) < g_dlg->m_nCurrentRowSelected)
@@ -2130,7 +2013,6 @@ void CCheckOpenPortsDlg::CallbackLANListenerEx(const char* ipAddress, const char
 
 			g_dlg->m_ctrlLANConnected.SetItemState(g_dlg->m_nCurrentRowSelected, LVIS_SELECTED, LVIS_SELECTED);
 			g_dlg->m_ctrlLANConnected.SetFocus();
-
 		}
 		else if (strcmp(ipAddress, "stop") == 0)
 		{

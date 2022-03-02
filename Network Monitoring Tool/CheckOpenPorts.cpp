@@ -53,7 +53,7 @@ BOOL IsRunAsAdministrator()
 		&pAdministratorsGroup))
 	{
 		dwError = GetLastError();
-		DEBUG_LOG("Network Monitoring Tool : CheckTokenMembership() Error: " + to_string(dwError));
+		DEBUG_LOG(_T("Network Monitoring Tool : CheckTokenMembership() Error: ") + to_wstring(dwError));
 		goto Cleanup;
 	}
 
@@ -62,7 +62,7 @@ BOOL IsRunAsAdministrator()
 	if (!CheckTokenMembership(NULL, pAdministratorsGroup, &fIsRunAsAdmin))
 	{
 		dwError = GetLastError();
-		DEBUG_LOG("Network Monitoring Tool : CheckTokenMembership() Error: "+ to_string(dwError));
+		DEBUG_LOG(_T("Network Monitoring Tool : CheckTokenMembership() Error: ")+ to_wstring(dwError));
 		goto Cleanup;
 	}
 
@@ -92,12 +92,12 @@ void ElevateNow()
 	}
 	catch (...)
 	{
-		std::cout << "Failed to determine if application was running with admin rights" << std::endl;
+		//std::cout << "Failed to determine if application was running with admin rights" << std::endl;
 		DWORD dwErrorCode = GetLastError();
-		char szMessage[256];
-		sprintf_s(szMessage, ARRAYSIZE(szMessage), "Error code returned was 0x%08lx", dwErrorCode);
-		string s(szMessage);
-		DEBUG_LOG("Network Monitoring Tool : " + s);
+		TCHAR szMessage[256];
+		_stprintf_s(szMessage, ARRAYSIZE(szMessage), L"Error code returned was 0x%08lx", dwErrorCode);
+		wstring s(szMessage);
+		DEBUG_LOG(_T("Network Monitoring Tool : ") + s);
 	}
 	if (!bAlreadyRunningAsAdministrator)
 	{
@@ -117,8 +117,8 @@ void ElevateNow()
 				if (dwError == ERROR_CANCELLED)
 				{
 					// The user refused to allow privileges elevation.
-					std::cout << "End user did not allow elevation" << std::endl;
-					DEBUG_LOG("Network Monitoring Tool : End user did not allow elevation");
+					//std::cout << "End user did not allow elevation" << std::endl;
+					DEBUG_LOG(_T("Network Monitoring Tool : End user did not allow elevation"));
 				}
 			}
 			else

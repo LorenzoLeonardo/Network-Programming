@@ -189,6 +189,7 @@
     <ClInclude Include="CCustomClock.h" />
     <ClInclude Include="CCustomText.h" />
     <ClInclude Include="CDeviceConnected.h" />
+    <ClInclude Include="CFirewall.h" />
     <ClInclude Include="CheckOpenPorts.h" />
     <ClInclude Include="CheckOpenPortsDlg.h" />
     <ClInclude Include="CListCtrlCustom.h" />
@@ -203,6 +204,7 @@
     <ClCompile Include="CCustomClock.cpp" />
     <ClCompile Include="CCustomText.cpp" />
     <ClCompile Include="CDeviceConnected.cpp" />
+    <ClCompile Include="CFirewall.cpp" />
     <ClCompile Include="CheckOpenPorts.cpp" />
     <ClCompile Include="CheckOpenPortsDlg.cpp" />
     <ClCompile Include="CListCtrlCustom.cpp" />
