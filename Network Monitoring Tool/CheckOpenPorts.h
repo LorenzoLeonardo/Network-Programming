@@ -27,6 +27,9 @@ public:
 // Implementation
 
 	DECLARE_MESSAGE_MAP()
+private:
+	void  ElevateProcess();
+	BOOL  IsAdministrator();
 };
 
 extern CCheckOpenPortsApp theApp;

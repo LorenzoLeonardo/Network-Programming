@@ -307,9 +307,72 @@ bool CCheckOpenPortsDlg::InitDLL()
 		m_fnptrStartLocalAreaListenerEx = (FNPTRStartLocalAreaListenerEx)GetProcAddress(m_hDLLhandle, "StartLocalAreaListenerEx");
 		m_fnptrStopLocalAreaListenerEx = (FNPTRStopLocalAreaListenerEx)GetProcAddress(m_hDLLhandle, "StopLocalAreaListenerEx");
 		m_fnptrDeleteLocalAreaListenerEx = (FNPTRDeleteLocalAreaListenerEx)GetProcAddress(m_hDLLhandle, "DeleteLocalAreaListenerEx");
+		 m_fnptrSetNICAdapterToUse = (FNPTRSetNICAdapterToUse)GetProcAddress(m_hDLLhandle, "SetNICAdapterToUse");
 		return true;
 	}
 	return false;
+}
+int CCheckOpenPortsDlg::ProcessAppToFirewall(LPCTSTR szAppName)
+{
+	CFirewall* firewall = new CFirewall();
+	HRESULT hr = S_OK;
+	INetFwProfile* fwProfile = NULL;
+	TCHAR* szFileNamePath = NULL;
+	BOOL bIsAppEnable = false;
+	DWORD dwSize = sizeof(TCHAR) * (MAX_PATH + 1);
+
+	szFileNamePath = (TCHAR*)malloc(dwSize);
+	if (!szFileNamePath)
+		return 0;
+	memset(szFileNamePath, 0, dwSize);
+	GetModuleFileName(NULL, szFileNamePath, dwSize);
+
+	// Initialize COM.
+	if (firewall->InitializeCOM())
+	{
+		hr = firewall->WindowsFirewallInitialize(&fwProfile);
+		if (FAILED(hr))
+		{
+			DEBUG_LOG(_T("WindowsFirewallInitialize failed: 0x%08lx\n"), hr);
+			firewall->UninitializeCOM();
+			free(szFileNamePath);
+			delete firewall;
+			return false;
+		}
+		hr = firewall->WindowsFirewallAppIsEnabled(fwProfile, szFileNamePath, &bIsAppEnable);
+		if (FAILED(hr))
+		{
+			DEBUG_LOG(_T("WindowsFirewallAddApp failed: 0x%08lx\n"), hr);
+			firewall->WindowsFirewallCleanup(fwProfile);
+			firewall->UninitializeCOM();
+			free(szFileNamePath);
+			delete firewall;
+			return false;
+		}
+		if (!bIsAppEnable)
+		{
+			int bRet = ::MessageBox(GetSafeHwnd(), _T("The Network Monitoring Tool is not yet allowed by the Windows firewall. You cannot see all the packets if you will not add it to the Windows firewall. Do you want to add it?"), _T("Network Monitoring Tool"), MB_YESNO);
+			if (IDYES == bRet)
+			{
+				hr = firewall->WindowsFirewallAddApp(fwProfile, szFileNamePath, szAppName);
+				if (FAILED(hr))
+				{
+					DEBUG_LOG(_T("WindowsFirewallAddApp failed: 0x%08lx\n"), hr);
+					firewall->WindowsFirewallCleanup(fwProfile);
+					firewall->UninitializeCOM();
+					free(szFileNamePath);
+					delete firewall;
+					return false;
+				}
+			}
+
+		}
+	}
+	free(szFileNamePath);
+	firewall->WindowsFirewallCleanup(fwProfile);
+	firewall->UninitializeCOM();
+	delete firewall;
+	return true;
 }
 BOOL CCheckOpenPortsDlg::OnInitDialog()
 {
@@ -317,7 +380,7 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	int nCol = 0;
 	char szDefaultGateWay[32];
 
-
+	//ProcessAppToFirewall(_T("Enzo Tech Network Monitoring Tool"));
 	if (!InitDLL())
 	{
 		AfxMessageBox(_T("EnzTCP.DLL is not found. Please contact Enzo Tech Computer Solutions."), MB_ICONERROR);
@@ -396,7 +459,7 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	m_ctrlBtnListenPackets.EnableWindow(TRUE);
 	m_ctrlBtnUnlistenPackets.EnableWindow(FALSE);
 
-
+	m_fnptrSetNICAdapterToUse(m_vAdapterInfo[m_ctrlComboAdapterList.GetCurSel()].AdapterName, m_vAdapterInfo[m_ctrlComboAdapterList.GetCurSel()].IpAddressList.Context);
 	if (m_pfnPtrGetDefaultGatewayEx(m_vAdapterInfo[m_ctrlComboAdapterList.GetCurSel()].AdapterName, szDefaultGateWay, sizeof(szDefaultGateWay)))
 	{
 		m_ipFilter = m_vAdapterInfo[m_ctrlComboAdapterList.GetCurSel()].IpAddressList.IpAddress.String;

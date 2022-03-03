@@ -29,7 +29,7 @@ public :
 	static void PollingThread(void* args);
 	static unsigned _stdcall PollingThreadEx(void* args);
 	bool StartListening();
-	bool StartListeningEx();
+	bool StartListeningEx(ULONG ulNICIP);
 	void StopListening();
 	void StopListeningEx();
 	bool IsStopped()

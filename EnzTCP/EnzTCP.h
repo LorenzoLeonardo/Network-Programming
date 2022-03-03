@@ -142,3 +142,4 @@ extern "C" ENZTCPLIBRARY_API    HANDLE      CreateLocalAreaListenerEx();
 extern "C" ENZTCPLIBRARY_API	bool		StartLocalAreaListenerEx(HANDLE, const char* szStartingIPAddress, const char* subNetMask, CallbackLocalAreaListener pFncPtr, int nPollingTimeMS);
 extern "C" ENZTCPLIBRARY_API	void		StopLocalAreaListenerEx(HANDLE);
 extern "C" ENZTCPLIBRARY_API    void        DeleteLocalAreaListenerEx(HANDLE);
+extern "C" ENZTCPLIBRARY_API    void        SetNICAdapterToUse(const char* szAdapterName, ULONG ipAddress);

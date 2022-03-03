@@ -20,6 +20,7 @@
 #include "CPacketInfoDlg.h"
 #include "CDeviceConnected.h"
 #include "CCustomClock.h"
+#include "CFirewall.h"
 
 #ifndef _tstring
 #ifdef UNICODE
@@ -57,7 +58,7 @@ typedef HANDLE (*FNPTRCreateLocalAreaListenerEx)();
 typedef	bool (*FNPTRStartLocalAreaListenerEx)(HANDLE, const char* ipAddress, const char* subNetMask, CallbackLocalAreaListener fnpPtr, int nPollingTimeMS);
 typedef void (*FNPTRStopLocalAreaListenerEx)(HANDLE);
 typedef void (*FNPTRDeleteLocalAreaListenerEx)(HANDLE);
-
+typedef void (*FNPTRSetNICAdapterToUse)(const char* szAdapterName, ULONG ipAddress);
 
 inline void GetLastErrorMessageString(_tstring& str, int nGetLastError);
 template <typename Map>
@@ -109,6 +110,7 @@ public:
 	FNPTRStartLocalAreaListenerEx m_fnptrStartLocalAreaListenerEx;
 	FNPTRStopLocalAreaListenerEx m_fnptrStopLocalAreaListenerEx;
 	FNPTRDeleteLocalAreaListenerEx m_fnptrDeleteLocalAreaListenerEx;
+	FNPTRSetNICAdapterToUse m_fnptrSetNICAdapterToUse;
 	CPacketInfoDlg* m_pmodeless;
 // Dialog Data
 #ifdef AFX_DESIGN_TIME
@@ -357,6 +359,7 @@ protected:
 	// Generated message map functions
 	virtual BOOL OnInitDialog();
 	bool InitDLL();
+	int ProcessAppToFirewall(LPCTSTR szAppName);
 public:
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	CStatic m_ctrlStaticLogo;

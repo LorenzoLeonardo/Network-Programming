@@ -13,6 +13,8 @@ CLocalAreaListener* g_pLocalAreaListener = NULL;
 CPacketListener* g_pPacketListener = NULL;
 CSNMP*   g_SNMP = NULL;
 CICMP* g_pICMP = NULL;
+char g_szAdapterName[MAX_ADAPTER_NAME_LENGTH + 4];
+ULONG g_ulAdapterIP;
 
 BOOL APIENTRY DllMain(HMODULE hModule,
     DWORD  ul_reason_for_call,
@@ -23,6 +25,8 @@ BOOL APIENTRY DllMain(HMODULE hModule,
     {
     case DLL_PROCESS_ATTACH:
         DEBUG_LOG("Application Started");
+        memset(g_szAdapterName, 0, sizeof(char) * (MAX_ADAPTER_NAME_LENGTH + 4));
+        g_ulAdapterIP = 0;
         break;
     case DLL_PROCESS_DETACH:
         if(g_pOpenPorts != NULL)
@@ -393,7 +397,7 @@ bool ENZTCPLIBRARY_API StartPacketListenerEx(HANDLE hHandle)
 {
     CPacketListener* pPacketListener = (CPacketListener*)hHandle;
     if (pPacketListener)
-        return pPacketListener->StartListeningEx();
+        return pPacketListener->StartListeningEx(g_ulAdapterIP);
     else
         return false;
 }
@@ -453,4 +457,11 @@ void ENZTCPLIBRARY_API DeleteLocalAreaListenerEx(HANDLE hHandle)
         delete pLanListener;
         pLanListener = NULL;
     }
+}
+
+void ENZTCPLIBRARY_API SetNICAdapterToUse(const char* szAdapterName, ULONG ulIPAddress)
+{
+    
+    memcpy(g_szAdapterName, szAdapterName, sizeof(g_szAdapterName));
+    g_ulAdapterIP = ulIPAddress;
 }

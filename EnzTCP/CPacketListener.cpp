@@ -101,6 +101,7 @@ unsigned _stdcall CPacketListener::PollingThreadEx(void* args)
 	pBuffer = NULL;
 	DEBUG_LOG("CPacketListener: PollingThreadEx ("+ to_string((ULONG_PTR)pListener->m_pObject) + ") Thread Ended.");
 	SetEvent(pListener->m_hWaitThread);
+	_endthreadex(0);
 	return 0;
 }
 
@@ -168,12 +169,12 @@ bool CPacketListener::StartListening()
 	return true;
 }
 
-bool CPacketListener::StartListeningEx()
+bool CPacketListener::StartListeningEx(ULONG ulNICIP)
 {
 	int	iResult = 0;
 	char szHostname[100];
 	int nInput = 1;
-
+	ULONG ulIP;
 	memset(szHostname, 0, sizeof(szHostname));
 
 	m_bIsStopped = false;
@@ -206,6 +207,18 @@ bool CPacketListener::StartListeningEx()
 		return false;
 	}
 
+	ptr = result;
+	while (ptr != NULL)
+	{
+		memcpy(&ulIP, (ptr->ai_addr->sa_data + 2), sizeof(ulIP));
+		if (ulIP == ulNICIP)
+		{
+			result = ptr;
+			break;
+		}
+		ptr = ptr->ai_next;
+	}
+	
 	iResult = bind(m_socket, result->ai_addr, (int)result->ai_addrlen);
 	if (iResult == SOCKET_ERROR)
 	{
@@ -214,8 +227,6 @@ bool CPacketListener::StartListeningEx()
 		m_socket = NULL;
 		return false;
 	}
-
-
 
 	if (WSAIoctl(m_socket, SIO_RCVALL, &nInput, sizeof(nInput), 0, 0, (LPDWORD)&iResult, 0, 0) == SOCKET_ERROR)
 	{
