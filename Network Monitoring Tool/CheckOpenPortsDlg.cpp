@@ -321,7 +321,7 @@ int CCheckOpenPortsDlg::ProcessAppToFirewall(LPCTSTR szAppName)
 		}
 		if (!bIsAppEnable)
 		{
-			int bRet = ::MessageBox(GetSafeHwnd(), _T("The Network Monitoring Tool is not yet allowed by the Windows firewall. You cannot see all the packets if you will not add it to the Windows firewall. Do you want to add it?"), _T("Network Monitoring Tool"), MB_YESNO);
+			int bRet = ::MessageBox(GetSafeHwnd(), _T("The Network Monitoring Tool is not yet allowed by the Windows firewall. You cannot see the network utilization of all devices connected on your Local Area Network if you will not add it to the Windows firewall. Do you want to add it?"), _T("Enzo Tech Network Monitoring Tool"), MB_YESNO | MB_ICONQUESTION);
 			if (IDYES == bRet)
 			{
 				hr = firewall->WindowsFirewallAddApp(fwProfile, szFileNamePath, szAppName);
@@ -350,7 +350,7 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	int nCol = 0;
 	char szDefaultGateWay[32];
 
-	//ProcessAppToFirewall(_T("Enzo Tech Network Monitoring Tool"));
+	ProcessAppToFirewall(_T("Enzo Tech Network Monitoring Tool"));
 	if (!InitDLL())
 	{
 		AfxMessageBox(_T("EnzTCP.DLL is not found. Please contact Enzo Tech Computer Solutions."), MB_ICONERROR);

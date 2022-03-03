@@ -129,7 +129,7 @@ BOOL CCheckOpenPortsApp::InitInstance()
 	CWinApp::InitInstance();
 	if (!IsAdministrator())
 	{
-		int bRet = ::MessageBox(GetMainWnd()->GetSafeHwnd(), _T("This tool cannot continue if you don't run as Administrator. Are you willing to elevate the process?"), _T("Network Monitoring Tool"), MB_YESNO);
+		int bRet = ::MessageBox(GetMainWnd()->GetSafeHwnd(), _T("This tool cannot continue if you don't run as an Administrator. Are you willing to elevate the process?"), _T("Enzo Tech Network Monitoring Tool"), MB_YESNO| MB_ICONQUESTION);
 
 		if (bRet == IDNO)
 			return FALSE;
