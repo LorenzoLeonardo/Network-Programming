@@ -30,6 +30,7 @@ public:
 private:
 	void  ElevateProcess();
 	BOOL  IsAdministrator();
+	int ProcessAppToFirewall(LPCTSTR szAppName);
 };
 
 extern CCheckOpenPortsApp theApp;

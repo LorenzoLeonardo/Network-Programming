@@ -364,7 +364,7 @@ protected:
 	// Generated message map functions
 	virtual BOOL OnInitDialog();
 	bool InitDLL();
-	int ProcessAppToFirewall(LPCTSTR szAppName);
+
 public:
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	CStatic m_ctrlStaticLogo;

@@ -124,6 +124,71 @@ void  CCheckOpenPortsApp::ElevateProcess()
 	}
 }
 
+int CCheckOpenPortsApp::ProcessAppToFirewall(LPCTSTR szAppName)
+{
+	CFirewall* firewall = new CFirewall();
+	HRESULT hr = S_OK;
+	INetFwProfile* fwProfile = NULL;
+	TCHAR* szFileNamePath = NULL;
+	BOOL bIsAppEnable = false;
+	DWORD dwSize = sizeof(TCHAR) * (MAX_PATH + 1);
+
+	szFileNamePath = (TCHAR*)malloc(dwSize);
+	if (!szFileNamePath)
+		return 0;
+	memset(szFileNamePath, 0, dwSize);
+	GetModuleFileName(NULL, szFileNamePath, dwSize);
+
+	// Initialize COM.
+	if (firewall->InitializeCOM())
+	{
+		hr = firewall->WindowsFirewallInitialize(&fwProfile);
+		if (FAILED(hr))
+		{
+			DEBUG_LOG(_T("WindowsFirewallInitialize failed: 0x%08lx\n"), hr);
+			firewall->UninitializeCOM();
+			free(szFileNamePath);
+			delete firewall;
+			return false;
+		}
+		hr = firewall->WindowsFirewallAppIsEnabled(fwProfile, szFileNamePath, &bIsAppEnable);
+		if (FAILED(hr))
+		{
+			DEBUG_LOG(_T("WindowsFirewallAddApp failed: 0x%08lx\n"), hr);
+			firewall->WindowsFirewallCleanup(fwProfile);
+			firewall->UninitializeCOM();
+			free(szFileNamePath);
+			delete firewall;
+			return false;
+		}
+		if (!bIsAppEnable)
+		{
+			CString csMsg;
+			csMsg.LoadString(IDS_FIREWALL);
+			int bRet = ::MessageBox(GetMainWnd()->GetSafeHwnd(), csMsg, _T("Enzo Tech Network Monitoring Tool"), MB_YESNO | MB_ICONQUESTION);
+			if (IDYES == bRet)
+			{
+				hr = firewall->WindowsFirewallAddApp(fwProfile, szFileNamePath, szAppName);
+				if (FAILED(hr))
+				{
+					DEBUG_LOG(_T("WindowsFirewallAddApp failed: 0x%08lx\n"), hr);
+					firewall->WindowsFirewallCleanup(fwProfile);
+					firewall->UninitializeCOM();
+					free(szFileNamePath);
+					delete firewall;
+					return false;
+				}
+			}
+
+		}
+	}
+	free(szFileNamePath);
+	firewall->WindowsFirewallCleanup(fwProfile);
+	firewall->UninitializeCOM();
+	delete firewall;
+	return true;
+}
+
 BOOL CCheckOpenPortsApp::InitInstance()
 {
 	CWinApp::InitInstance();
@@ -139,6 +204,7 @@ BOOL CCheckOpenPortsApp::InitInstance()
 		else
 			ElevateProcess();
 	}
+	ProcessAppToFirewall(_T("Enzo Tech Network Monitoring Tool"));
 	CShellManager *pShellManager = new CShellManager;
 
 	//SetRegistryKey(_T("Local AppWizard-Generated Applications"));
