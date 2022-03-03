@@ -158,6 +158,7 @@ void CCheckOpenPortsDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_CHECK_DEBUG, m_ctrlBtnDebug);
 	DDX_Control(pDX, IDC_EDIT_ADAPTER_INFO, m_ctrlEditAdapterInfo);
 	DDX_Control(pDX, IDC_COMBO_LIST_ADAPTER, m_ctrlComboAdapterList);
+	DDX_Control(pDX, IDC_STATIC_NIC_LISTEN, m_ctrlStaticNICListen);
 }
 
 BEGIN_MESSAGE_MAP(CCheckOpenPortsDlg, CDialogEx)
@@ -445,9 +446,10 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	}
 	CString csGateWay(szDefaultGateWay);
 	m_ctrlIPAddress.SetWindowText(csGateWay);
+	m_ctrlStaticNICListen.SetWindowText(CA2W(m_vAdapterInfo[m_nCurrentNICSelect].AdapterInfo.Description));
+
 	m_hThreadRouter = (HANDLE)_beginthreadex(NULL, 0, RouterThread, this, 0, NULL);
 	
-
 	m_hThreadNICListener = (HANDLE)_beginthreadex(NULL, 0, NICListenerThread, this, 0, NULL);
 	
 	m_bShowPacketInfo = false;
@@ -1357,6 +1359,7 @@ void CCheckOpenPortsDlg::UpdateAdapterChanges()
 					
 					OnBnClickedButtonStopListenLan();
 					m_fnptrSetNICAdapterToUse(m_vAdapterInfo[i].AdapterInfo.AdapterName, m_vAdapterInfo[i].AdapterInfo.IpAddressList.Context);
+					m_ctrlStaticNICListen.SetWindowText(CA2W(m_vAdapterInfo[i].AdapterInfo.Description));
 					OnBnClickedButtonStartListenLan();
 				}
 			//}
@@ -1702,6 +1705,7 @@ void CCheckOpenPortsDlg::OnCbnSelchangeComboListAdapter()
 			{
 				OnBnClickedButtonStopListenLan();
 				m_fnptrSetNICAdapterToUse(m_vAdapterInfo[i].AdapterInfo.AdapterName, m_vAdapterInfo[i].AdapterInfo.IpAddressList.Context);
+				m_ctrlStaticNICListen.SetWindowText(CA2W(m_vAdapterInfo[i].AdapterInfo.Description));
 				OnBnClickedButtonStartListenLan();
 				m_nCurrentNICSelect = i;
 			}

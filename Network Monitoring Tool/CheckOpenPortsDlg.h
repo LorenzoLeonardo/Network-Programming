@@ -391,4 +391,5 @@ public:
 	afx_msg LRESULT OnNcHitTest(CPoint point);
 	afx_msg void OnNcMouseHover(UINT nFlags, CPoint point);
 	afx_msg void OnNcMouseMove(UINT nHitTest, CPoint point);
+	CStatic m_ctrlStaticNICListen;
 };
