@@ -16,6 +16,7 @@ CLocalAreaListener::CLocalAreaListener()
 	m_hStopThread = NULL;
 	m_hWaitThread = NULL;
 	m_hMainThread = NULL;
+	m_hMainStopThread = NULL;
 	try
 	{
 		m_objICMP = new CICMP();
@@ -64,14 +65,18 @@ CLocalAreaListener::~CLocalAreaListener()
 
 	if (m_hMainThread)
 	{
-		SetEvent(m_hStopThread);
+		WaitForSingleObject(m_hStopThread, INFINITE);
 		WaitForSingleObject(m_hWaitThread, INFINITE);
+		WaitForSingleObject(m_hMainThread, INFINITE);
+		WaitForSingleObject(m_hMainStopThread, INFINITE);
 		CloseHandle(m_hStopThread);
 		CloseHandle(m_hWaitThread);
 		CloseHandle(m_hMainThread);
+		CloseHandle(m_hMainStopThread);
 		m_hStopThread = NULL;
 		m_hWaitThread = NULL;
 		m_hMainThread = NULL;
+		m_hMainStopThread = NULL;
 	}
 }
 map<thread*, int>* CLocalAreaListener::GetThreads()
@@ -270,6 +275,15 @@ unsigned _stdcall CLocalAreaListener::MainThreadEx(void* args)
 	_endthreadex(0);
 	return 0;
 }
+
+unsigned _stdcall CLocalAreaListener::StopThread(void* args)
+{
+	CLocalAreaListener* pCLocalAreaListener = (CLocalAreaListener*)args;
+	SetEvent(pCLocalAreaListener->m_hStopThread);
+	WaitForSingleObject(pCLocalAreaListener->m_hWaitThread, INFINITE);
+	_endthreadex(0);
+	return 0;
+}
 bool CLocalAreaListener::StartEx(const char* szStartingIPAddress, const char* subNetMask, CallbackLocalAreaListener pFncPtr, int nPollingTimeMS)
 {
 	m_fnptrCallbackLocalAreaListener = pFncPtr;
@@ -279,14 +293,18 @@ bool CLocalAreaListener::StartEx(const char* szStartingIPAddress, const char* su
 
 	if (m_hMainThread)
 	{
-		SetEvent(m_hStopThread);
+		WaitForSingleObject(m_hStopThread, INFINITE);
 		WaitForSingleObject(m_hWaitThread, INFINITE);
+		WaitForSingleObject(m_hMainThread, INFINITE);
+		WaitForSingleObject(m_hMainStopThread, INFINITE);
 		CloseHandle(m_hStopThread);
 		CloseHandle(m_hWaitThread);
 		CloseHandle(m_hMainThread);
+		CloseHandle(m_hMainStopThread);
 		m_hStopThread = NULL;
 		m_hWaitThread = NULL;
 		m_hMainThread = NULL;
+		m_hMainStopThread = NULL;
 	}
 	m_hStopThread = CreateEvent(NULL,TRUE, FALSE,NULL);
 	if (!m_hStopThread)
@@ -309,7 +327,5 @@ bool CLocalAreaListener::StartEx(const char* szStartingIPAddress, const char* su
 void CLocalAreaListener::StopEx()
 {
 	if (m_hMainThread)
-	{
-		SetEvent(m_hStopThread);
-	}
+		m_hMainStopThread = (HANDLE)_beginthreadex(NULL, 0, StopThread, this, 0, NULL);
 }

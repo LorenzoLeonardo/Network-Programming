@@ -34,7 +34,7 @@ using namespace std;
 
 #define MAX_PORT 65535
 #define POLLING_TIME 1000
-#define WM_CLEAR_TREADS WM_USER + 1
+#define WM_RESET_CONNECTION WM_USER + 1
 
 typedef  void(*LPEnumOpenPorts)(const char*, int, FuncFindOpenPort);
 typedef  bool(*LPIsPortOpen)(const char*, int, int*);
@@ -79,7 +79,11 @@ typedef struct _tOBJ
 	HANDLE m_eventUpload;
 }ENZ_CONNECTED_DEVICE_DETAILS;
 
-
+typedef struct _tNIC
+{
+	IP_ADAPTER_INFO AdapterInfo;
+	HANDLE hLANListener;
+}NIC_INFO;
 
 // CCheckOpenPortsDlg dialog
 class CCheckOpenPortsDlg : public CDialogEx
@@ -137,7 +141,7 @@ public:
 	map<ULONG, CDeviceConnected> m_mConnectedBefore;
 	map<ULONG, int> m_mMonitorDeviceCurrent;
 	map<ULONG, int> m_mMonitorDeviceBefore;
-	vector<IP_ADAPTER_INFO> m_vAdapterInfo;
+	vector<NIC_INFO> m_vAdapterInfo;
 	CEdit m_ctrlEditPacketReportArea;
 	CEdit m_ctrlEditDownloadSpeed;
 	CEdit m_ctrlEditUploadSpeed;
@@ -152,7 +156,8 @@ public:
 	CButton m_ctrlBtnStopListening;
 	CCustomClock m_customClock;
 	RECT m_rectModeless;
-	
+	bool m_bInitNIC;
+	int m_nCurrentNICSelect;
 	inline string UnicodeToMultiByte(wstring& wstr);
 	inline wstring MultiByteToUnicode(string& wstr);
 	void Increment();
@@ -280,6 +285,7 @@ public:
 		return m_ulIPFilter;
 	}
 	void InitAdapterUI();
+	void UpdateAdapterChanges();
 	void EndProgram();
 protected:
 	HBRUSH m_hBrushBackGround;
@@ -304,11 +310,11 @@ protected:
 	HANDLE m_hThreadDownloadSpeedList;
 	HANDLE m_hThreadUploadSpeedList;
 	HANDLE m_hThreadLANListener;
-	HANDLE m_hThreadPacketListener;
+	HANDLE m_hNICPacketListener;
 	HANDLE m_hThreadClock;
 	HANDLE m_hThreadOpenPortListener;
 	HANDLE m_hThreadNICListener;
-
+	HANDLE m_hWaitEvent;
 	HANDLE m_hLocalAreaListener;
 	CButton m_ctrlBtnCheckOpenPorts;
 	CButton m_ctrlBtnStopSearchingPort;
@@ -338,21 +344,20 @@ protected:
 	afx_msg void OnBnClickedButtonStartPacket();
 	afx_msg void OnBnClickedButtonStopPacket();
 	afx_msg void OnBnClickedButtonShowPackets();
-	afx_msg LRESULT OnClearThreads(WPARAM wParam, LPARAM lParam);
+//	afx_msg LRESULT OnResetConnection(WPARAM wParam, LPARAM lParam);
 	DECLARE_MESSAGE_MAP()
 
-	static void CallbackLANListener(const char* ipAddress, const char* hostName, const char* macAddress, bool bIsopen);
+//	static void CallbackLANListener(const char* ipAddress, const char* hostName, const char* macAddress, bool bIsopen);
 	static void CallbackLANListenerEx(const char* ipAddress, const char* hostName, const char* macAddress, bool bIsopen);
 	static void CallBackEnumPort(char* ipAddress, int nPort, bool bIsopen, int nLastError);
-	static bool CallPacketListener(unsigned char* buffer, int nSize);
+	static bool CallbackNICPacketListener(unsigned char* buffer, int nSize, void* obj);
 	static void CallBackEnumAdapters(void*);
 	static bool CallbackPacketListenerDownloadEx(unsigned char* buffer, int nSize, void* pObject);
 	static bool CallbackPacketListenerUploadEx(unsigned char* buffer, int nSize, void* pObject);
 	static unsigned __stdcall  RouterThread(void* parg);
-	static unsigned __stdcall  DownloadSpeedThreadList(void* parg);
-	static unsigned __stdcall  UploadSpeedThreadList(void* parg);
-	static unsigned __stdcall  LANListenerThread(void* parg);
-	static unsigned __stdcall  PacketListenerThread(void* parg);
+//	static unsigned __stdcall  DownloadSpeedThreadList(void* parg);
+//	static unsigned __stdcall  UploadSpeedThreadList(void* parg);
+//	static unsigned __stdcall  LANListenerThread(void* parg);
 	static unsigned __stdcall  ClockThread(void* parg);
 	static unsigned __stdcall  OpenPortListenerThread(void* parg);
 	static unsigned __stdcall  NICListenerThread(void* parg);

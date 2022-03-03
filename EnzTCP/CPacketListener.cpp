@@ -41,6 +41,7 @@ void CPacketListener::CleanupHandles()
 {
 	if (m_hThread != NULL)
 	{
+		SetEvent(m_hStopThread);
 		WaitForSingleObject(m_hWaitThread, INFINITE);
 		CloseHandle(m_hStopThread);
 		CloseHandle(m_hWaitThread);
@@ -177,7 +178,7 @@ bool CPacketListener::StartListeningEx(ULONG ulNICIP)
 	ULONG ulIP;
 	memset(szHostname, 0, sizeof(szHostname));
 
-	m_bIsStopped = false;
+	//m_bIsStopped = false;
 	m_socket = NULL;
 	m_socket = socket(AF_INET, SOCK_RAW, IPPROTO_IP);
 	if (m_socket == INVALID_SOCKET)

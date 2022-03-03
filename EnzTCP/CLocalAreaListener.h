@@ -52,8 +52,10 @@ public:
 	HANDLE  m_hStopThread;
 	HANDLE  m_hWaitThread;
 	HANDLE  m_hMainThread;
+	HANDLE  m_hMainStopThread;
 	static unsigned _stdcall MainThreadEx(void* args);
 	static unsigned _stdcall MultiQueryingThreadEx(void* args);
+	static unsigned _stdcall StopThread(void* args);
 	bool StartEx(const char* szStartingIPAddress, const char* subNetMask, CallbackLocalAreaListener pFncPtr, int nPollingTimeMS);
 	void StopEx();
 private:
