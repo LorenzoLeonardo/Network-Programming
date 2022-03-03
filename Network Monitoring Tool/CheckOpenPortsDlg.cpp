@@ -321,7 +321,9 @@ int CCheckOpenPortsDlg::ProcessAppToFirewall(LPCTSTR szAppName)
 		}
 		if (!bIsAppEnable)
 		{
-			int bRet = ::MessageBox(GetSafeHwnd(), _T("The Network Monitoring Tool is not yet allowed by the Windows firewall. You cannot see the network utilization of all devices connected on your Local Area Network if you will not add it to the Windows firewall. Do you want to add it?"), _T("Enzo Tech Network Monitoring Tool"), MB_YESNO | MB_ICONQUESTION);
+			CString csMsg;
+			csMsg.LoadString(IDS_FIREWALL);
+			int bRet = ::MessageBox(GetSafeHwnd(), csMsg, _T("Enzo Tech Network Monitoring Tool"), MB_YESNO | MB_ICONQUESTION);
 			if (IDYES == bRet)
 			{
 				hr = firewall->WindowsFirewallAddApp(fwProfile, szFileNamePath, szAppName);
@@ -346,18 +348,27 @@ int CCheckOpenPortsDlg::ProcessAppToFirewall(LPCTSTR szAppName)
 }
 BOOL CCheckOpenPortsDlg::OnInitDialog()
 {
+	CDialogEx::OnInitDialog();
+	::SetWindowTheme(GetDlgItem(IDC_STATIC_ROUTER_INFO)->GetSafeHwnd(), _T(""), _T(""));//To change text Color of Group Box
+	::SetWindowTheme(GetDlgItem(IDC_STATIC_ADAPTER_INFO)->GetSafeHwnd(), _T(""), _T(""));
+	::SetWindowTheme(GetDlgItem(IDC_STATIC_OPEN_PORTS)->GetSafeHwnd(), _T(""), _T(""));
+	::SetWindowTheme(GetDlgItem(IDC_CHECK_DEBUG)->GetSafeHwnd(), _T(""), _T(""));
+
 	LPCTSTR lpcRecHeader[] = { _T("No."), _T("IP Address"), _T("Device Name"), _T("MAC Address"), _T("Download Speed"), _T("Upload Speed"),  _T("Max Download Speed"), _T("Max Upload Speed") };
 	int nCol = 0;
 	char szDefaultGateWay[32];
 
+	
 	ProcessAppToFirewall(_T("Enzo Tech Network Monitoring Tool"));
 	if (!InitDLL())
 	{
-		AfxMessageBox(_T("EnzTCP.DLL is not found. Please contact Enzo Tech Computer Solutions."), MB_ICONERROR);
+		CString csMsg;
+
+		csMsg.Format(IDS_ENZDLL);
+		AfxMessageBox(csMsg, MB_ICONERROR);
 		OnOK();
 		return false;
 	}
-	CDialogEx::OnInitDialog();
 	
 	// Add "About..." menu item to system menu.
 
@@ -378,6 +389,10 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 			pSysMenu->AppendMenu(MF_STRING, IDM_ABOUTBOX, strAboutMenu);
 		}
 	}
+	// Set the icon for this dialog.  The framework does this automatically
+//  when the application's main window is not a dialog
+	SetIcon(m_hIcon, TRUE);			// Set big icon
+	SetIcon(m_hIcon, FALSE);		// Set small icon
 
 	DWORD value = 0;
 	DWORD BufferSize = 4;
@@ -387,14 +402,8 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 		m_ctrlBtnDebug.SetCheck(BST_CHECKED);
 	else
 		m_ctrlBtnDebug.SetCheck(BST_UNCHECKED);
-	::SetWindowTheme(GetDlgItem(IDC_STATIC_ROUTER_INFO)->GetSafeHwnd(), _T(""), _T(""));//To change text Color of Group Box
-	::SetWindowTheme(GetDlgItem(IDC_STATIC_ADAPTER_INFO)->GetSafeHwnd(), _T(""), _T(""));
-	::SetWindowTheme(GetDlgItem(IDC_STATIC_OPEN_PORTS)->GetSafeHwnd(), _T(""), _T(""));
-	::SetWindowTheme(GetDlgItem(IDC_CHECK_DEBUG)->GetSafeHwnd(), _T(""), _T(""));
-	// Set the icon for this dialog.  The framework does this automatically
-	//  when the application's main window is not a dialog
-	SetIcon(m_hIcon, TRUE);			// Set big icon
-	SetIcon(m_hIcon, FALSE);		// Set small icon
+
+
 	m_pmodeless = NULL;
 	// TODO: Add extra initialization here
 	g_dlg = this;
@@ -411,10 +420,14 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	m_pfnPtrEnumNetworkAdapters(CallBackEnumAdapters);
 	if (m_vAdapterInfo.empty())
 	{
-		AfxMessageBox(_T("All Network Interface are disconnected. Please check your ethernet ports and WIFI adapters."), MB_ICONERROR);
+		CString csMsg;
+
+		csMsg.Format(IDS_NIC_DISCONNECTED);
+		AfxMessageBox(csMsg, MB_ICONERROR);
 		OnOK();
 		return false;
 	}
+	m_hThreadRouter = (HANDLE)_beginthreadex(NULL, 0, RouterThread, this, 0, NULL);
 	m_bInitNIC = false;
 	InitAdapterUI();
 	
@@ -440,7 +453,10 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	}
 	else
 	{
-		AfxMessageBox(_T("No network adapters found. Please check your ethernet cables or WIFI settings. This tool will now exit."), MB_ICONERROR);
+		CString csMsg;
+
+		csMsg.Format(IDS_NIC_DISCONNECTED);
+		AfxMessageBox(csMsg, MB_ICONERROR);
 		OnOK();
 		return false;
 	}
@@ -448,7 +464,6 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	m_ctrlIPAddress.SetWindowText(csGateWay);
 	m_ctrlStaticNICListen.SetWindowText(CA2W(m_vAdapterInfo[m_nCurrentNICSelect].AdapterInfo.Description));
 
-	m_hThreadRouter = (HANDLE)_beginthreadex(NULL, 0, RouterThread, this, 0, NULL);
 	
 	m_hThreadNICListener = (HANDLE)_beginthreadex(NULL, 0, NICListenerThread, this, 0, NULL);
 	
@@ -1313,7 +1328,6 @@ void CCheckOpenPortsDlg::UpdateAdapterChanges()
 {
 	CStringA csWindowText;
 	char szDefaultGateWay[32];
-	u_char p[6];
 	m_ctrlComboAdapterList.SetCurSel(0);
 	int i = m_ctrlComboAdapterList.GetCurSel();
 
@@ -1328,9 +1342,10 @@ void CCheckOpenPortsDlg::UpdateAdapterChanges()
 
 			csWindowText.Format("Adapter Name: \t%s\r\n", m_vAdapterInfo[i].AdapterInfo.AdapterName);
 			csWindowText.Format("%sAdapter Desc: \t%s\r\n", csWindowText.GetBuffer(), m_vAdapterInfo[i].AdapterInfo.Description);
-			memcpy(p, m_vAdapterInfo[i].AdapterInfo.Address, 6);
-			csWindowText.Format("%sAdapter Addr: \t%X:%X:%X:%X:%X:%X\r\n", csWindowText.GetBuffer(),
-				p[0], p[1], p[2], p[3], p[4], p[5]);
+			//memcpy_s(p, sizeof(p), m_vAdapterInfo[i].AdapterInfo.Address, sizeof(p));
+			csWindowText.Format("%sAdapter Addr: \t%X:%X:%X:%X:%X:%X\r\n", (const char*)csWindowText.GetBuffer(),
+				m_vAdapterInfo[i].AdapterInfo.Address[0], m_vAdapterInfo[i].AdapterInfo.Address[1], m_vAdapterInfo[i].AdapterInfo.Address[2], 
+				m_vAdapterInfo[i].AdapterInfo.Address[3], m_vAdapterInfo[i].AdapterInfo.Address[4], m_vAdapterInfo[i].AdapterInfo.Address[5]);
 			csWindowText.Format("%sIP Addr: \t\t%s\r\n", csWindowText.GetBuffer(), m_vAdapterInfo[i].AdapterInfo.IpAddressList.IpAddress.String);
 			csWindowText.Format("%sIP Mask: \t\t%s\r\n", csWindowText.GetBuffer(), m_vAdapterInfo[i].AdapterInfo.IpAddressList.IpMask.String);
 			csWindowText.Format("%sIP Gateway: \t%s\r\n", csWindowText.GetBuffer(), m_vAdapterInfo[i].AdapterInfo.GatewayList.IpAddress.String);

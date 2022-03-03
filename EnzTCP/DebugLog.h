@@ -133,13 +133,14 @@ inline void DEBUG_LOG(wstring logMsg, ...)
         len = _vsnwprintf(NULL, 0, logMsg.c_str(), arg);
         va_end(copy);
         if (len >= (sizeof(loc_buf)/sizeof(wchar_t))) {
-            temp = (wchar_t*)malloc(len + 1);
+            temp = (wchar_t*)malloc(sizeof(wchar_t) * (len + 1));
             if (temp == NULL) {
                 g_mutxLog.unlock();
                 return;
             }
+            memset(temp, 0, sizeof(wchar_t) * (len + 1));
         }
-        _vsnwprintf(temp, (len + 1) ,logMsg.c_str(), arg);
+        _vsnwprintf(temp, sizeof(wchar_t) * (len), logMsg.c_str(), arg);
         logMsg = temp;
         wstring filePath = getCurrentDateTime(L"date") + L".txt";
         wstring now = getCurrentDateTime(L"now");

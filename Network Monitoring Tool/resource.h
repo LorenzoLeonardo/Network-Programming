@@ -7,7 +7,11 @@
 #define IDD_ABOUTBOX                    100
 #define IDS_ABOUTBOX                    101
 #define IDD_CHECKOPENPORST_DIALOG       102
+#define IDS_FIREWALL                    102
 #define IDD_PACKETINFO_DIALOG           103
+#define IDS_NIC_DISCONNECTED            103
+#define IDS_ENZDLL                      104
+#define IDS_ELEVATE                     105
 #define IDR_MAINFRAME                   128
 #define IDB_BITMAP1                     135
 #define IDD_DIALOG_DEVICE_INFO          137

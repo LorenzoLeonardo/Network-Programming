@@ -27,7 +27,7 @@ END_MESSAGE_MAP()
 CCheckOpenPortsApp::CCheckOpenPortsApp()
 {
 	// support Restart Manager
-	//m_dwRestartManagerSupportFlags = AFX_RESTART_MANAGER_SUPPORT_RESTART;
+	m_dwRestartManagerSupportFlags = AFX_RESTART_MANAGER_SUPPORT_RESTART;
 
 	// TODO: add construction code here,
 	// Place all significant initialization in InitInstance
@@ -129,7 +129,10 @@ BOOL CCheckOpenPortsApp::InitInstance()
 	CWinApp::InitInstance();
 	if (!IsAdministrator())
 	{
-		int bRet = ::MessageBox(GetMainWnd()->GetSafeHwnd(), _T("This tool cannot continue if you don't run as an Administrator. Are you willing to elevate the process?"), _T("Enzo Tech Network Monitoring Tool"), MB_YESNO| MB_ICONQUESTION);
+		CString csMsg;
+
+		csMsg.Format(IDS_ELEVATE);
+		int bRet = ::MessageBox(GetMainWnd()->GetSafeHwnd(), csMsg, _T("Enzo Tech Network Monitoring Tool"), MB_YESNO| MB_ICONQUESTION);
 
 		if (bRet == IDNO)
 			return FALSE;
@@ -151,7 +154,7 @@ BOOL CCheckOpenPortsApp::InitInstance()
 	
 
 #if !defined(_AFXDLL) && !defined(_AFX_NO_MFC_CONTROLS_IN_DIALOGS)
-//	ControlBarCleanUp();
+	ControlBarCleanUp();
 #endif
 
 	// Since the dialog has been closed, return FALSE so that we exit the
