@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "CListCtrlCustom.h"
-
+#include "CheckOpenPortsDlg.h"
 
 CHeaderCtrlCustom::CHeaderCtrlCustom()
 {
@@ -67,6 +67,12 @@ void CListCtrlCustom::OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult)
 				lplvcd->clrTextBk = m_colRow2;
 			}
 
+			CString csString;
+			csString = this->GetItemText(iRow, CCheckOpenPortsDlg::COL_IPADDRESS);
+			if (csString.Compare(m_csIP) == 0)
+			{
+				lplvcd->clrTextBk = RGB(255, 255, 0);
+			}
 
 			*pResult = CDRF_DODEFAULT;
 			return;

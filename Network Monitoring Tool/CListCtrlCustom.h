@@ -33,12 +33,16 @@ public:
 
     int InsertItem(_In_ UINT nMask, _In_ int nItem, _In_z_ LPCTSTR lpszItem, _In_ UINT nState,
         _In_ UINT nStateMask, _In_ int nImage, _In_ LPARAM lParam);
+    void SetAdapterIP(CString ip)
+    {
+        m_csIP = ip;
+    }
 protected:
    // afx_msg void PreSubclassWindow();
     afx_msg void OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult);
     afx_msg BOOL OnEraseBkgnd(CDC* pDC);
     DECLARE_MESSAGE_MAP()
-
+    CString m_csIP;
     CHeaderCtrlCustom m_ctrlHeader;
 };
 

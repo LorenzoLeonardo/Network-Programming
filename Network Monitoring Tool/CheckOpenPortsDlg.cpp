@@ -400,7 +400,8 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	CString csGateWay(szDefaultGateWay);
 	m_ctrlIPAddress.SetWindowText(csGateWay);
 	m_ctrlStaticNICListen.SetWindowText(CA2W(m_vAdapterInfo[m_nCurrentNICSelect].AdapterInfo.Description));
-
+	CString csIP(CA2W(m_vAdapterInfo[m_nCurrentNICSelect].AdapterInfo.IpAddressList.IpAddress.String));
+	m_ctrlLANConnected.SetAdapterIP(csIP);
 	
 	m_hThreadNICListener = (HANDLE)_beginthreadex(NULL, 0, NICListenerThread, this, 0, NULL);
 	
@@ -415,7 +416,7 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	OnBnClickedButtonShowPackets();
 	OnBnClickedButtonStartListenLan();
 	
-
+	
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
 
@@ -973,6 +974,7 @@ void CCheckOpenPortsDlg::CallbackLANListenerEx(const char* ipAddress, const char
 		g_dlg->m_ctrlBtnListen.EnableWindow(FALSE);
 		g_dlg->m_ctrlBtnStopListening.EnableWindow(TRUE);
 		g_dlg->SetLANStop(false);
+
 	}
 	if (bIsopen)
 	{
@@ -1172,6 +1174,10 @@ void CCheckOpenPortsDlg::CallbackLANListenerEx(const char* ipAddress, const char
 
 			g_dlg->m_ctrlLANConnected.SetItemState(g_dlg->m_nCurrentRowSelected, LVIS_SELECTED, LVIS_SELECTED);
 			g_dlg->m_ctrlLANConnected.SetFocus();
+			CString csIP(CA2W(g_dlg->m_vAdapterInfo[g_dlg->m_nCurrentNICSelect].AdapterInfo.IpAddressList.IpAddress.String));
+			g_dlg->m_ctrlLANConnected.SetAdapterIP(csIP);
+			g_dlg->m_fnptrSetNICAdapterToUse(g_dlg->m_vAdapterInfo[g_dlg->m_nCurrentNICSelect].AdapterInfo.AdapterName, g_dlg->m_vAdapterInfo[g_dlg->m_nCurrentNICSelect].AdapterInfo.IpAddressList.Context);
+			g_dlg->m_ctrlStaticNICListen.SetWindowText(CA2W(g_dlg->m_vAdapterInfo[g_dlg->m_nCurrentNICSelect].AdapterInfo.Description));
 		}
 		else if (strcmp(ipAddress, "stop") == 0)
 		{
@@ -1310,9 +1316,8 @@ void CCheckOpenPortsDlg::UpdateAdapterChanges()
 				{
 					
 					OnBnClickedButtonStopListenLan();
-					m_fnptrSetNICAdapterToUse(m_vAdapterInfo[i].AdapterInfo.AdapterName, m_vAdapterInfo[i].AdapterInfo.IpAddressList.Context);
-					m_ctrlStaticNICListen.SetWindowText(CA2W(m_vAdapterInfo[i].AdapterInfo.Description));
 					OnBnClickedButtonStartListenLan();
+
 				}
 			//}
 		}
@@ -1656,8 +1661,6 @@ void CCheckOpenPortsDlg::OnCbnSelchangeComboListAdapter()
 			if (i != m_nCurrentNICSelect)
 			{
 				OnBnClickedButtonStopListenLan();
-				m_fnptrSetNICAdapterToUse(m_vAdapterInfo[i].AdapterInfo.AdapterName, m_vAdapterInfo[i].AdapterInfo.IpAddressList.Context);
-				m_ctrlStaticNICListen.SetWindowText(CA2W(m_vAdapterInfo[i].AdapterInfo.Description));
 				OnBnClickedButtonStartListenLan();
 				m_nCurrentNICSelect = i;
 			}
@@ -1757,10 +1760,13 @@ inline void CCheckOpenPortsDlg::DisplayDownloadSpeed(CString szIPAddress, int nC
 		else
 			csFormat.Format(_T("%.2lf Mbps"), ldData / 1000);
 
-		lvItem.iItem = findResult;
-		lvItem.iSubItem = nColumn;
-		lvItem.pszText = csFormat.GetBuffer();
-		m_ctrlLANConnected.SetItem(&lvItem);
+		if (m_ctrlLANConnected.GetItemText(findResult, nColumn).Compare(csFormat) != 0)
+		{
+			lvItem.iItem = findResult;
+			lvItem.iSubItem = nColumn;
+			lvItem.pszText = csFormat.GetBuffer();
+			m_ctrlLANConnected.SetItem(&lvItem);
+		}
 	}
 }
 
@@ -1791,10 +1797,13 @@ inline void CCheckOpenPortsDlg::DisplayUploadSpeed(CString szIPAddress, int nCol
 		else
 			csFormat.Format(_T("%.2lf Mbps"), ldData / 1000);
 
-		lvItem.iItem = findResult;
-		lvItem.iSubItem = nColumn;
-		lvItem.pszText = csFormat.GetBuffer();
-		m_ctrlLANConnected.SetItem(&lvItem);
+		if (m_ctrlLANConnected.GetItemText(findResult, nColumn).Compare(csFormat) != 0)
+		{
+			lvItem.iItem = findResult;
+			lvItem.iSubItem = nColumn;
+			lvItem.pszText = csFormat.GetBuffer();
+			m_ctrlLANConnected.SetItem(&lvItem);
+		}
 	}
 }
 
