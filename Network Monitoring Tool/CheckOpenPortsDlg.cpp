@@ -1755,7 +1755,7 @@ inline void CCheckOpenPortsDlg::DisplayDownloadSpeed(CString szIPAddress, int nC
 	}
 	if (findResult != -1)
 	{
-		if (ldData <= 1000)
+		if (ldData < 1000)
 			csFormat.Format(_T("%.2lf Kbps"), ldData);
 		else
 			csFormat.Format(_T("%.2lf Mbps"), ldData / 1000);
@@ -1792,7 +1792,7 @@ inline void CCheckOpenPortsDlg::DisplayUploadSpeed(CString szIPAddress, int nCol
 	}
 	if (findResult != -1)
 	{
-		if (ldData <= 1000)
+		if (ldData < 1000)
 			csFormat.Format(_T("%.2lf Kbps"), ldData);
 		else
 			csFormat.Format(_T("%.2lf Mbps"), ldData / 1000);
