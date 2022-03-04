@@ -96,12 +96,8 @@ public:
 	FNEndSNMP m_pfnPtrEndSNMP;
 	FNGetDefaultGateway m_pfnPtrGetDefaultGateway;
 	FNStartSNMP m_pfnPtrStartSNMP;
-	FNStartPacketListener m_pfnPtrStartPacketListener;
-	FNStopPacketListener m_pfnPtrStopPacketListener;
 	LPEnumOpenPorts m_pfnPtrEnumOpenPorts;
 	LPIsPortOpen m_pfnPtrIsPortOpen;
-	FNStartLocalAreaListening m_pfnPtrStartLocalAreaListening;
-	FNStopLocalAreaListening m_pfnPtrStopLocalAreaListening;
 	FNStopSearchingOpenPorts m_pfnPtrStopSearchingOpenPorts;
 	FNGetNetworkDeviceStatus m_pfnPtrGetNetworkDeviceStatus;
 	FNEnumNetworkAdapters m_pfnPtrEnumNetworkAdapters;
@@ -133,12 +129,10 @@ public:
 	};
 	HMODULE m_hDLLhandle;
 	int m_nCurrentRowSelected;
-	HANDLE Handle[MAX_PORT];
 	CIPAddressCtrl m_ctrlIPAddress;
 	CEdit m_ctrlResult;
 	CListCtrlCustom m_ctrlLANConnected;
 	map<ULONG, CDeviceConnected*> m_mConnected;
-	map<ULONG, CDeviceConnected> m_mConnectedBefore;
 	map<ULONG, int> m_mMonitorDeviceCurrent;
 	map<ULONG, int> m_mMonitorDeviceBefore;
 	vector<NIC_INFO> m_vAdapterInfo;
@@ -169,73 +163,7 @@ public:
 	{
 		return m_bHasClickClose;
 	}
-	void SetDownloadSize(ULONG size)
-	{
-		m_ulDataSizeDownload = size;
-	}
 
-	void SetDownloadSize(ULONG ulIPAdd, ULONG size)
-	{
-		
-		if (!m_mConnectedBefore.empty())
-		{
-			if (m_mConnectedBefore.find(ulIPAdd) != m_mConnectedBefore.end())
-				m_mConnectedBefore[ulIPAdd].m_ulDataSizeDownload = size;
-		}
-	
-	}
-
-	void SetUploadSize(ULONG size)
-	{
-		m_ulDataSizeUpload = size;
-	}
-
-	void SetUploadSize(ULONG ulIPAdd, ULONG size)
-	{
-		
-		if (!m_mConnectedBefore.empty())
-		{
-			if(m_mConnectedBefore.find(ulIPAdd)!= m_mConnectedBefore.end())
-				m_mConnectedBefore[ulIPAdd].m_ulDataSizeUpload = size;
-		}
-		
-	}
-	ULONG GetDownloadSize()
-	{
-		return m_ulDataSizeDownload;
-	}
-	ULONG GetDownloadSize(ULONG ulIPAdd)
-	{
-		
-		ULONG ulSize = 0;
-		if (!m_mConnectedBefore.empty())
-		{
-			if (m_mConnectedBefore.find(ulIPAdd) != m_mConnectedBefore.end())
-				ulSize = m_mConnectedBefore[ulIPAdd].m_ulDataSizeDownload;
-		}
-		
-		return ulSize;
-	}
-	ULONG GetUploadSize()
-	{
-		return m_ulDataSizeUpload;
-	}
-	ULONG GetUploadSize(ULONG ulIPAdd)
-	{
-		
-		ULONG ulSize = 0;
-		if (!m_mConnectedBefore.empty())
-		{
-			if (m_mConnectedBefore.find(ulIPAdd) != m_mConnectedBefore.end())
-				ulSize = m_mConnectedBefore[ulIPAdd].m_ulDataSizeUpload;
-		}
-		
-		return ulSize;
-	}
-	vector<thread*> GetHandles()
-	{
-		return v_Thread;
-	}
 	void SetLANStop(bool b)
 	{
 		m_bLanStop = b;
@@ -264,21 +192,9 @@ public:
 	{
 		m_ctrlStaticRouterUpTime.SetWindowText(cs);
 	}
-	void SetDownloadSpeedText(CString cs)
-	{
-		m_ctrlEditDownloadSpeed.SetWindowText(cs);
-	}
-	void SetUploadSpeedText(CString cs)
-	{
-		m_ctrlEditUploadSpeed.SetWindowText(cs);
-	}
 	bool ShowPacketInfo()
 	{
 		return m_bShowPacketInfo;
-	}
-	CString GetIPFilterString()
-	{
-		return m_ipFilter;
 	}
 	DWORD GetIPFilterULONG()
 	{
@@ -286,7 +202,7 @@ public:
 	}
 	void InitAdapterUI();
 	void UpdateAdapterChanges();
-	void EndProgram();
+
 protected:
 	HBRUSH m_hBrushBackGround;
 	HBRUSH m_hBrushEditArea;
@@ -296,19 +212,13 @@ protected:
 	bool m_bLanStop;
 	CString m_IPAddress;
 	int m_nThread;
-	vector<thread*> v_Thread;
-	thread* m_tMonitor;
 	bool m_bHasClickClose;
 	CString m_csRouterModel;
 	CString m_csRouterBrand;
 	CString m_csRouterDescription;
-	ULONG m_ulDataSizeDownload;
-	ULONG m_ulDataSizeUpload;
 	CEdit m_ctrlEditPollingTime;
 
 	HANDLE m_hThreadRouter;
-	HANDLE m_hThreadDownloadSpeedList;
-	HANDLE m_hThreadUploadSpeedList;
 	HANDLE m_hThreadLANListener;
 	HANDLE m_hNICPacketListener;
 	HANDLE m_hThreadClock;
@@ -344,10 +254,8 @@ protected:
 	afx_msg void OnBnClickedButtonStartPacket();
 	afx_msg void OnBnClickedButtonStopPacket();
 	afx_msg void OnBnClickedButtonShowPackets();
-//	afx_msg LRESULT OnResetConnection(WPARAM wParam, LPARAM lParam);
 	DECLARE_MESSAGE_MAP()
 
-//	static void CallbackLANListener(const char* ipAddress, const char* hostName, const char* macAddress, bool bIsopen);
 	static void CallbackLANListenerEx(const char* ipAddress, const char* hostName, const char* macAddress, bool bIsopen);
 	static void CallBackEnumPort(char* ipAddress, int nPort, bool bIsopen, int nLastError);
 	static bool CallbackNICPacketListener(unsigned char* buffer, int nSize, void* obj);
@@ -355,9 +263,6 @@ protected:
 	static bool CallbackPacketListenerDownloadEx(unsigned char* buffer, int nSize, void* pObject);
 	static bool CallbackPacketListenerUploadEx(unsigned char* buffer, int nSize, void* pObject);
 	static unsigned __stdcall  RouterThread(void* parg);
-//	static unsigned __stdcall  DownloadSpeedThreadList(void* parg);
-//	static unsigned __stdcall  UploadSpeedThreadList(void* parg);
-//	static unsigned __stdcall  LANListenerThread(void* parg);
 	static unsigned __stdcall  ClockThread(void* parg);
 	static unsigned __stdcall  OpenPortListenerThread(void* parg);
 	static unsigned __stdcall  NICListenerThread(void* parg);

@@ -68,7 +68,7 @@ void CListCtrlCustom::OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult)
 			}
 
 			CString csString;
-			csString = this->GetItemText(iRow, CCheckOpenPortsDlg::COL_IPADDRESS);
+			csString = this->GetItemText((int)iRow, (int)CCheckOpenPortsDlg::COL_IPADDRESS);
 			if (csString.Compare(m_csIP) == 0)
 			{
 				lplvcd->clrTextBk = RGB(255, 255, 0);

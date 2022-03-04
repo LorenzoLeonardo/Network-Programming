@@ -11,6 +11,8 @@
 #include "../EnzTCP/DebugLog.h"
 
 CCheckOpenPortsDlg* g_dlg;
+mutex mtx_enumPorts;
+mutex mtx_lanlistener;
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -77,33 +79,21 @@ END_MESSAGE_MAP()
 
 
 // CCheckOpenPortsDlg dialog
-
-mutex mtx_enumPorts;
-
-mutex mtx_packetlistenerDownload;
-mutex mtx_packetlistenerUpload;
-mutex mtx_clearthreads;
-mutex mtx_lanlistener;
-
 CCheckOpenPortsDlg::CCheckOpenPortsDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_CHECKOPENPORST_DIALOG, pParent)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
-	m_tMonitor = NULL;
 	m_nCurrentRowSelected = -1;
 	m_bHasClickClose = FALSE;
 	m_hDLLhandle = NULL;
 	m_hWaitEvent = NULL;
-	m_hThreadDownloadSpeedList = NULL;
 	m_hThreadRouter = NULL;
-	m_hThreadUploadSpeedList = NULL;
 	m_hThreadLANListener = NULL;
 	m_hNICPacketListener = NULL;
 	m_hThreadClock = NULL;
 	m_hThreadOpenPortListener = NULL;
 	m_hThreadNICListener = NULL;
 	m_hLocalAreaListener = NULL;
-	//m_pTemp = new CDeviceConnected();
 	m_bOnCloseWasCalled = false;
 	m_hBrushBackGround = CreateSolidBrush(RGB(93, 107, 153));
 	m_hBrushEditArea = CreateSolidBrush(RGB(255, 255, 255));
@@ -112,14 +102,21 @@ CCheckOpenPortsDlg::CCheckOpenPortsDlg(CWnd* pParent /*=nullptr*/)
 	m_pfnPtrEndSNMP = NULL;
 	m_pfnPtrGetDefaultGateway = NULL;
 	m_pfnPtrStartSNMP = NULL;
-	m_pfnPtrStartPacketListener = NULL;
-	m_pfnPtrStopPacketListener = NULL;
 	m_pfnPtrEnumOpenPorts = NULL;
 	m_pfnPtrIsPortOpen = NULL;
-	m_pfnPtrStartLocalAreaListening = NULL;
-	m_pfnPtrStopLocalAreaListening = NULL;
 	m_pfnPtrStopSearchingOpenPorts = NULL;
 	m_pfnPtrGetNetworkDeviceStatus = NULL;
+	m_pfnPtrEnumNetworkAdapters = NULL;
+	m_pfnPtrGetDefaultGatewayEx = NULL;
+	m_fnptrCreatePacketListenerEx = NULL;
+	m_fnptrStartPacketListenerEx = NULL;
+	m_fnptrStopPacketListenerEx = NULL;
+	m_fnptrDeletePacketListenerEx = NULL;
+	m_fnptrCreateLocalAreaListenerEx = NULL;
+	m_fnptrStartLocalAreaListenerEx = NULL;
+	m_fnptrStopLocalAreaListenerEx = NULL;
+	m_fnptrDeleteLocalAreaListenerEx = NULL;
+	m_fnptrSetNICAdapterToUse = NULL;
 
 	m_customClock.SetFontStyle(_T("Yu Gothic UI"));
 	m_customClock.SetFontSize(50);
@@ -257,15 +254,11 @@ bool CCheckOpenPortsDlg::InitDLL()
 	{
 		m_pfnPtrEnumOpenPorts = (LPEnumOpenPorts)GetProcAddress(m_hDLLhandle, "EnumOpenPorts");
 		m_pfnPtrIsPortOpen = (LPIsPortOpen)GetProcAddress(m_hDLLhandle, "IsPortOpen");
-		m_pfnPtrStartLocalAreaListening = (FNStartLocalAreaListening)GetProcAddress(m_hDLLhandle, "StartLocalAreaListening");
-		m_pfnPtrStopLocalAreaListening = (FNStopLocalAreaListening)GetProcAddress(m_hDLLhandle, "StopLocalAreaListening");
 		m_pfnPtrStartSNMP = (FNStartSNMP)GetProcAddress(m_hDLLhandle, "StartSNMP");
 		m_pfnPtrSNMPGet = (FNSNMPGet)GetProcAddress(m_hDLLhandle, "SNMPGet");
 		m_pfnPtrEndSNMP = (FNEndSNMP)GetProcAddress(m_hDLLhandle, "EndSNMP");
 		m_pfnPtrGetDefaultGateway = (FNGetDefaultGateway)GetProcAddress(m_hDLLhandle, "GetDefaultGateway");
 		m_pfnPtrStopSearchingOpenPorts = (FNStopSearchingOpenPorts)GetProcAddress(m_hDLLhandle, "StopSearchingOpenPorts");
-		m_pfnPtrStartPacketListener = (FNStartPacketListener)GetProcAddress(m_hDLLhandle, "StartPacketListener");
-		m_pfnPtrStopPacketListener = (FNStopPacketListener)GetProcAddress(m_hDLLhandle, "StopPacketListener");
 		m_pfnPtrGetNetworkDeviceStatus = (FNGetNetworkDeviceStatus)GetProcAddress(m_hDLLhandle, "GetNetworkDeviceStatus");
 		m_pfnPtrEnumNetworkAdapters = (FNEnumNetworkAdapters)GetProcAddress(m_hDLLhandle, "EnumNetworkAdapters");
 		m_pfnPtrGetDefaultGatewayEx = (FNGetDefaultGatewayEx)GetProcAddress(m_hDLLhandle, "GetDefaultGatewayEx");
@@ -629,17 +622,6 @@ void CCheckOpenPortsDlg::OnClose()
 			WaitForSingleObject(m_hThreadLANListener, INFINITE);
 			CloseHandle(m_hThreadLANListener);
 		}
-		if (m_hThreadUploadSpeedList)
-		{
-			WaitForSingleObject(m_hThreadUploadSpeedList, INFINITE);
-			CloseHandle(m_hThreadUploadSpeedList);
-		}
-		if (m_hThreadDownloadSpeedList)
-		{
-			WaitForSingleObject(m_hThreadDownloadSpeedList, INFINITE);
-			CloseHandle(m_hThreadDownloadSpeedList);
-		}
-
 		if (m_hThreadOpenPortListener)
 		{
 			WaitForSingleObject(m_hThreadOpenPortListener, INFINITE);
@@ -1178,6 +1160,7 @@ void CCheckOpenPortsDlg::CallbackLANListenerEx(const char* ipAddress, const char
 			g_dlg->m_ctrlLANConnected.SetAdapterIP(csIP);
 			g_dlg->m_fnptrSetNICAdapterToUse(g_dlg->m_vAdapterInfo[g_dlg->m_nCurrentNICSelect].AdapterInfo.AdapterName, g_dlg->m_vAdapterInfo[g_dlg->m_nCurrentNICSelect].AdapterInfo.IpAddressList.Context);
 			g_dlg->m_ctrlStaticNICListen.SetWindowText(CA2W(g_dlg->m_vAdapterInfo[g_dlg->m_nCurrentNICSelect].AdapterInfo.Description));
+			g_dlg->m_ctrlComboAdapterList.EnableWindow(TRUE);
 		}
 		else if (strcmp(ipAddress, "stop") == 0)
 		{
@@ -1310,16 +1293,13 @@ void CCheckOpenPortsDlg::UpdateAdapterChanges()
 				csWindowText.Format("%sHave Wins: \tNo\r\n", csWindowText.GetBuffer());
 
 			m_ctrlEditAdapterInfo.SetWindowText(CA2W(csWindowText));
-			//if (i != m_nCurrentNICSelect)
-			//{
-				if (!m_bInitNIC)
-				{
-					
-					OnBnClickedButtonStopListenLan();
-					OnBnClickedButtonStartListenLan();
 
-				}
-			//}
+			if (!m_bInitNIC)
+			{
+				OnBnClickedButtonStopListenLan();
+				OnBnClickedButtonStartListenLan();
+			}
+
 		}
 		
 	}
@@ -1437,7 +1417,6 @@ void CCheckOpenPortsDlg::OnBnClickedButtonStopPacket()
 {
 	// TODO: Add your control notification handler code here
 	m_bStopPacketListener = true;
-	m_pfnPtrStopPacketListener();
 	m_ctrlBtnListenPackets.EnableWindow(TRUE);
 	m_ctrlBtnUnlistenPackets.EnableWindow(FALSE);
 
@@ -1663,6 +1642,7 @@ void CCheckOpenPortsDlg::OnCbnSelchangeComboListAdapter()
 				OnBnClickedButtonStopListenLan();
 				OnBnClickedButtonStartListenLan();
 				m_nCurrentNICSelect = i;
+				m_ctrlComboAdapterList.EnableWindow(FALSE);
 			}
 			m_ctrlEditAdapterInfo.SetWindowText(CA2W(csWindowText));
 		}
@@ -1676,62 +1656,7 @@ void CCheckOpenPortsDlg::OnCbnSelchangeComboListAdapter()
 		OnBnClickedButtonStopPacket();
 	}
 }
-void CCheckOpenPortsDlg::EndProgram()
-{
-	m_bHasClickClose = TRUE;
-	m_pfnPtrStopLocalAreaListening();
-	m_ctrlBtnStopListening.EnableWindow(FALSE);
-	m_bStopPacketListener = true;
-	m_pfnPtrStopPacketListener();
-	m_ctrlBtnListenPackets.EnableWindow(TRUE);
-	m_ctrlBtnUnlistenPackets.EnableWindow(FALSE);
-	m_pfnPtrStopSearchingOpenPorts();
-	m_pfnPtrEndSNMP();
 
-	if (m_hThreadRouter)
-	{
-		WaitForSingleObject(m_hThreadRouter, INFINITE);
-		CloseHandle(m_hThreadRouter);
-	}
-	if (m_hThreadLANListener)
-	{
-		WaitForSingleObject(m_hThreadLANListener, INFINITE);
-		CloseHandle(m_hThreadLANListener);
-	}
-	if (m_hThreadUploadSpeedList)
-	{
-		WaitForSingleObject(m_hThreadUploadSpeedList, INFINITE);
-		CloseHandle(m_hThreadUploadSpeedList);
-	}
-	if (m_hThreadDownloadSpeedList)
-	{
-		WaitForSingleObject(m_hThreadDownloadSpeedList, INFINITE);
-		CloseHandle(m_hThreadDownloadSpeedList);
-	}
-	if (m_hNICPacketListener)
-	{
-		WaitForSingleObject(m_hNICPacketListener, INFINITE);
-		CloseHandle(m_hNICPacketListener);
-	}
-	if (m_hThreadOpenPortListener)
-	{
-		WaitForSingleObject(m_hThreadOpenPortListener, INFINITE);
-		CloseHandle(m_hThreadOpenPortListener);
-	}
-	if (m_hThreadClock)
-	{
-		WaitForSingleObject(m_hThreadClock, INFINITE);
-		CloseHandle(m_hThreadClock);
-	}
-	if (m_hThreadNICListener)
-	{
-		WaitForSingleObject(m_hThreadNICListener, INFINITE);
-		CloseHandle(m_hThreadNICListener);
-	}
-	if (m_hDLLhandle)
-		FreeLibrary(m_hDLLhandle);
-	CDialog::OnClose();
-}
 
 inline void CCheckOpenPortsDlg::DisplayDownloadSpeed(CString szIPAddress, int nColumn, double ldData)
 {
