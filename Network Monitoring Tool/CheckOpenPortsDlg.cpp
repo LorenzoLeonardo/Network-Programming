@@ -18,22 +18,6 @@ mutex mtx_lanlistener;
 #define new DEBUG_NEW
 #endif
 
-inline void GetLastErrorMessageString(_tstring& str, int nGetLastError)
-{
-	DWORD dwSize = 0;
-	TCHAR lpMessage[1020];
-
-	dwSize = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,   // flags
-		NULL,                // lpsource
-		nGetLastError,                 // message id
-		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),    // languageid
-		lpMessage,              // output buffer
-		sizeof(lpMessage) / sizeof(TCHAR),     // size of msgbuf, bytes
-		NULL);
-
-	str = lpMessage;
-}
-
 template <typename Map>
 inline bool key_compare(Map const& lhs, Map const& rhs) 
 {
@@ -157,6 +141,7 @@ void CCheckOpenPortsDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_COMBO_LIST_ADAPTER, m_ctrlComboAdapterList);
 	DDX_Control(pDX, IDC_STATIC_NIC_LISTEN, m_ctrlStaticNICListen);
 	DDX_Control(pDX, IDC_STATIC_ROUTER_PIC, m_ctrlStaticRouterImage);
+	DDX_Control(pDX, IDC_STATIC_NUM_DEVICE, m_ctrlStaticNumDevice);
 }
 
 BEGIN_MESSAGE_MAP(CCheckOpenPortsDlg, CDialogEx)
@@ -342,7 +327,7 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	m_ctrlPortNum.SetWindowText(_T("80"));
 	m_ctrlEditPollingTime.SetWindowText(_T("50"));
 	m_ctrlBtnStopListening.EnableWindow(FALSE);
-	m_ctrlLANConnected.SetExtendedStyle(LVS_EX_FLATSB | LVS_EX_HEADERDRAGDROP | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT);
+	m_ctrlLANConnected.SetExtendedStyle(LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT);
 
 	m_bInitNIC = true;
 	m_pfnPtrEnumNetworkAdapters(CallBackEnumAdapters);
@@ -675,7 +660,7 @@ void CCheckOpenPortsDlg::OnBnClickedButtonStartListenLan()
 	m_ctrlBtnListen.EnableWindow(FALSE);
 	m_ctrlBtnStopListening.EnableWindow(TRUE);
 	SetLANStop(false);
-
+	EnableCloseButton(false);
 	CString csText;
 	CString csPollTime;
 	
@@ -691,7 +676,8 @@ void CCheckOpenPortsDlg::OnBnClickedButtonStopListenLan()
 	// TODO: Add your control notification handler code here
 	//m_pfnPtrStopLocalAreaListening();
 	m_ctrlBtnStopListening.EnableWindow(FALSE);
-	
+	EnableCloseButton(true);
+
 	for(int i = 0; i < m_vAdapterInfo.size();i++)
 		m_fnptrStopLocalAreaListenerEx(m_vAdapterInfo[i].hLANListener);
 }
@@ -732,13 +718,12 @@ void CCheckOpenPortsDlg::OnHdnItemKeyDownListLan(NMHDR* pNMHDR, LRESULT* pResult
 void CCheckOpenPortsDlg::OnLvnKeydownListLan(NMHDR* pNMHDR, LRESULT* pResult)
 {
 	LPNMLVKEYDOWN pLVKeyDow = reinterpret_cast<LPNMLVKEYDOWN>(pNMHDR);
-	// TODO: Add your control notification handler code here
-
+	
 	if (pLVKeyDow->wVKey == VK_UP)
 	{
-		if(g_dlg->m_nCurrentRowSelected > 0)
+		m_nCurrentRowSelected = g_dlg->m_ctrlLANConnected.GetSelectionMark()-1;
+		if (m_nCurrentRowSelected >= 0)
 		{
-			g_dlg->m_nCurrentRowSelected--;
 			g_dlg->m_ctrlLANConnected.SetItemState(m_nCurrentRowSelected, LVIS_SELECTED, LVIS_SELECTED);
 			g_dlg->m_ctrlLANConnected.SetFocus();
 			CString cs = m_ctrlLANConnected.GetItemText(m_nCurrentRowSelected, 1);
@@ -747,16 +732,15 @@ void CCheckOpenPortsDlg::OnLvnKeydownListLan(NMHDR* pNMHDR, LRESULT* pResult)
 	}
 	else if (pLVKeyDow->wVKey == VK_DOWN)
 	{
-		if (g_dlg->m_nCurrentRowSelected < (g_dlg->m_ctrlLANConnected.GetItemCount()-1))
+		m_nCurrentRowSelected = g_dlg->m_ctrlLANConnected.GetSelectionMark()+1;
+		if (m_nCurrentRowSelected < g_dlg->m_ctrlLANConnected.GetItemCount())
 		{
-			g_dlg->m_nCurrentRowSelected++;
 			g_dlg->m_ctrlLANConnected.SetItemState(m_nCurrentRowSelected, LVIS_SELECTED, LVIS_SELECTED);
 			g_dlg->m_ctrlLANConnected.SetFocus();
 			CString cs = m_ctrlLANConnected.GetItemText(m_nCurrentRowSelected, 1);
 			m_ctrlIPAddress.SetWindowText(cs);
 		}
 	}
-
 }
 
 void CCheckOpenPortsDlg::OnNMDblclkListLan(NMHDR* pNMHDR, LRESULT* pResult)
@@ -937,7 +921,12 @@ int CCheckOpenPortsDlg::IsInTheList(CString csIPAddress)
 
 	return index;
 }
-
+void CCheckOpenPortsDlg::UpdateDeviceConnected()
+{
+	CString csConn;
+	csConn.Format(_T("Device Connected: %d"), m_ctrlLANConnected.GetItemCount());
+	m_ctrlStaticNumDevice.SetWindowTextW(csConn);
+}
 void CCheckOpenPortsDlg::CallbackLANListenerEx(const char* ipAddress, const char* hostName, const char* macAddress, bool bIsopen)
 {
 	mtx_lanlistener.lock();
@@ -947,7 +936,6 @@ void CCheckOpenPortsDlg::CallbackLANListenerEx(const char* ipAddress, const char
 		g_dlg->m_ctrlBtnListen.EnableWindow(FALSE);
 		g_dlg->m_ctrlBtnStopListening.EnableWindow(TRUE);
 		g_dlg->SetLANStop(false);
-
 	}
 	if (bIsopen)
 	{
@@ -1093,7 +1081,7 @@ void CCheckOpenPortsDlg::CallbackLANListenerEx(const char* ipAddress, const char
 					g_dlg->m_ctrlLANConnected.SetItemText(j, 0, to_wstring(j + 1).c_str());
 				}
 			}
-
+			g_dlg->UpdateDeviceConnected();
 		}
 	}
 	else
@@ -1139,19 +1127,16 @@ void CCheckOpenPortsDlg::CallbackLANListenerEx(const char* ipAddress, const char
 					it++;
 				}
 			}
+
 			g_dlg->m_mMonitorDeviceBefore = g_dlg->m_mMonitorDeviceCurrent;
 			g_dlg->m_mMonitorDeviceCurrent.clear();
 
-			if ((g_dlg->m_mConnected.size() - 1) < g_dlg->m_nCurrentRowSelected)
-				g_dlg->m_nCurrentRowSelected = (int)g_dlg->m_mConnected.size() - 1;
-
-			g_dlg->m_ctrlLANConnected.SetItemState(g_dlg->m_nCurrentRowSelected, LVIS_SELECTED, LVIS_SELECTED);
-			g_dlg->m_ctrlLANConnected.SetFocus();
 			CString csIP(CA2W(g_dlg->m_vAdapterInfo[g_dlg->m_nCurrentNICSelect].AdapterInfo.IpAddressList.IpAddress.String));
 			g_dlg->m_ctrlLANConnected.SetAdapterIP(csIP);
 			g_dlg->m_fnptrSetNICAdapterToUse(g_dlg->m_vAdapterInfo[g_dlg->m_nCurrentNICSelect].AdapterInfo.AdapterName, g_dlg->m_vAdapterInfo[g_dlg->m_nCurrentNICSelect].AdapterInfo.IpAddressList.Context);
 			g_dlg->m_ctrlStaticNICListen.SetWindowText(CA2W(g_dlg->m_vAdapterInfo[g_dlg->m_nCurrentNICSelect].AdapterInfo.Description));
 			g_dlg->m_ctrlComboAdapterList.EnableWindow(TRUE);
+			g_dlg->UpdateDeviceConnected();
 		}
 		else if (strcmp(ipAddress, "stop") == 0)
 		{
@@ -1185,8 +1170,6 @@ void CCheckOpenPortsDlg::CallBackEnumPort(char* ipAddress, int nPort, bool bIsop
 
 				string sTemp = ipAddress;
 
-				_tstring wsLastError;
-				GetLastErrorMessageString(wsLastError, nLastError);
 				if (bIsopen)
 					csStr.Format(_T("%s %d is open.\r\n"), g_dlg->MultiByteToUnicode(sTemp).c_str(), nPort);
 
@@ -1217,7 +1200,7 @@ void CCheckOpenPortsDlg::CallBackEnumAdapters(void* args)
 	{
 		if (pAdapterInfo->IpAddressList.Context)
 		{
-			NIC_INFO nicInfo;
+			CNetworkInterfaceInfo nicInfo;
 			nicInfo.AdapterInfo = *pAdapterInfo;
 			nicInfo.hLANListener = g_dlg->m_fnptrCreateLocalAreaListenerEx();
 			g_dlg->m_vAdapterInfo.push_back(nicInfo);
@@ -2018,4 +2001,28 @@ void CCheckOpenPortsDlg::OnBnClickedCheckInternetOnly()
 		m_bIsInternetOnly = true;
 		AfxMessageBox(_T("The tool will be able to listen internet packets only."), MB_ICONINFORMATION);
 	}
+}
+
+void CCheckOpenPortsDlg::EnableCloseButton(bool bEnable)
+{
+	UINT nMenuf = bEnable ? (MF_BYCOMMAND) : (MF_BYCOMMAND | MF_GRAYED | MF_DISABLED);
+
+	CMenu* pSysMenu = g_dlg->GetSystemMenu(FALSE);
+	if (pSysMenu)
+		pSysMenu->EnableMenuItem(SC_CLOSE, nMenuf);
+}
+
+void CCheckOpenPortsDlg::OnCancel()
+{
+	// TODO: Add your specialized code here and/or call the base class
+
+//	CDialogEx::OnCancel();
+}
+
+
+void CCheckOpenPortsDlg::OnOK()
+{
+	// TODO: Add your specialized code here and/or call the base class
+
+	//CDialogEx::OnOK();
 }

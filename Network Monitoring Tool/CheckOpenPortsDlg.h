@@ -60,30 +60,15 @@ typedef void (*FNPTRStopLocalAreaListenerEx)(HANDLE);
 typedef void (*FNPTRDeleteLocalAreaListenerEx)(HANDLE);
 typedef void (*FNPTRSetNICAdapterToUse)(const char* szAdapterName, ULONG ipAddress);
 
-inline void GetLastErrorMessageString(_tstring& str, int nGetLastError);
 template <typename Map>
 inline bool key_compare(Map const& lhs, Map const& rhs);
 
-typedef struct _tOBJ
+class CNetworkInterfaceInfo
 {
-	ULONG m_ulDataSizeDownload;
-	ULONG m_ulDataSizeUpload;
-	double m_lfDownloadSpeed;
-	double m_lfUploadSpeed;
-	double m_lfMaxDownloadSpeed;
-	double m_lfMaxUploadSpeed;
-	vector<CString> m_vIPHOSTMAC;//IP, Host, MAC
-	HANDLE m_hThreadDownload;
-	HANDLE m_hThreadUpload;
-	HANDLE m_eventDownload;
-	HANDLE m_eventUpload;
-}ENZ_CONNECTED_DEVICE_DETAILS;
-
-typedef struct _tNIC
-{
+public:
 	IP_ADAPTER_INFO AdapterInfo;
 	HANDLE hLANListener;
-}NIC_INFO;
+};
 
 // CCheckOpenPortsDlg dialog
 class CCheckOpenPortsDlg : public CDialogEx
@@ -135,7 +120,7 @@ public:
 	map<ULONG, CDeviceConnected*> m_mConnected;
 	map<ULONG, int> m_mMonitorDeviceCurrent;
 	map<ULONG, int> m_mMonitorDeviceBefore;
-	vector<NIC_INFO> m_vAdapterInfo;
+	vector<CNetworkInterfaceInfo> m_vAdapterInfo;
 	CEdit m_ctrlEditPacketReportArea;
 	CEdit m_ctrlEditDownloadSpeed;
 	CEdit m_ctrlEditUploadSpeed;
@@ -163,7 +148,8 @@ public:
 	{
 		return m_bHasClickClose;
 	}
-
+	void UpdateDeviceConnected();
+	void EnableCloseButton(bool bEnable);
 	void SetLANStop(bool b)
 	{
 		m_bLanStop = b;
@@ -304,4 +290,7 @@ public:
 	CStatic m_ctrlStaticNICListen;
 	afx_msg void OnBnClickedCheckInternetOnly();
 	CStatic m_ctrlStaticRouterImage;
+	CStatic m_ctrlStaticNumDevice;
+	virtual void OnCancel();
+	virtual void OnOK();
 };
