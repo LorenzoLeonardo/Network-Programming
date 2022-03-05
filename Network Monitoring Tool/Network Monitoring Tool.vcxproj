@@ -229,7 +229,10 @@
     <Image Include="C:\Users\loren\Downloads\Square44x44Logo.targetsize-256.bmp" />
     <Image Include="res\android-icon-72x72.bmp" />
     <Image Include="res\bitmap1.bmp" />
+    <Image Include="res\bitmap2.bmp" />
+    <Image Include="res\bitmap3.bmp" />
     <Image Include="res\Network Monitoring Tool.ico" />
+    <Image Include="res\TL-R605.bmp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

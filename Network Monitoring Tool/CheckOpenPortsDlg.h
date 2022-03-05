@@ -303,4 +303,5 @@ public:
 	afx_msg void OnNcMouseMove(UINT nHitTest, CPoint point);
 	CStatic m_ctrlStaticNICListen;
 	afx_msg void OnBnClickedCheckInternetOnly();
+	CStatic m_ctrlStaticRouterImage;
 };

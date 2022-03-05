@@ -119,7 +119,7 @@ CCheckOpenPortsDlg::CCheckOpenPortsDlg(CWnd* pParent /*=nullptr*/)
 	m_fnptrSetNICAdapterToUse = NULL;
 	m_bIsInternetOnly = false;
 	m_customClock.SetFontStyle(_T("Yu Gothic UI"));
-	m_customClock.SetFontSize(50);
+	m_customClock.SetFontSize(40);
 	m_customClock.SetFontWeight(FW_NORMAL);
 	m_customClock.SetTextColor(RGB(255, 255, 255));
 	m_customClock.SetTextBKColor(RGB(93, 107, 153));
@@ -156,6 +156,7 @@ void CCheckOpenPortsDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT_ADAPTER_INFO, m_ctrlEditAdapterInfo);
 	DDX_Control(pDX, IDC_COMBO_LIST_ADAPTER, m_ctrlComboAdapterList);
 	DDX_Control(pDX, IDC_STATIC_NIC_LISTEN, m_ctrlStaticNICListen);
+	DDX_Control(pDX, IDC_STATIC_ROUTER_PIC, m_ctrlStaticRouterImage);
 }
 
 BEGIN_MESSAGE_MAP(CCheckOpenPortsDlg, CDialogEx)
@@ -211,7 +212,7 @@ int CCheckOpenPortsDlg::OnCreate(LPCREATESTRUCT lpCreateStruct)
 void CCheckOpenPortsDlg::UpdateClock()
 {
 	CClientDC cdc(this);
-	m_customClock.DrawClock(&cdc, 420, 15);
+	m_customClock.DrawClock(&cdc, 480, 15);
 }
 unsigned __stdcall  CCheckOpenPortsDlg::ClockThread(void* parg)
 {
@@ -358,9 +359,9 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	InitAdapterUI();
 	
 	m_ctrlLANConnected.InsertColumn(COL_NUMBER, lpcRecHeader[COL_NUMBER], LVCFMT_FIXED_WIDTH, 30);
-	m_ctrlLANConnected.InsertColumn(COL_IPADDRESS, lpcRecHeader[COL_IPADDRESS], LVCFMT_LEFT, 110);
+	m_ctrlLANConnected.InsertColumn(COL_IPADDRESS, lpcRecHeader[COL_IPADDRESS], LVCFMT_LEFT, 100);
 	m_ctrlLANConnected.InsertColumn(COL_DEVICENAME, lpcRecHeader[COL_DEVICENAME], LVCFMT_LEFT, 110);
-	m_ctrlLANConnected.InsertColumn(COL_MACADDRESS, lpcRecHeader[COL_MACADDRESS], LVCFMT_LEFT, 110);
+	m_ctrlLANConnected.InsertColumn(COL_MACADDRESS, lpcRecHeader[COL_MACADDRESS], LVCFMT_LEFT, 0);
 	m_ctrlLANConnected.InsertColumn(COL_DOWNLOADSPEED, lpcRecHeader[COL_DOWNLOADSPEED], LVCFMT_LEFT, 100);
 	m_ctrlLANConnected.InsertColumn(COL_UPLOADSPEED, lpcRecHeader[COL_UPLOADSPEED], LVCFMT_LEFT, 100);
 	m_ctrlLANConnected.InsertColumn(COL_DOWNLOADMAXSPEED, lpcRecHeader[COL_DOWNLOADMAXSPEED], LVCFMT_LEFT, 120);
@@ -1497,7 +1498,27 @@ void CCheckOpenPortsDlg::OnMouseMove(UINT nFlags, CPoint point)
 	else
 	{
 		SetCursor(LoadCursor(NULL, IDC_ARROW));
+		this->GetWindowRect(&rectDlg);
+		m_ctrlStaticRouterImage.GetWindowRect(&rect);
+		m_ctrlStaticRouterImage.GetClientRect(&translatedRect);
+
+		translatedRect.left = rect.left - rectDlg.left - 10;
+		translatedRect.top = rect.top - rectDlg.top - 30;
+		translatedRect.right = rect.right - rectDlg.left - 10;
+		translatedRect.bottom = rect.bottom - rectDlg.top - 30;
+
+		if ((translatedRect.left <= (point.x)) && ((point.x) <= translatedRect.right) &&
+			((translatedRect.top) <= point.y) && (point.y <= (translatedRect.bottom)))
+		{
+			SetCursor(LoadCursor(NULL, IDC_HAND));
+		}
+		else
+		{
+			SetCursor(LoadCursor(NULL, IDC_ARROW));
+		}
 	}
+
+	
 	CDialogEx::OnMouseMove(nFlags, point);
 }
 
@@ -1519,6 +1540,27 @@ void CCheckOpenPortsDlg::OnLButtonDown(UINT nFlags, CPoint point)
 		((translatedRect.top) <= point.y) && (point.y <= (translatedRect.bottom)))
 	{
 		ShellExecute(NULL, _T("open"), _T("https://m.me/Lorenzo.Leonardo.92"), NULL, NULL, SW_SHOWNORMAL);
+	}
+
+	this->GetWindowRect(&rectDlg);
+	m_ctrlStaticRouterImage.GetWindowRect(&rect);
+	m_ctrlStaticRouterImage.GetClientRect(&translatedRect);
+
+	translatedRect.left = rect.left - rectDlg.left - 10;
+	translatedRect.top = rect.top - rectDlg.top - 30;
+	translatedRect.right = rect.right - rectDlg.left - 10;
+	translatedRect.bottom = rect.bottom - rectDlg.top - 30;
+	if((translatedRect.left <= (point.x)) && ((point.x) <= translatedRect.right) &&
+		((translatedRect.top) <= point.y) && (point.y <= (translatedRect.bottom)))
+	{
+		CString csLink;
+		char szDefaultGateway[32];
+		memset(szDefaultGateway, 0, sizeof(szDefaultGateway));
+
+		m_pfnPtrGetDefaultGatewayEx(m_vAdapterInfo[m_ctrlComboAdapterList.GetCurSel()].AdapterInfo.AdapterName, szDefaultGateway, sizeof(szDefaultGateway));
+		csLink = _T("http://");
+		csLink.AppendFormat(_T("%s"), CA2W(szDefaultGateway).m_szBuffer);
+		ShellExecute(NULL, _T("open"), csLink, NULL, NULL, SW_SHOWNORMAL);
 	}
 	if (m_pmodeless)
 		m_pmodeless->SetForegroundWindow();
