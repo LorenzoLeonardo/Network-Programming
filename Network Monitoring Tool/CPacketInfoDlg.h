@@ -37,4 +37,5 @@ protected:
 	static unsigned __stdcall  PacketInfoThread(void* parg);
 public:
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+
 };

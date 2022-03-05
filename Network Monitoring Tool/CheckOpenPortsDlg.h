@@ -203,7 +203,12 @@ public:
 	void InitAdapterUI();
 	void UpdateAdapterChanges();
 
+	bool IsInternetOnly()
+	{
+		return m_bIsInternetOnly;
+	}
 protected:
+	bool m_bIsInternetOnly;
 	HBRUSH m_hBrushBackGround;
 	HBRUSH m_hBrushEditArea;
 	HICON m_hIcon;
@@ -297,4 +302,5 @@ public:
 	afx_msg void OnNcMouseHover(UINT nFlags, CPoint point);
 	afx_msg void OnNcMouseMove(UINT nHitTest, CPoint point);
 	CStatic m_ctrlStaticNICListen;
+	afx_msg void OnBnClickedCheckInternetOnly();
 };

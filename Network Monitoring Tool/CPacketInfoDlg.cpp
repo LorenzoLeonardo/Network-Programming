@@ -76,6 +76,7 @@ void CPacketInfoDlg::UpdatePacketInfo(CString csPacketInfo, int nProtocol)
 		else if (((CButton*)GetDlgItem(IDC_CHECK_ICMP))->GetCheck() == BST_UNCHECKED
 			&& nProtocol == ICMP_PROTOCOL)
 			return;
+		
 
 
 		CString csText;

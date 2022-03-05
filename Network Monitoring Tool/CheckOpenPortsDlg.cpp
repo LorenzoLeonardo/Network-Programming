@@ -117,7 +117,7 @@ CCheckOpenPortsDlg::CCheckOpenPortsDlg(CWnd* pParent /*=nullptr*/)
 	m_fnptrStopLocalAreaListenerEx = NULL;
 	m_fnptrDeleteLocalAreaListenerEx = NULL;
 	m_fnptrSetNICAdapterToUse = NULL;
-
+	m_bIsInternetOnly = false;
 	m_customClock.SetFontStyle(_T("Yu Gothic UI"));
 	m_customClock.SetFontSize(50);
 	m_customClock.SetFontWeight(FW_NORMAL);
@@ -197,6 +197,7 @@ BEGIN_MESSAGE_MAP(CCheckOpenPortsDlg, CDialogEx)
 	ON_WM_NCHITTEST()
 	ON_WM_NCMOUSEHOVER()
 	ON_WM_NCMOUSEMOVE()
+	ON_BN_CLICKED(IDC_CHECK_INTERNET_ONLY, &CCheckOpenPortsDlg::OnBnClickedCheckInternetOnly)
 END_MESSAGE_MAP()
 
 
@@ -283,12 +284,10 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	::SetWindowTheme(GetDlgItem(IDC_STATIC_ADAPTER_INFO)->GetSafeHwnd(), _T(""), _T(""));
 	::SetWindowTheme(GetDlgItem(IDC_STATIC_OPEN_PORTS)->GetSafeHwnd(), _T(""), _T(""));
 	::SetWindowTheme(GetDlgItem(IDC_CHECK_DEBUG)->GetSafeHwnd(), _T(""), _T(""));
-
+	::SetWindowTheme(GetDlgItem(IDC_CHECK_INTERNET_ONLY)->GetSafeHwnd(), _T(""), _T(""));
 	LPCTSTR lpcRecHeader[] = { _T("No."), _T("IP Address"), _T("Device Name"), _T("MAC Address"), _T("Download Speed"), _T("Upload Speed"),  _T("Max Download Speed"), _T("Max Upload Speed") };
 	int nCol = 0;
 	char szDefaultGateWay[32];
-
-	
 
 	if (!InitDLL())
 	{
@@ -332,8 +331,6 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 		m_ctrlBtnDebug.SetCheck(BST_CHECKED);
 	else
 		m_ctrlBtnDebug.SetCheck(BST_UNCHECKED);
-
-
 	m_pmodeless = NULL;
 	// TODO: Add extra initialization here
 	g_dlg = this;
@@ -351,7 +348,6 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	if (m_vAdapterInfo.empty())
 	{
 		CString csMsg;
-
 		csMsg.Format(IDS_NIC_DISCONNECTED);
 		AfxMessageBox(csMsg, MB_ICONERROR);
 		OnOK();
@@ -376,7 +372,6 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	m_fnptrSetNICAdapterToUse(m_vAdapterInfo[m_nCurrentNICSelect].AdapterInfo.AdapterName, m_vAdapterInfo[m_ctrlComboAdapterList.GetCurSel()].AdapterInfo.IpAddressList.Context);
 	if (m_pfnPtrGetDefaultGatewayEx(m_vAdapterInfo[m_nCurrentNICSelect].AdapterInfo.AdapterName, szDefaultGateWay, sizeof(szDefaultGateWay)))
 	{
-		
 		m_ipFilter = m_vAdapterInfo[m_nCurrentNICSelect].AdapterInfo.IpAddressList.IpAddress.String;
 		wstring temp = m_ipFilter.GetBuffer();
 		inet_pton(AF_INET, UnicodeToMultiByte(temp).c_str(), &m_ulIPFilter);
@@ -395,20 +390,15 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	m_ctrlStaticNICListen.SetWindowText(CA2W(m_vAdapterInfo[m_nCurrentNICSelect].AdapterInfo.Description));
 	CString csIP(CA2W(m_vAdapterInfo[m_nCurrentNICSelect].AdapterInfo.IpAddressList.IpAddress.String));
 	m_ctrlLANConnected.SetAdapterIP(csIP);
-	
 	m_hThreadNICListener = (HANDLE)_beginthreadex(NULL, 0, NICListenerThread, this, 0, NULL);
-	
 	m_bShowPacketInfo = false;
 	for (int i = 0; i < m_vAdapterInfo.size(); i++)
 		m_vAdapterInfo[i].hLANListener = m_fnptrCreateLocalAreaListenerEx();
 
 	m_hNICPacketListener = m_fnptrCreatePacketListenerEx(CallbackNICPacketListener, NULL);
-
-
 	OnBnClickedButtonStartPacket();
 	OnBnClickedButtonShowPackets();
 	OnBnClickedButtonStartListenLan();
-	
 	
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -1327,6 +1317,23 @@ bool CCheckOpenPortsDlg::CallbackNICPacketListener(unsigned char* buffer, int nS
 	iphdrlen = iphdr->ucIPHeaderLen * 4;
 	
 
+	if (g_dlg->IsInternetOnly())
+	{
+		DWORD dwMask = 0;
+		DWORD dwBeginIP = 0;
+		DWORD dwEndIP = 0;
+
+		inet_pton(AF_INET, g_dlg->m_vAdapterInfo[g_dlg->m_ctrlComboAdapterList.GetCurSel()].AdapterInfo.IpAddressList.IpMask.String, &dwMask);
+		dwMask = ntohl(dwMask);
+		inet_pton(AF_INET, g_dlg->m_vAdapterInfo[g_dlg->m_ctrlComboAdapterList.GetCurSel()].AdapterInfo.IpAddressList.IpAddress.String, &dwBeginIP);
+		dwBeginIP = dwMask & ntohl(dwBeginIP);
+		dwEndIP = (0xFFFFFFFF - dwMask) + dwBeginIP;
+
+		if (((ntohl(iphdr->unDestaddress) > dwBeginIP) && (ntohl(iphdr->unDestaddress) < dwEndIP)) && ((ntohl(iphdr->unSrcaddress) > dwBeginIP) && (ntohl(iphdr->unSrcaddress) < dwEndIP)))
+			return false;
+	}
+
+
 	if (!g_dlg->ShowPacketInfo())
 	{
 		inet_ntop(AF_INET, (const void*)&iphdr->unDestaddress, sztemp, sizeof(sztemp));
@@ -1376,7 +1383,10 @@ bool CCheckOpenPortsDlg::CallbackNICPacketListener(unsigned char* buffer, int nS
 		{
 			csReport = csText + sourceIP + _T(":") + csSrcPort + _T("->") + destIP + _T(":") + csDestPort + _T("\t\tSize: ") + to_wstring(nSize).c_str() + _T(" bytes\r\n");
 			if (g_dlg->m_pmodeless)
+			{
+				
 				g_dlg->m_pmodeless->UpdatePacketInfo(csReport, iphdr->ucIPProtocol);
+			}
 		}
 	}
 	if (g_dlg->GetIPFilterULONG() == iphdr->unSrcaddress)
@@ -1750,6 +1760,22 @@ bool CCheckOpenPortsDlg::CallbackPacketListenerDownloadEx(unsigned char* buffer,
 	inet_ntop(AF_INET, (const void*)&iphdr->unSrcaddress, sztemp, sizeof(sztemp));
 	sourceIP = CA2W(sztemp);
 
+	if (g_dlg->IsInternetOnly())
+	{
+		DWORD dwMask = 0;
+		DWORD dwBeginIP = 0;
+		DWORD dwEndIP = 0;
+
+		inet_pton(AF_INET, g_dlg->m_vAdapterInfo[g_dlg->m_ctrlComboAdapterList.GetCurSel()].AdapterInfo.IpAddressList.IpMask.String, &dwMask);
+		dwMask = ntohl(dwMask);
+		inet_pton(AF_INET, g_dlg->m_vAdapterInfo[g_dlg->m_ctrlComboAdapterList.GetCurSel()].AdapterInfo.IpAddressList.IpAddress.String, &dwBeginIP);
+		dwBeginIP = dwMask & ntohl(dwBeginIP);
+		dwEndIP = (0xFFFFFFFF - dwMask) + dwBeginIP;
+
+		if (((ntohl(iphdr->unDestaddress) > dwBeginIP) && (ntohl(iphdr->unDestaddress) < dwEndIP)) && ((ntohl(iphdr->unSrcaddress) > dwBeginIP) && (ntohl(iphdr->unSrcaddress) < dwEndIP)))
+			return false;
+	}
+
 	ULONGLONG timeCurrent = GetTickCount64();
 	if (pDevice->m_szIPAddress == destIP)
 		pDevice->m_ulDataSizeDownload += nSize;
@@ -1786,6 +1812,22 @@ bool CCheckOpenPortsDlg::CallbackPacketListenerUploadEx(unsigned char* buffer, i
 	destIP = CA2W(sztemp);
 	inet_ntop(AF_INET, (const void*)&iphdr->unSrcaddress, sztemp, sizeof(sztemp));
 	sourceIP = CA2W(sztemp);
+
+	if (g_dlg->IsInternetOnly())
+	{
+		DWORD dwMask = 0;
+		DWORD dwBeginIP = 0;
+		DWORD dwEndIP = 0;
+
+		inet_pton(AF_INET, g_dlg->m_vAdapterInfo[g_dlg->m_ctrlComboAdapterList.GetCurSel()].AdapterInfo.IpAddressList.IpMask.String, &dwMask);
+		dwMask = ntohl(dwMask);
+		inet_pton(AF_INET, g_dlg->m_vAdapterInfo[g_dlg->m_ctrlComboAdapterList.GetCurSel()].AdapterInfo.IpAddressList.IpAddress.String, &dwBeginIP);
+		dwBeginIP = dwMask & ntohl(dwBeginIP);
+		dwEndIP = (0xFFFFFFFF - dwMask) + dwBeginIP;
+
+		if (((ntohl(iphdr->unDestaddress) > dwBeginIP) && (ntohl(iphdr->unDestaddress) < dwEndIP)) && ((ntohl(iphdr->unSrcaddress) > dwBeginIP) && (ntohl(iphdr->unSrcaddress) < dwEndIP)))
+			return false;
+	}
 
 	ULONGLONG timeCurrent = GetTickCount64();
 	if (pDevice->m_szIPAddress == sourceIP)
@@ -1914,4 +1956,21 @@ void CCheckOpenPortsDlg::OnNcMouseMove(UINT nHitTest, CPoint point)
 	if (m_pmodeless)
 		m_pmodeless->SetForegroundWindow();
 	CDialogEx::OnNcMouseMove(nHitTest, point);
+}
+
+
+void CCheckOpenPortsDlg::OnBnClickedCheckInternetOnly()
+{
+	// TODO: Add your control notification handler code here
+	int ChkBox = ((CButton*)GetDlgItem(IDC_CHECK_INTERNET_ONLY))->GetCheck();
+	if (ChkBox == BST_UNCHECKED)
+	{
+		m_ctrlBtnDebug.SetCheck(BST_UNCHECKED);
+		m_bIsInternetOnly = false;
+	}
+	else
+	{
+		m_ctrlBtnDebug.SetCheck(BST_CHECKED);
+		m_bIsInternetOnly = true;
+	}
 }

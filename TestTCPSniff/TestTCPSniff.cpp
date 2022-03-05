@@ -8,8 +8,13 @@
 #include "tdiinfo.h"
 //#include "tdistat.h"
 #include "tcpioctl.h"
+#include <iphlpapi.h>
+#include <dhcpsapi.h>
+#pragma comment(lib, "Iphlpapi.lib")
+#pragma comment(lib, "Dhcpsapi.lib")
 
-
+#define MALLOC(x) HeapAlloc(GetProcessHeap(), 0, (x)) 
+#define FREE(x) HeapFree(GetProcessHeap(), 0, (x))
 /*  Function:              GetTCPHandle
     Description:
       Opens a handle to the TCP driver
@@ -195,8 +200,10 @@ DWORD GetEntityArray(IN HANDLE TCPDriverHandle,
     return((DWORD)(arrayLen / sizeof(TDIEntityID)));
 }
 
+/*
 int main()
 {
+
     DWORD i;
     DWORD entityCount;
     TDIEntityID
@@ -255,6 +262,27 @@ int main()
 
     //  Free the entity-array buffer before quitting.
     LocalFree(entityArray);
-
+    
     return(0);
+}*/
+
+
+int main()
+{
+    LPDHCP_CLIENT_INFO_ARRAY ClientInfo = NULL;
+    DHCP_RESUME_HANDLE* ResumeHandle = NULL;
+    DWORD ClientsRead;
+    DWORD ClientsTotal;
+    DWORD ip = 0x0100A8C0;
+    DWORD subnet = 0xFFFFFF00;
+    DWORD dwRet = DhcpEnumSubnetClients(L"192.168.0.1",
+        subnet,
+        ResumeHandle,
+        65536,
+        &ClientInfo,
+        &ClientsRead,
+        &ClientsTotal
+    );
+    return 0;
 }
+

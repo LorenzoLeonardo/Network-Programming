@@ -60,6 +60,7 @@
 #define IDC_CHECK_IGMP                  1031
 #define IDC_STATIC_OPEN_PORTS           1032
 #define IDC_STATIC_ADAPTER_INFO         1033
+#define IDC_CHECK_INTERNET_ONLY         1034
 #define IDC_STATIC_DEVAREA              1035
 #define IDC_STATIC_NIC_LISTEN           1036
 
