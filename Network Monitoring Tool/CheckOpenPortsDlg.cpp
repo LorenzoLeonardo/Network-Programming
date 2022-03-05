@@ -1580,10 +1580,11 @@ void CCheckOpenPortsDlg::OnBnClickedCheckDebug()
 		DWORD BufferSize = 4;
 		if (ChkBox == BST_UNCHECKED)
 		{
+			
 			value = 0;
 			m_ctrlBtnDebug.SetCheck(BST_UNCHECKED);
 			LONG setRes = RegSetValueEx(hKey, _T("DebugLog"), 0, RRF_RT_DWORD, (LPBYTE)&value, BufferSize);
-
+			AfxMessageBox(_T("Debugging log of the tool is disabled."), MB_ICONINFORMATION);
 			if (setRes == ERROR_SUCCESS)
 				return;
 			else
@@ -1594,7 +1595,7 @@ void CCheckOpenPortsDlg::OnBnClickedCheckDebug()
 			value = 1;
 			m_ctrlBtnDebug.SetCheck(BST_CHECKED);
 			LONG setRes = RegSetValueEx(hKey, _T("DebugLog"), 0, RRF_RT_REG_DWORD, (LPBYTE)&value, BufferSize);
-
+			AfxMessageBox(_T("Debugging log of the tool is enabled."), MB_ICONINFORMATION);
 			if (setRes == ERROR_SUCCESS)
 				return;
 			else
@@ -1965,12 +1966,14 @@ void CCheckOpenPortsDlg::OnBnClickedCheckInternetOnly()
 	int ChkBox = ((CButton*)GetDlgItem(IDC_CHECK_INTERNET_ONLY))->GetCheck();
 	if (ChkBox == BST_UNCHECKED)
 	{
-		m_ctrlBtnDebug.SetCheck(BST_UNCHECKED);
+		((CButton*)GetDlgItem(IDC_CHECK_INTERNET_ONLY))->SetCheck(BST_UNCHECKED);
 		m_bIsInternetOnly = false;
+		AfxMessageBox(_T("The tool will be able to listen both local area and internet packets."), MB_ICONINFORMATION);
 	}
 	else
 	{
-		m_ctrlBtnDebug.SetCheck(BST_CHECKED);
+		((CButton*)GetDlgItem(IDC_CHECK_INTERNET_ONLY))->SetCheck(BST_CHECKED);
 		m_bIsInternetOnly = true;
+		AfxMessageBox(_T("The tool will be able to listen internet packets only."), MB_ICONINFORMATION);
 	}
 }
