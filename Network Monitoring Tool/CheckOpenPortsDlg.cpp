@@ -660,7 +660,7 @@ void CCheckOpenPortsDlg::OnBnClickedButtonStartListenLan()
 	m_ctrlBtnListen.EnableWindow(FALSE);
 	m_ctrlBtnStopListening.EnableWindow(TRUE);
 	SetLANStop(false);
-	EnableCloseButton(false);
+	//EnableCloseButton(false);
 	CString csText;
 	CString csPollTime;
 	
@@ -676,7 +676,7 @@ void CCheckOpenPortsDlg::OnBnClickedButtonStopListenLan()
 	// TODO: Add your control notification handler code here
 	//m_pfnPtrStopLocalAreaListening();
 	m_ctrlBtnStopListening.EnableWindow(FALSE);
-	EnableCloseButton(true);
+
 
 	for(int i = 0; i < m_vAdapterInfo.size();i++)
 		m_fnptrStopLocalAreaListenerEx(m_vAdapterInfo[i].hLANListener);
@@ -936,6 +936,7 @@ void CCheckOpenPortsDlg::CallbackLANListenerEx(const char* ipAddress, const char
 		g_dlg->m_ctrlBtnListen.EnableWindow(FALSE);
 		g_dlg->m_ctrlBtnStopListening.EnableWindow(TRUE);
 		g_dlg->SetLANStop(false);
+
 	}
 	if (bIsopen)
 	{
@@ -1143,7 +1144,7 @@ void CCheckOpenPortsDlg::CallbackLANListenerEx(const char* ipAddress, const char
 			g_dlg->m_ctrlBtnListen.EnableWindow(TRUE);
 			g_dlg->m_ctrlBtnStopListening.EnableWindow(FALSE);
 			g_dlg->SetLANStop(true);
-			::PostMessage(g_dlg->GetSafeHwnd(),WM_RESET_CONNECTION,0,0);
+			//g_dlg->EnableCloseButton(true);
 		}
 	}
 	mtx_lanlistener.unlock();
