@@ -660,19 +660,20 @@ void CCheckOpenPortsDlg::OnBnClickedButtonStartListenLan()
 	m_ctrlBtnListen.EnableWindow(FALSE);
 	m_ctrlBtnStopListening.EnableWindow(TRUE);
 	SetLANStop(false);
-	//EnableCloseButton(false);
+	
 	CString csText;
 	CString csPollTime;
 	
-	string ip = m_vAdapterInfo[m_ctrlComboAdapterList.GetCurSel()].AdapterInfo.IpAddressList.IpAddress.String;
-	string mask = m_vAdapterInfo[m_ctrlComboAdapterList.GetCurSel()].AdapterInfo.IpAddressList.IpMask.String;
+	string ip = m_vAdapterInfo[m_nCurrentNICSelect].AdapterInfo.IpAddressList.IpAddress.String;
+	string mask = m_vAdapterInfo[m_nCurrentNICSelect].AdapterInfo.IpAddressList.IpMask.String;
 	wstring wstr(csText.GetBuffer());
 
-	m_fnptrStartLocalAreaListenerEx(m_vAdapterInfo[m_ctrlComboAdapterList.GetCurSel()].hLANListener, ip.c_str(), mask.c_str(), CallbackLANListenerEx, 0);
+	m_fnptrStartLocalAreaListenerEx(m_vAdapterInfo[m_nCurrentNICSelect].hLANListener, ip.c_str(), mask.c_str(), CallbackLANListenerEx, 0);
 }
 
 void CCheckOpenPortsDlg::OnBnClickedButtonStopListenLan()
 {
+	
 	// TODO: Add your control notification handler code here
 	//m_pfnPtrStopLocalAreaListening();
 	m_ctrlBtnStopListening.EnableWindow(FALSE);
@@ -680,6 +681,7 @@ void CCheckOpenPortsDlg::OnBnClickedButtonStopListenLan()
 
 	for(int i = 0; i < m_vAdapterInfo.size();i++)
 		m_fnptrStopLocalAreaListenerEx(m_vAdapterInfo[i].hLANListener);
+
 }
 
 void CCheckOpenPortsDlg::OnNMClickListLan(NMHDR* pNMHDR, LRESULT* pResult)
@@ -927,16 +929,21 @@ void CCheckOpenPortsDlg::UpdateDeviceConnected()
 	csConn.Format(_T("Device Connected: %d"), m_ctrlLANConnected.GetItemCount());
 	m_ctrlStaticNumDevice.SetWindowTextW(csConn);
 }
-void CCheckOpenPortsDlg::CallbackLANListenerEx(const char* ipAddress, const char* hostName, const char* macAddress, bool bIsopen)
+void CCheckOpenPortsDlg::PumpWaitingMessages() {
+	MSG msg;
+	while (::PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE)) {
+		if (!AfxGetThread()->PumpMessage())
+			return;
+	}
+}
+void CCheckOpenPortsDlg::ProcessLANListener(const char* ipAddress, const char* hostName, const char* macAddress, bool bIsopen)
 {
-	mtx_lanlistener.lock();
-
 	if (strcmp(ipAddress, "start") == 0)
 	{
-		g_dlg->m_ctrlBtnListen.EnableWindow(FALSE);
-		g_dlg->m_ctrlBtnStopListening.EnableWindow(TRUE);
-		g_dlg->SetLANStop(false);
-
+		m_ctrlBtnListen.EnableWindow(FALSE);
+		m_ctrlBtnStopListening.EnableWindow(TRUE);
+		SetLANStop(false);
+		EnableCloseButton(false);
 	}
 	if (bIsopen)
 	{
@@ -949,18 +956,18 @@ void CCheckOpenPortsDlg::CallbackLANListenerEx(const char* ipAddress, const char
 		int nRow = 0;
 
 		inet_pton(AF_INET, ipAddress, &ipaddr);
-		g_dlg->m_mMonitorDeviceCurrent[ipaddr]++;
-		if ((g_dlg->m_mConnected.find(ipaddr) == g_dlg->m_mConnected.end()) && strlen(ipAddress))
+		m_mMonitorDeviceCurrent[ipaddr]++;
+		if ((m_mConnected.find(ipaddr) == m_mConnected.end()) && strlen(ipAddress))
 		{
 			CString csTemp, format;
 			CDeviceConnected* tDeviceDetails = new CDeviceConnected();
 
 			string sTemp = ipAddress;
-			tDeviceDetails->m_szIPAddress.Format(_T("%s"), g_dlg->MultiByteToUnicode(sTemp).c_str());
+			tDeviceDetails->m_szIPAddress.Format(_T("%s"), MultiByteToUnicode(sTemp).c_str());
 			sTemp = macAddress;
-			tDeviceDetails->m_szMACAddress.Format(_T("%s"), g_dlg->MultiByteToUnicode(sTemp).c_str());
+			tDeviceDetails->m_szMACAddress.Format(_T("%s"), MultiByteToUnicode(sTemp).c_str());
 			sTemp = hostName;
-			tDeviceDetails->m_szHostName.Format(_T("%s"), g_dlg->MultiByteToUnicode(sTemp).c_str());
+			tDeviceDetails->m_szHostName.Format(_T("%s"), MultiByteToUnicode(sTemp).c_str());
 			tDeviceDetails->m_ulDataSizeDownload = 0;
 			tDeviceDetails->m_ulDataSizeUpload = 0;
 			tDeviceDetails->m_lfDownloadSpeed = 0;
@@ -968,15 +975,15 @@ void CCheckOpenPortsDlg::CallbackLANListenerEx(const char* ipAddress, const char
 			tDeviceDetails->m_lfMaxDownloadSpeed = 0;
 			tDeviceDetails->m_lfMaxUploadSpeed = 0;
 			tDeviceDetails->m_ullDownloadStartTime = tDeviceDetails->m_ullUploadStartTime = GetTickCount64();
-			tDeviceDetails->m_hPacketListenerDownload = g_dlg->m_fnptrCreatePacketListenerEx(CallbackPacketListenerDownloadEx, (void*)tDeviceDetails);
-			tDeviceDetails->m_hPacketListenerUpload = g_dlg->m_fnptrCreatePacketListenerEx(CallbackPacketListenerUploadEx, (void*)tDeviceDetails);
+			tDeviceDetails->m_hPacketListenerDownload = m_fnptrCreatePacketListenerEx(CallbackPacketListenerDownloadEx, (void*)tDeviceDetails);
+			tDeviceDetails->m_hPacketListenerUpload = m_fnptrCreatePacketListenerEx(CallbackPacketListenerUploadEx, (void*)tDeviceDetails);
 
-			if (!g_dlg->m_bStopPacketListener)
+			if (!m_bStopPacketListener)
 			{
-				g_dlg->m_fnptrStartPacketListenerEx(tDeviceDetails->m_hPacketListenerDownload);
-				g_dlg->m_fnptrStartPacketListenerEx(tDeviceDetails->m_hPacketListenerUpload);
+				m_fnptrStartPacketListenerEx(tDeviceDetails->m_hPacketListenerDownload);
+				m_fnptrStartPacketListenerEx(tDeviceDetails->m_hPacketListenerUpload);
 			}
-			
+
 			if (tDeviceDetails->m_szIPAddress == tDeviceDetails->m_szHostName)
 			{
 				TCHAR value[MAX_PATH];
@@ -985,55 +992,55 @@ void CCheckOpenPortsDlg::CallbackLANListenerEx(const char* ipAddress, const char
 				if (dwRet == ERROR_SUCCESS)
 					tDeviceDetails->m_szHostName = value;
 			}
-			g_dlg->m_mConnected[ipaddr] = tDeviceDetails;
-			
+			m_mConnected[ipaddr] = tDeviceDetails;
 
-			nRow = g_dlg->m_ctrlLANConnected.GetItemCount();
+
+			nRow = m_ctrlLANConnected.GetItemCount();
 			wstring wTemp(tDeviceDetails->m_szIPAddress);
-			ipAdd = g_dlg->UnicodeToMultiByte(wTemp);
+			ipAdd = UnicodeToMultiByte(wTemp);
 
 			if (nRow == 0)
 			{
-				g_dlg->m_ctrlLANConnected.InsertItem(LVIF_TEXT | LVIF_STATE, nRow,
+				m_ctrlLANConnected.InsertItem(LVIF_TEXT | LVIF_STATE, nRow,
 					to_wstring(nRow + 1).c_str(), 0, 0, 0, 0);
-				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 1, tDeviceDetails->m_szIPAddress);
-				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 2, tDeviceDetails->m_szHostName);
-				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 3, tDeviceDetails->m_szMACAddress);
+				m_ctrlLANConnected.SetItemText(nRow, col + 1, tDeviceDetails->m_szIPAddress);
+				m_ctrlLANConnected.SetItemText(nRow, col + 2, tDeviceDetails->m_szHostName);
+				m_ctrlLANConnected.SetItemText(nRow, col + 3, tDeviceDetails->m_szMACAddress);
 				if (tDeviceDetails->m_lfDownloadSpeed <= 1000)
 					format.Format(_T("%.2f Kbps"), tDeviceDetails->m_lfDownloadSpeed);
 				else
 					format.Format(_T("%.2f Mbps"), tDeviceDetails->m_lfDownloadSpeed / 1000);
-				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 4, format);
+				m_ctrlLANConnected.SetItemText(nRow, col + 4, format);
 				if (tDeviceDetails->m_lfUploadSpeed <= 1000)
 					format.Format(_T("%.2f Kbps"), tDeviceDetails->m_lfUploadSpeed);
 				else
 					format.Format(_T("%.2f Mbps"), tDeviceDetails->m_lfUploadSpeed / 1000);
-				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 5, format);
+				m_ctrlLANConnected.SetItemText(nRow, col + 5, format);
 				if (tDeviceDetails->m_lfMaxDownloadSpeed <= 1000)
 					format.Format(_T("%.2f Kbps"), tDeviceDetails->m_lfMaxDownloadSpeed);
 				else
 					format.Format(_T("%.2f Mbps"), tDeviceDetails->m_lfMaxDownloadSpeed / 1000);
-				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 6, format);
+				m_ctrlLANConnected.SetItemText(nRow, col + 6, format);
 				if (tDeviceDetails->m_lfMaxUploadSpeed <= 1000)
 					format.Format(_T("%.2f Kbps"), tDeviceDetails->m_lfMaxUploadSpeed);
 				else
 					format.Format(_T("%.2f Mbps"), tDeviceDetails->m_lfMaxUploadSpeed / 1000);
-				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 7, format);
+				m_ctrlLANConnected.SetItemText(nRow, col + 7, format);
 			}
 			else
 			{
-				for (int i = 0; i < g_dlg->m_ctrlLANConnected.GetItemCount(); i++)
+				for (int i = 0; i < m_ctrlLANConnected.GetItemCount(); i++)
 				{
 					ULONG ulItemBefore = 0, UlIP = 0, ulItemAfter = 0;
-					InetPtonW(AF_INET, g_dlg->m_ctrlLANConnected.GetItemText(i, 1), &ulItemBefore);
-					InetPtonW(AF_INET, g_dlg->m_ctrlLANConnected.GetItemText(i + 1, 1), &ulItemAfter);
+					InetPtonW(AF_INET, m_ctrlLANConnected.GetItemText(i, 1), &ulItemBefore);
+					InetPtonW(AF_INET, m_ctrlLANConnected.GetItemText(i + 1, 1), &ulItemAfter);
 					InetPtonW(AF_INET, tDeviceDetails->m_szIPAddress, &UlIP);
 					if ((htonl(ulItemBefore) < htonl(UlIP)) && (htonl(UlIP) < htonl(ulItemAfter)))
 					{
 						nRow = i + 1;
 						break;
 					}
-					else if (htonl(ulItemBefore) < htonl(UlIP) && i == g_dlg->m_ctrlLANConnected.GetItemCount() - 1)
+					else if (htonl(ulItemBefore) < htonl(UlIP) && i == m_ctrlLANConnected.GetItemCount() - 1)
 					{
 						nRow = i + 1;
 						break;
@@ -1043,110 +1050,116 @@ void CCheckOpenPortsDlg::CallbackLANListenerEx(const char* ipAddress, const char
 						nRow = i;
 						break;
 					}
-					else if (htonl(ulItemBefore) > htonl(UlIP) && i == g_dlg->m_ctrlLANConnected.GetItemCount() - 1)
+					else if (htonl(ulItemBefore) > htonl(UlIP) && i == m_ctrlLANConnected.GetItemCount() - 1)
 					{
 						nRow = i;
 						break;
 					}
 				}
 
-				g_dlg->m_ctrlLANConnected.InsertItem(LVIF_TEXT | LVIF_STATE, nRow,
+				m_ctrlLANConnected.InsertItem(LVIF_TEXT | LVIF_STATE, nRow,
 					to_wstring(nRow + 1).c_str(), 0, 0, 0, 0);
-				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 1, tDeviceDetails->m_szIPAddress);
-				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 2, tDeviceDetails->m_szHostName);
-				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 3, tDeviceDetails->m_szMACAddress);
+				m_ctrlLANConnected.SetItemText(nRow, col + 1, tDeviceDetails->m_szIPAddress);
+				m_ctrlLANConnected.SetItemText(nRow, col + 2, tDeviceDetails->m_szHostName);
+				m_ctrlLANConnected.SetItemText(nRow, col + 3, tDeviceDetails->m_szMACAddress);
 				if (tDeviceDetails->m_lfDownloadSpeed <= 1000)
 					format.Format(_T("%.2f Kbps"), tDeviceDetails->m_lfDownloadSpeed);
 				else
 					format.Format(_T("%.2f Mbps"), tDeviceDetails->m_lfDownloadSpeed / 1000);
-				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 4, format);
+				m_ctrlLANConnected.SetItemText(nRow, col + 4, format);
 				if (tDeviceDetails->m_lfUploadSpeed <= 1000)
 					format.Format(_T("%.2f Kbps"), tDeviceDetails->m_lfUploadSpeed);
 				else
 					format.Format(_T("%.2f Mbps"), tDeviceDetails->m_lfUploadSpeed / 1000);
-				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 5, format);
+				m_ctrlLANConnected.SetItemText(nRow, col + 5, format);
 				if (tDeviceDetails->m_lfMaxDownloadSpeed <= 1000)
 					format.Format(_T("%.2f Kbps"), tDeviceDetails->m_lfMaxDownloadSpeed);
 				else
 					format.Format(_T("%.2f Mbps"), tDeviceDetails->m_lfMaxDownloadSpeed / 1000);
-				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 6, format);
+				m_ctrlLANConnected.SetItemText(nRow, col + 6, format);
 				if (tDeviceDetails->m_lfMaxUploadSpeed <= 1000)
 					format.Format(_T("%.2f Kbps"), tDeviceDetails->m_lfMaxUploadSpeed);
 				else
 					format.Format(_T("%.2f Mbps"), tDeviceDetails->m_lfMaxUploadSpeed / 1000);
-				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 7, format);
+				m_ctrlLANConnected.SetItemText(nRow, col + 7, format);
 
 
 				for (int j = nRow; j < g_dlg->m_ctrlLANConnected.GetItemCount(); j++)
 				{
-					g_dlg->m_ctrlLANConnected.SetItemText(j, 0, to_wstring(j + 1).c_str());
+					m_ctrlLANConnected.SetItemText(j, 0, to_wstring(j + 1).c_str());
 				}
 			}
-			g_dlg->UpdateDeviceConnected();
+			UpdateDeviceConnected();
 		}
+
 	}
 	else
 	{
 		if (strcmp(ipAddress, "end") == 0)
 		{
-			if (!g_dlg->m_mMonitorDeviceBefore.empty())
+			if (!m_mMonitorDeviceBefore.empty())
 			{
-				map<ULONG, int>::iterator it = g_dlg->m_mMonitorDeviceCurrent.begin();
-				while (it != g_dlg->m_mMonitorDeviceCurrent.end())
+				map<ULONG, int>::iterator it = m_mMonitorDeviceCurrent.begin();
+				while (it != m_mMonitorDeviceCurrent.end())
 				{
-					if (g_dlg->m_mMonitorDeviceBefore.find(it->first) != g_dlg->m_mMonitorDeviceBefore.end())
-						g_dlg->m_mMonitorDeviceBefore.erase(it->first);
+					if (m_mMonitorDeviceBefore.find(it->first) != m_mMonitorDeviceBefore.end())
+						m_mMonitorDeviceBefore.erase(it->first);
 					it++;
 				}
-				it = g_dlg->m_mMonitorDeviceBefore.begin();
-				while (it != g_dlg->m_mMonitorDeviceBefore.end())
+				it = m_mMonitorDeviceBefore.begin();
+				while (it != m_mMonitorDeviceBefore.end())
 				{
 					char szIP[32];
 					inet_ntop(AF_INET, &(it->first), szIP, sizeof(szIP));
 					CString cs(szIP);
-					int nRow = g_dlg->IsInTheList(cs);
+					int nRow = IsInTheList(cs);
 					if (nRow != -1)
 					{
-						g_dlg->m_ctrlLANConnected.DeleteItem(nRow);
-						for (int j = nRow; j < g_dlg->m_ctrlLANConnected.GetItemCount(); j++)
+						m_ctrlLANConnected.DeleteItem(nRow);
+						for (int j = nRow; j < m_ctrlLANConnected.GetItemCount(); j++)
 						{
-							g_dlg->m_ctrlLANConnected.SetItemText(j, 0, to_wstring(j + 1).c_str());
+							m_ctrlLANConnected.SetItemText(j, 0, to_wstring(j + 1).c_str());
 						}
-		
-						g_dlg->m_fnptrStopPacketListenerEx(g_dlg->m_mConnected[it->first]->m_hPacketListenerDownload);
-						g_dlg->m_fnptrStopPacketListenerEx(g_dlg->m_mConnected[it->first]->m_hPacketListenerUpload);
-						g_dlg->m_fnptrDeletePacketListenerEx(g_dlg->m_mConnected[it->first]->m_hPacketListenerDownload);
-						g_dlg->m_fnptrDeletePacketListenerEx(g_dlg->m_mConnected[it->first]->m_hPacketListenerUpload);
+
+						m_fnptrStopPacketListenerEx(m_mConnected[it->first]->m_hPacketListenerDownload);
+						m_fnptrStopPacketListenerEx(m_mConnected[it->first]->m_hPacketListenerUpload);
+						m_fnptrDeletePacketListenerEx(m_mConnected[it->first]->m_hPacketListenerDownload);
+						m_fnptrDeletePacketListenerEx(m_mConnected[it->first]->m_hPacketListenerUpload);
 
 						CDeviceConnected* pDevice;
-						pDevice = g_dlg->m_mConnected[it->first];
-						g_dlg->m_mConnected[it->first] = NULL;
+						pDevice = m_mConnected[it->first];
+						m_mConnected[it->first] = NULL;
 						delete pDevice;
 						pDevice = NULL;
-						g_dlg->m_mConnected.erase(it->first);
+						m_mConnected.erase(it->first);
 					}
 					it++;
 				}
 			}
 
-			g_dlg->m_mMonitorDeviceBefore = g_dlg->m_mMonitorDeviceCurrent;
-			g_dlg->m_mMonitorDeviceCurrent.clear();
+			m_mMonitorDeviceBefore = m_mMonitorDeviceCurrent;
+			m_mMonitorDeviceCurrent.clear();
 
-			CString csIP(CA2W(g_dlg->m_vAdapterInfo[g_dlg->m_nCurrentNICSelect].AdapterInfo.IpAddressList.IpAddress.String));
-			g_dlg->m_ctrlLANConnected.SetAdapterIP(csIP);
-			g_dlg->m_fnptrSetNICAdapterToUse(g_dlg->m_vAdapterInfo[g_dlg->m_nCurrentNICSelect].AdapterInfo.AdapterName, g_dlg->m_vAdapterInfo[g_dlg->m_nCurrentNICSelect].AdapterInfo.IpAddressList.Context);
-			g_dlg->m_ctrlStaticNICListen.SetWindowText(CA2W(g_dlg->m_vAdapterInfo[g_dlg->m_nCurrentNICSelect].AdapterInfo.Description));
-			g_dlg->m_ctrlComboAdapterList.EnableWindow(TRUE);
-			g_dlg->UpdateDeviceConnected();
+			CString csIP(CA2W(m_vAdapterInfo[m_nCurrentNICSelect].AdapterInfo.IpAddressList.IpAddress.String));
+			m_ctrlLANConnected.SetAdapterIP(csIP);
+			m_fnptrSetNICAdapterToUse(m_vAdapterInfo[m_nCurrentNICSelect].AdapterInfo.AdapterName, m_vAdapterInfo[m_nCurrentNICSelect].AdapterInfo.IpAddressList.Context);
+			m_ctrlStaticNICListen.SetWindowText(CA2W(m_vAdapterInfo[m_nCurrentNICSelect].AdapterInfo.Description));
+			m_ctrlComboAdapterList.EnableWindow(TRUE);
+			UpdateDeviceConnected();
 		}
 		else if (strcmp(ipAddress, "stop") == 0)
 		{
-			g_dlg->m_ctrlBtnListen.EnableWindow(TRUE);
-			g_dlg->m_ctrlBtnStopListening.EnableWindow(FALSE);
-			g_dlg->SetLANStop(true);
-			//g_dlg->EnableCloseButton(true);
+			m_ctrlBtnListen.EnableWindow(TRUE);
+			m_ctrlBtnStopListening.EnableWindow(FALSE);
+			SetLANStop(true);
+			EnableCloseButton(true);
 		}
 	}
+}
+void CCheckOpenPortsDlg::CallbackLANListenerEx(const char* ipAddress, const char* hostName, const char* macAddress, bool bIsopen)
+{
+	mtx_lanlistener.lock();
+	g_dlg->ProcessLANListener(ipAddress, hostName, macAddress, bIsopen);
 	mtx_lanlistener.unlock();
 }
 
@@ -1677,9 +1690,9 @@ void CCheckOpenPortsDlg::OnCbnSelchangeComboListAdapter()
 			if (i != m_nCurrentNICSelect)
 			{
 				OnBnClickedButtonStopListenLan();
-				OnBnClickedButtonStartListenLan();
 				m_nCurrentNICSelect = i;
 				m_ctrlComboAdapterList.EnableWindow(FALSE);
+				OnBnClickedButtonStartListenLan();
 			}
 			m_ctrlEditAdapterInfo.SetWindowText(CA2W(csWindowText));
 		}

@@ -248,6 +248,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
 
 	static void CallbackLANListenerEx(const char* ipAddress, const char* hostName, const char* macAddress, bool bIsopen);
+	void ProcessLANListener(const char* ipAddress, const char* hostName, const char* macAddress, bool bIsopen);
 	static void CallBackEnumPort(char* ipAddress, int nPort, bool bIsopen, int nLastError);
 	static bool CallbackNICPacketListener(unsigned char* buffer, int nSize, void* obj);
 	static void CallBackEnumAdapters(void*);
@@ -267,6 +268,7 @@ public:
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnMove(int x, int y);
 	afx_msg void OnBnClickedCheckDebug();
+	void PumpWaitingMessages();
 protected:
 	CButton m_ctrlBtnDebug;
 public:
