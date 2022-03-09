@@ -584,6 +584,7 @@ void CCheckOpenPortsDlg::OnClose()
 	
 	if (IsLANStopped() && IsSearchingOpenPortStopped())
 	{
+		EnableCloseButton(false);
 		m_pfnPtrEndSNMP();
 		m_bHasClickClose = TRUE;
 		//Listening of Main Router Information

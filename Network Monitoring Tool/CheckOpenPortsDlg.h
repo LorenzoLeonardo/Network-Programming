@@ -203,7 +203,7 @@ protected:
 	bool m_bLanStop;
 	CString m_IPAddress;
 	int m_nThread;
-	bool m_bHasClickClose;
+	volatile bool m_bHasClickClose;
 	CString m_csRouterModel;
 	CString m_csRouterBrand;
 	CString m_csRouterDescription;
