@@ -216,7 +216,6 @@ protected:
 	HANDLE m_hThreadOpenPortListener;
 	HANDLE m_hThreadNICListener;
 	HANDLE m_hWaitEvent;
-	HANDLE m_hLocalAreaListener;
 	CButton m_ctrlBtnCheckOpenPorts;
 	CButton m_ctrlBtnStopSearchingPort;
 	CProgressCtrl m_ctrlProgressStatus;

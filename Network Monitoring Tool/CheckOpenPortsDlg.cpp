@@ -77,7 +77,6 @@ CCheckOpenPortsDlg::CCheckOpenPortsDlg(CWnd* pParent /*=nullptr*/)
 	m_hThreadClock = NULL;
 	m_hThreadOpenPortListener = NULL;
 	m_hThreadNICListener = NULL;
-	m_hLocalAreaListener = NULL;
 	m_bOnCloseWasCalled = false;
 	m_hBrushBackGround = CreateSolidBrush(RGB(93, 107, 153));
 	m_hBrushEditArea = CreateSolidBrush(RGB(255, 255, 255));
@@ -383,7 +382,7 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 
 	m_hNICPacketListener = m_fnptrCreatePacketListenerEx(CallbackNICPacketListener, NULL);
 	OnBnClickedButtonStartPacket();
-	OnBnClickedButtonShowPackets();
+	//OnBnClickedButtonShowPackets();
 	OnBnClickedButtonStartListenLan();
 	
 	return TRUE;  // return TRUE  unless you set the focus to a control
@@ -583,55 +582,75 @@ void CCheckOpenPortsDlg::OnClose()
 	OnBnClickedButtonStopSearchingOpenPorts();
 	OnBnClickedButtonStopPacket();
 	
-
 	if (IsLANStopped() && IsSearchingOpenPortStopped())
 	{
 		m_pfnPtrEndSNMP();
 		m_bHasClickClose = TRUE;
+		//Listening of Main Router Information
 		if (m_hThreadRouter)
 		{
 			WaitForSingleObject(m_hThreadRouter, INFINITE);
 			CloseHandle(m_hThreadRouter);
 		}
-		if (m_hThreadLANListener)
-		{
-			WaitForSingleObject(m_hThreadLANListener, INFINITE);
-			CloseHandle(m_hThreadLANListener);
-		}
-		if (m_hThreadOpenPortListener)
-		{
-			WaitForSingleObject(m_hThreadOpenPortListener, INFINITE);
-			CloseHandle(m_hThreadOpenPortListener);
-		}
+		//Clock Thread
 		if (m_hThreadClock)
 		{
 			WaitForSingleObject(m_hThreadClock, INFINITE);
 			CloseHandle(m_hThreadClock);
 		}
+		//Tjhrea for checking if additional NIC is added
+		if (m_hThreadNICListener)
+		{
+			WaitForSingleObject(m_hThreadNICListener, INFINITE);
+			CloseHandle(m_hThreadNICListener);
+		}
 
-		m_fnptrStopPacketListenerEx(m_hNICPacketListener);
-		m_fnptrDeletePacketListenerEx(m_hNICPacketListener);
+		//Thread for listening LAN devices connected
+		if (m_hThreadLANListener)
+		{
+			WaitForSingleObject(m_hThreadLANListener, INFINITE);
+			CloseHandle(m_hThreadLANListener);
+		}
+		//Thread for checking open ports
+		if (m_hThreadOpenPortListener)
+		{
+			WaitForSingleObject(m_hThreadOpenPortListener, INFINITE);
+			CloseHandle(m_hThreadOpenPortListener);
+		}
+
+		if (m_hNICPacketListener)
+		{
+			m_fnptrStopPacketListenerEx(m_hNICPacketListener);
+			m_fnptrDeletePacketListenerEx(m_hNICPacketListener);
+		}
 		map<ULONG, CDeviceConnected*>::iterator it = m_mConnected.begin();
 
 		for (int i = 0; i < m_vAdapterInfo.size(); i++)
 		{
-			m_fnptrStopLocalAreaListenerEx(m_vAdapterInfo[i].hLANListener);
-			m_fnptrDeleteLocalAreaListenerEx(m_vAdapterInfo[i].hLANListener);
+			if (m_vAdapterInfo[i].hLANListener)
+			{
+				m_fnptrStopLocalAreaListenerEx(m_vAdapterInfo[i].hLANListener);
+				m_fnptrDeleteLocalAreaListenerEx(m_vAdapterInfo[i].hLANListener);
+			}
 		}
 
 		while (it != m_mConnected.end())
 		{
-			m_fnptrStopPacketListenerEx(it->second->m_hPacketListenerDownload);
-			m_fnptrDeletePacketListenerEx(it->second->m_hPacketListenerDownload);
-			m_fnptrStopPacketListenerEx(it->second->m_hPacketListenerUpload);
-			m_fnptrDeletePacketListenerEx(it->second->m_hPacketListenerUpload);
+			if (it->second->m_hPacketListenerDownload)
+			{
+				m_fnptrStopPacketListenerEx(it->second->m_hPacketListenerDownload);
+				m_fnptrDeletePacketListenerEx(it->second->m_hPacketListenerDownload);
+			}
+			if (it->second->m_hPacketListenerUpload)
+			{
+				m_fnptrStopPacketListenerEx(it->second->m_hPacketListenerUpload);
+				m_fnptrDeletePacketListenerEx(it->second->m_hPacketListenerUpload);
+			}
 
 			delete it->second;
 			it++;
 		}
 		m_mConnected.clear();
-		if(m_hLocalAreaListener)
-			m_fnptrDeleteLocalAreaListenerEx(m_hLocalAreaListener);
 
 		if(m_hDLLhandle)
 			FreeLibrary(m_hDLLhandle);
