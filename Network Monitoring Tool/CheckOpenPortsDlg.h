@@ -33,7 +33,7 @@
 using namespace std;
 
 #define MAX_PORT 65535
-#define POLLING_TIME 1000
+#define POLLING_TIME 500
 #define WM_RESET_CONNECTION WM_USER + 1
 
 typedef  void(*LPEnumOpenPorts)(const char*, int, FuncFindOpenPort);
@@ -194,7 +194,7 @@ public:
 		return m_bIsInternetOnly;
 	}
 protected:
-	bool m_bIsInternetOnly;
+	volatile bool m_bIsInternetOnly;
 	HBRUSH m_hBrushBackGround;
 	HBRUSH m_hBrushEditArea;
 	HICON m_hIcon;
@@ -251,9 +251,12 @@ protected:
 	void ProcessLANListener(const char* ipAddress, const char* hostName, const char* macAddress, bool bIsopen);
 	static void CallBackEnumPort(char* ipAddress, int nPort, bool bIsopen, int nLastError);
 	static bool CallbackNICPacketListener(unsigned char* buffer, int nSize, void* obj);
+	bool ProcessNICPacketListener(unsigned char* buffer, int nSize, void* obj);
 	static void CallBackEnumAdapters(void*);
 	static bool CallbackPacketListenerDownloadEx(unsigned char* buffer, int nSize, void* pObject);
+	bool ProcessPacketListenerDownloadEx(unsigned char* buffer, int nSize, void* pObject);
 	static bool CallbackPacketListenerUploadEx(unsigned char* buffer, int nSize, void* pObject);
+	bool ProcessPacketListenerUploadEx(unsigned char* buffer, int nSize, void* pObject);
 	static unsigned __stdcall  RouterThread(void* parg);
 	static unsigned __stdcall  ClockThread(void* parg);
 	static unsigned __stdcall  OpenPortListenerThread(void* parg);

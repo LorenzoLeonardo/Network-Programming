@@ -10,7 +10,7 @@
 #include "CSaveDeviceInfoDlg.h"
 #include "../EnzTCP/DebugLog.h"
 
-CCheckOpenPortsDlg* g_dlg;
+CCheckOpenPortsDlg* g_pCCheckOpenPortsDlg;
 mutex mtx_enumPorts;
 mutex mtx_lanlistener;
 
@@ -319,7 +319,7 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 		m_ctrlBtnDebug.SetCheck(BST_UNCHECKED);
 	m_pmodeless = NULL;
 	// TODO: Add extra initialization here
-	g_dlg = this;
+	g_pCCheckOpenPortsDlg = this;
 	m_bStopSearchingOpenPorts = TRUE;
 	m_bLanStop = TRUE;
 	m_ctrlBtnStopSearchingPort.EnableWindow(false);
@@ -564,15 +564,15 @@ void CCheckOpenPortsDlg::OnBnClickedButtonCheckIfPortOpen()
 		CString csRes;
 		csRes = +_T("Port (") + csPort + _T(") Of (") + cs + _T(") is open.\r\n");
 	
-		g_dlg->m_ctrlResult.SetSel(0, 0);
-		g_dlg->m_ctrlResult.ReplaceSel(csRes);
+		g_pCCheckOpenPortsDlg->m_ctrlResult.SetSel(0, 0);
+		g_pCCheckOpenPortsDlg->m_ctrlResult.ReplaceSel(csRes);
 	}
 	else
 	{
 		CString csRes;
 		csRes = +_T("Port (") + csPort + _T(") Of (") + cs + _T(") is closed.\r\n");
-		g_dlg->m_ctrlResult.SetSel(0, 0);
-		g_dlg->m_ctrlResult.ReplaceSel(csRes);
+		g_pCCheckOpenPortsDlg->m_ctrlResult.SetSel(0, 0);
+		g_pCCheckOpenPortsDlg->m_ctrlResult.ReplaceSel(csRes);
 	}
 
 }
@@ -632,7 +632,6 @@ void CCheckOpenPortsDlg::OnClose()
 		m_mConnected.clear();
 		if(m_hLocalAreaListener)
 			m_fnptrDeleteLocalAreaListenerEx(m_hLocalAreaListener);
-		CDialogEx::OnClose();
 
 		if(m_hDLLhandle)
 			FreeLibrary(m_hDLLhandle);
@@ -705,8 +704,8 @@ void CCheckOpenPortsDlg::OnNMClickListLan(NMHDR* pNMHDR, LRESULT* pResult)
 void CCheckOpenPortsDlg::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 {
 	// TODO: Add your message handler code here and/or call default
-	g_dlg->m_ctrlLANConnected.SetItemState(g_dlg->m_nCurrentRowSelected, LVIS_SELECTED, LVIS_SELECTED);
-	g_dlg->m_ctrlLANConnected.SetFocus();
+	g_pCCheckOpenPortsDlg->m_ctrlLANConnected.SetItemState(g_pCCheckOpenPortsDlg->m_nCurrentRowSelected, LVIS_SELECTED, LVIS_SELECTED);
+	g_pCCheckOpenPortsDlg->m_ctrlLANConnected.SetFocus();
 	CDialogEx::OnKeyDown(nChar, nRepCnt, nFlags);
 }
 
@@ -723,22 +722,22 @@ void CCheckOpenPortsDlg::OnLvnKeydownListLan(NMHDR* pNMHDR, LRESULT* pResult)
 	
 	if (pLVKeyDow->wVKey == VK_UP)
 	{
-		m_nCurrentRowSelected = g_dlg->m_ctrlLANConnected.GetSelectionMark()-1;
+		m_nCurrentRowSelected = g_pCCheckOpenPortsDlg->m_ctrlLANConnected.GetSelectionMark()-1;
 		if (m_nCurrentRowSelected >= 0)
 		{
-			g_dlg->m_ctrlLANConnected.SetItemState(m_nCurrentRowSelected, LVIS_SELECTED, LVIS_SELECTED);
-			g_dlg->m_ctrlLANConnected.SetFocus();
+			g_pCCheckOpenPortsDlg->m_ctrlLANConnected.SetItemState(m_nCurrentRowSelected, LVIS_SELECTED, LVIS_SELECTED);
+			g_pCCheckOpenPortsDlg->m_ctrlLANConnected.SetFocus();
 			CString cs = m_ctrlLANConnected.GetItemText(m_nCurrentRowSelected, 1);
 			m_ctrlIPAddress.SetWindowText(cs);
 		}
 	}
 	else if (pLVKeyDow->wVKey == VK_DOWN)
 	{
-		m_nCurrentRowSelected = g_dlg->m_ctrlLANConnected.GetSelectionMark()+1;
-		if (m_nCurrentRowSelected < g_dlg->m_ctrlLANConnected.GetItemCount())
+		m_nCurrentRowSelected = g_pCCheckOpenPortsDlg->m_ctrlLANConnected.GetSelectionMark()+1;
+		if (m_nCurrentRowSelected < g_pCCheckOpenPortsDlg->m_ctrlLANConnected.GetItemCount())
 		{
-			g_dlg->m_ctrlLANConnected.SetItemState(m_nCurrentRowSelected, LVIS_SELECTED, LVIS_SELECTED);
-			g_dlg->m_ctrlLANConnected.SetFocus();
+			g_pCCheckOpenPortsDlg->m_ctrlLANConnected.SetItemState(m_nCurrentRowSelected, LVIS_SELECTED, LVIS_SELECTED);
+			g_pCCheckOpenPortsDlg->m_ctrlLANConnected.SetFocus();
 			CString cs = m_ctrlLANConnected.GetItemText(m_nCurrentRowSelected, 1);
 			m_ctrlIPAddress.SetWindowText(cs);
 		}
@@ -913,7 +912,7 @@ int CCheckOpenPortsDlg::IsInTheList(CString csIPAddress)
 	
 	for (int i = 0; i < m_ctrlLANConnected.GetItemCount(); ++i)
 	{
-		CString szText = g_dlg->m_ctrlLANConnected.GetItemText(i, 1);
+		CString szText = g_pCCheckOpenPortsDlg->m_ctrlLANConnected.GetItemText(i, 1);
 		if (szText == csIPAddress)
 		{
 			index = i;
@@ -943,7 +942,7 @@ void CCheckOpenPortsDlg::ProcessLANListener(const char* ipAddress, const char* h
 		m_ctrlBtnListen.EnableWindow(FALSE);
 		m_ctrlBtnStopListening.EnableWindow(TRUE);
 		SetLANStop(false);
-		EnableCloseButton(false);
+		//EnableCloseButton(false);
 	}
 	if (bIsopen)
 	{
@@ -1084,7 +1083,7 @@ void CCheckOpenPortsDlg::ProcessLANListener(const char* ipAddress, const char* h
 				m_ctrlLANConnected.SetItemText(nRow, col + 7, format);
 
 
-				for (int j = nRow; j < g_dlg->m_ctrlLANConnected.GetItemCount(); j++)
+				for (int j = nRow; j < g_pCCheckOpenPortsDlg->m_ctrlLANConnected.GetItemCount(); j++)
 				{
 					m_ctrlLANConnected.SetItemText(j, 0, to_wstring(j + 1).c_str());
 				}
@@ -1152,14 +1151,14 @@ void CCheckOpenPortsDlg::ProcessLANListener(const char* ipAddress, const char* h
 			m_ctrlBtnListen.EnableWindow(TRUE);
 			m_ctrlBtnStopListening.EnableWindow(FALSE);
 			SetLANStop(true);
-			EnableCloseButton(true);
+			//EnableCloseButton(true);
 		}
 	}
 }
 void CCheckOpenPortsDlg::CallbackLANListenerEx(const char* ipAddress, const char* hostName, const char* macAddress, bool bIsopen)
 {
 	mtx_lanlistener.lock();
-	g_dlg->ProcessLANListener(ipAddress, hostName, macAddress, bIsopen);
+	g_pCCheckOpenPortsDlg->ProcessLANListener(ipAddress, hostName, macAddress, bIsopen);
 	mtx_lanlistener.unlock();
 }
 
@@ -1169,11 +1168,11 @@ void CCheckOpenPortsDlg::CallBackEnumPort(char* ipAddress, int nPort, bool bIsop
 	{
 		if(strcmp(ipAddress,"DONE") == 0)
 		{
-			g_dlg->m_ctrlIPAddress.EnableWindow(TRUE);
-			g_dlg->m_ctrlBtnCheckOpenPorts.EnableWindow(TRUE);
-			g_dlg->m_ctrlProgressStatus.ShowWindow(FALSE);
-			g_dlg->m_ctrlBtnStopSearchingPort.EnableWindow(false);
-			g_dlg->SetStopSearchingOpenPort();
+			g_pCCheckOpenPortsDlg->m_ctrlIPAddress.EnableWindow(TRUE);
+			g_pCCheckOpenPortsDlg->m_ctrlBtnCheckOpenPorts.EnableWindow(TRUE);
+			g_pCCheckOpenPortsDlg->m_ctrlProgressStatus.ShowWindow(FALSE);
+			g_pCCheckOpenPortsDlg->m_ctrlBtnStopSearchingPort.EnableWindow(false);
+			g_pCCheckOpenPortsDlg->SetStopSearchingOpenPort();
 		}
 		else
 		{
@@ -1185,13 +1184,13 @@ void CCheckOpenPortsDlg::CallBackEnumPort(char* ipAddress, int nPort, bool bIsop
 				string sTemp = ipAddress;
 
 				if (bIsopen)
-					csStr.Format(_T("%s %d is open.\r\n"), g_dlg->MultiByteToUnicode(sTemp).c_str(), nPort);
+					csStr.Format(_T("%s %d is open.\r\n"), g_pCCheckOpenPortsDlg->MultiByteToUnicode(sTemp).c_str(), nPort);
 
-				long nLength = g_dlg->m_ctrlResult.GetWindowTextLength();
-				g_dlg->m_ctrlResult.SetSel(0, 0);
-				g_dlg->m_ctrlResult.ReplaceSel(csStr);
+				long nLength = g_pCCheckOpenPortsDlg->m_ctrlResult.GetWindowTextLength();
+				g_pCCheckOpenPortsDlg->m_ctrlResult.SetSel(0, 0);
+				g_pCCheckOpenPortsDlg->m_ctrlResult.ReplaceSel(csStr);
 			}
-			g_dlg->Increment();
+			g_pCCheckOpenPortsDlg->Increment();
 			mtx_enumPorts.unlock();
 		}
 	}
@@ -1201,9 +1200,9 @@ void CCheckOpenPortsDlg::CallBackEnumAdapters(void* args)
 	PIP_ADAPTER_INFO pAdapterInfo = (PIP_ADAPTER_INFO)args;
 	bool bFound = false;
 	int nIndexFound = -1;
-	for (int i = 0; i < g_dlg->m_vAdapterInfo.size(); i++)
+	for (int i = 0; i < g_pCCheckOpenPortsDlg->m_vAdapterInfo.size(); i++)
 	{
-		if (strcmp(g_dlg->m_vAdapterInfo[i].AdapterInfo.AdapterName, pAdapterInfo->AdapterName) == 0)
+		if (strcmp(g_pCCheckOpenPortsDlg->m_vAdapterInfo[i].AdapterInfo.AdapterName, pAdapterInfo->AdapterName) == 0)
 		{
 			bFound = true;
 			nIndexFound = i;
@@ -1216,25 +1215,25 @@ void CCheckOpenPortsDlg::CallBackEnumAdapters(void* args)
 		{
 			CNetworkInterfaceInfo nicInfo;
 			nicInfo.AdapterInfo = *pAdapterInfo;
-			nicInfo.hLANListener = g_dlg->m_fnptrCreateLocalAreaListenerEx();
-			g_dlg->m_vAdapterInfo.push_back(nicInfo);
-			g_dlg->m_ctrlComboAdapterList.AddString(CA2W(pAdapterInfo->Description));
-			g_dlg->UpdateAdapterChanges();
+			nicInfo.hLANListener = g_pCCheckOpenPortsDlg->m_fnptrCreateLocalAreaListenerEx();
+			g_pCCheckOpenPortsDlg->m_vAdapterInfo.push_back(nicInfo);
+			g_pCCheckOpenPortsDlg->m_ctrlComboAdapterList.AddString(CA2W(pAdapterInfo->Description));
+			g_pCCheckOpenPortsDlg->UpdateAdapterChanges();
 		}
-		if (g_dlg->m_vAdapterInfo.empty())
+		if (g_pCCheckOpenPortsDlg->m_vAdapterInfo.empty())
 		{
-			g_dlg->UpdateAdapterChanges();
+			g_pCCheckOpenPortsDlg->UpdateAdapterChanges();
 		}
 	}
 	else
 	{
 		if (!pAdapterInfo->IpAddressList.Context)
 		{
-			g_dlg->m_fnptrStopLocalAreaListenerEx(g_dlg->m_vAdapterInfo[nIndexFound].hLANListener);
-			g_dlg->m_fnptrDeleteLocalAreaListenerEx(g_dlg->m_vAdapterInfo[nIndexFound].hLANListener);
-			g_dlg->m_vAdapterInfo.erase(g_dlg->m_vAdapterInfo.begin() + nIndexFound);
-			g_dlg->m_ctrlComboAdapterList.DeleteString(nIndexFound);
-			g_dlg->UpdateAdapterChanges();
+			g_pCCheckOpenPortsDlg->m_fnptrStopLocalAreaListenerEx(g_pCCheckOpenPortsDlg->m_vAdapterInfo[nIndexFound].hLANListener);
+			g_pCCheckOpenPortsDlg->m_fnptrDeleteLocalAreaListenerEx(g_pCCheckOpenPortsDlg->m_vAdapterInfo[nIndexFound].hLANListener);
+			g_pCCheckOpenPortsDlg->m_vAdapterInfo.erase(g_pCCheckOpenPortsDlg->m_vAdapterInfo.begin() + nIndexFound);
+			g_pCCheckOpenPortsDlg->m_ctrlComboAdapterList.DeleteString(nIndexFound);
+			g_pCCheckOpenPortsDlg->UpdateAdapterChanges();
 		}
 	}
 }
@@ -1302,6 +1301,10 @@ void CCheckOpenPortsDlg::UpdateAdapterChanges()
 }
 bool CCheckOpenPortsDlg::CallbackNICPacketListener(unsigned char* buffer, int nSize, void *obj)
 {
+	return g_pCCheckOpenPortsDlg->ProcessNICPacketListener(buffer, nSize, obj);
+}
+bool CCheckOpenPortsDlg::ProcessNICPacketListener(unsigned char* buffer, int nSize, void* obj)
+{
 	CString csText, csSrcPort, csDestPort, sourceIP, destIP, cs, csTemp, ipFilter, csReport;
 	int iphdrlen = 0, nDataSize = 0;
 	IPV4_HDR* iphdr;
@@ -1313,17 +1316,16 @@ bool CCheckOpenPortsDlg::CallbackNICPacketListener(unsigned char* buffer, int nS
 	memset(sztemp, 0, sizeof(sztemp));
 	iphdr = (IPV4_HDR*)buffer;
 	iphdrlen = iphdr->ucIPHeaderLen * 4;
-	
 
-	if (g_dlg->IsInternetOnly())
+	if (IsInternetOnly())
 	{
 		DWORD dwMask = 0;
 		DWORD dwBeginIP = 0;
 		DWORD dwEndIP = 0;
 
-		inet_pton(AF_INET, g_dlg->m_vAdapterInfo[g_dlg->m_ctrlComboAdapterList.GetCurSel()].AdapterInfo.IpAddressList.IpMask.String, &dwMask);
+		inet_pton(AF_INET, m_vAdapterInfo[m_ctrlComboAdapterList.GetCurSel()].AdapterInfo.IpAddressList.IpMask.String, &dwMask);
 		dwMask = ntohl(dwMask);
-		inet_pton(AF_INET, g_dlg->m_vAdapterInfo[g_dlg->m_ctrlComboAdapterList.GetCurSel()].AdapterInfo.IpAddressList.IpAddress.String, &dwBeginIP);
+		inet_pton(AF_INET, m_vAdapterInfo[m_ctrlComboAdapterList.GetCurSel()].AdapterInfo.IpAddressList.IpAddress.String, &dwBeginIP);
 		dwBeginIP = dwMask & ntohl(dwBeginIP);
 		dwEndIP = (0xFFFFFFFF - dwMask) + dwBeginIP;
 
@@ -1332,7 +1334,10 @@ bool CCheckOpenPortsDlg::CallbackNICPacketListener(unsigned char* buffer, int nS
 	}
 
 
-	if (!g_dlg->ShowPacketInfo())
+	if (m_pmodeless == NULL)
+		return false;
+
+	else
 	{
 		inet_ntop(AF_INET, (const void*)&iphdr->unDestaddress, sztemp, sizeof(sztemp));
 		destIP = sztemp;
@@ -1373,29 +1378,18 @@ bool CCheckOpenPortsDlg::CallbackNICPacketListener(unsigned char* buffer, int nS
 				break;
 			}
 		}
+		if (GetIPFilterULONG() == iphdr->unDestaddress)
+		{
+			csReport = csText + sourceIP + _T(":") + csSrcPort + _T("->") + destIP + _T(":") + csDestPort + _T("\t\tSize: ") + to_wstring(nSize).c_str() + _T(" bytes\r\n");
+			m_pmodeless->UpdatePacketInfo(csReport, iphdr->ucIPProtocol);
+		}
+		else if (GetIPFilterULONG() == iphdr->unSrcaddress)
+		{
+			csReport = csText + sourceIP + _T(":") + csSrcPort + _T("->") + destIP + _T(":") + csDestPort + _T("\t\tSize: ") + to_wstring(nSize).c_str() + _T(" bytes\r\n");
+			m_pmodeless->UpdatePacketInfo(csReport, iphdr->ucIPProtocol);
+		}
 	}
 
-	if (g_dlg->GetIPFilterULONG() == iphdr->unDestaddress)
-	{
-		if (!g_dlg->ShowPacketInfo())
-		{
-			csReport = csText + sourceIP + _T(":") + csSrcPort + _T("->") + destIP + _T(":") + csDestPort + _T("\t\tSize: ") + to_wstring(nSize).c_str() + _T(" bytes\r\n");
-			if (g_dlg->m_pmodeless)
-			{
-				
-				g_dlg->m_pmodeless->UpdatePacketInfo(csReport, iphdr->ucIPProtocol);
-			}
-		}
-	}
-	if (g_dlg->GetIPFilterULONG() == iphdr->unSrcaddress)
-	{
-		if (!g_dlg->ShowPacketInfo())
-		{
-			csReport = csText + sourceIP + _T(":") + csSrcPort + _T("->") + destIP + _T(":") + csDestPort + _T("\t\tSize: ") + to_wstring(nSize).c_str() + _T(" bytes\r\n");
-			if(g_dlg->m_pmodeless)
-				g_dlg->m_pmodeless->UpdatePacketInfo(csReport, iphdr->ucIPProtocol);
-		}
-	}
 	return true;
 }
 void CCheckOpenPortsDlg::OnBnClickedButtonStartPacket()
@@ -1784,6 +1778,10 @@ inline void CCheckOpenPortsDlg::DisplayUploadSpeed(CString szIPAddress, int nCol
 
 bool CCheckOpenPortsDlg::CallbackPacketListenerDownloadEx(unsigned char* buffer, int nSize, void* pObject)
 {
+	return g_pCCheckOpenPortsDlg->ProcessPacketListenerDownloadEx(buffer, nSize, pObject);
+}
+bool CCheckOpenPortsDlg::ProcessPacketListenerDownloadEx(unsigned char* buffer, int nSize, void* pObject)
+{
 	CDeviceConnected* pDevice = (CDeviceConnected*)pObject;
 	CString sourceIP, destIP, csText, csSrcPort, csDestPort, csReport;
 	int iphdrlen = 0;
@@ -1800,15 +1798,15 @@ bool CCheckOpenPortsDlg::CallbackPacketListenerDownloadEx(unsigned char* buffer,
 	inet_ntop(AF_INET, (const void*)&iphdr->unSrcaddress, sztemp, sizeof(sztemp));
 	sourceIP = CA2W(sztemp);
 
-	if (g_dlg->IsInternetOnly())
+	if (IsInternetOnly())
 	{
 		DWORD dwMask = 0;
 		DWORD dwBeginIP = 0;
 		DWORD dwEndIP = 0;
 
-		inet_pton(AF_INET, g_dlg->m_vAdapterInfo[g_dlg->m_ctrlComboAdapterList.GetCurSel()].AdapterInfo.IpAddressList.IpMask.String, &dwMask);
+		inet_pton(AF_INET, m_vAdapterInfo[m_ctrlComboAdapterList.GetCurSel()].AdapterInfo.IpAddressList.IpMask.String, &dwMask);
 		dwMask = ntohl(dwMask);
-		inet_pton(AF_INET, g_dlg->m_vAdapterInfo[g_dlg->m_ctrlComboAdapterList.GetCurSel()].AdapterInfo.IpAddressList.IpAddress.String, &dwBeginIP);
+		inet_pton(AF_INET, m_vAdapterInfo[m_ctrlComboAdapterList.GetCurSel()].AdapterInfo.IpAddressList.IpAddress.String, &dwBeginIP);
 		dwBeginIP = dwMask & ntohl(dwBeginIP);
 		dwEndIP = (0xFFFFFFFF - dwMask) + dwBeginIP;
 
@@ -1826,16 +1824,20 @@ bool CCheckOpenPortsDlg::CallbackPacketListenerDownloadEx(unsigned char* buffer,
 		if (pDevice->m_lfMaxDownloadSpeed < pDevice->m_lfDownloadSpeed)
 		{
 			pDevice->m_lfMaxDownloadSpeed = pDevice->m_lfDownloadSpeed;
-			g_dlg->DisplayDownloadSpeed(pDevice->m_szIPAddress, COL_DOWNLOADMAXSPEED, pDevice->m_lfMaxDownloadSpeed);
+			DisplayDownloadSpeed(pDevice->m_szIPAddress, COL_DOWNLOADMAXSPEED, pDevice->m_lfMaxDownloadSpeed);
 		}
 		pDevice->m_ulDataSizeDownload = 0;
-		g_dlg->DisplayDownloadSpeed(pDevice->m_szIPAddress,COL_DOWNLOADSPEED, pDevice->m_lfDownloadSpeed);
+		DisplayDownloadSpeed(pDevice->m_szIPAddress, COL_DOWNLOADSPEED, pDevice->m_lfDownloadSpeed);
 		pDevice->m_ullDownloadStartTime = GetTickCount64();
 	}
 	return true;
 }
-
 bool CCheckOpenPortsDlg::CallbackPacketListenerUploadEx(unsigned char* buffer, int nSize, void* pObject)
+{
+	return g_pCCheckOpenPortsDlg->ProcessPacketListenerUploadEx(buffer, nSize, pObject);
+}
+
+bool CCheckOpenPortsDlg::ProcessPacketListenerUploadEx(unsigned char* buffer, int nSize, void* pObject)
 {
 	CDeviceConnected* pDevice = (CDeviceConnected*)pObject;
 	CString sourceIP, destIP;
@@ -1853,15 +1855,15 @@ bool CCheckOpenPortsDlg::CallbackPacketListenerUploadEx(unsigned char* buffer, i
 	inet_ntop(AF_INET, (const void*)&iphdr->unSrcaddress, sztemp, sizeof(sztemp));
 	sourceIP = CA2W(sztemp);
 
-	if (g_dlg->IsInternetOnly())
+	if (IsInternetOnly())
 	{
 		DWORD dwMask = 0;
 		DWORD dwBeginIP = 0;
 		DWORD dwEndIP = 0;
 
-		inet_pton(AF_INET, g_dlg->m_vAdapterInfo[g_dlg->m_ctrlComboAdapterList.GetCurSel()].AdapterInfo.IpAddressList.IpMask.String, &dwMask);
+		inet_pton(AF_INET, m_vAdapterInfo[m_ctrlComboAdapterList.GetCurSel()].AdapterInfo.IpAddressList.IpMask.String, &dwMask);
 		dwMask = ntohl(dwMask);
-		inet_pton(AF_INET, g_dlg->m_vAdapterInfo[g_dlg->m_ctrlComboAdapterList.GetCurSel()].AdapterInfo.IpAddressList.IpAddress.String, &dwBeginIP);
+		inet_pton(AF_INET, m_vAdapterInfo[m_ctrlComboAdapterList.GetCurSel()].AdapterInfo.IpAddressList.IpAddress.String, &dwBeginIP);
 		dwBeginIP = dwMask & ntohl(dwBeginIP);
 		dwEndIP = (0xFFFFFFFF - dwMask) + dwBeginIP;
 
@@ -1879,15 +1881,14 @@ bool CCheckOpenPortsDlg::CallbackPacketListenerUploadEx(unsigned char* buffer, i
 		if (pDevice->m_lfMaxUploadSpeed < pDevice->m_lfUploadSpeed)
 		{
 			pDevice->m_lfMaxUploadSpeed = pDevice->m_lfUploadSpeed;
-			g_dlg->DisplayUploadSpeed(pDevice->m_szIPAddress, COL_UPLOADMAXSPEED, pDevice->m_lfMaxUploadSpeed);
+			DisplayUploadSpeed(pDevice->m_szIPAddress, COL_UPLOADMAXSPEED, pDevice->m_lfMaxUploadSpeed);
 		}
 		pDevice->m_ulDataSizeUpload = 0;
-		g_dlg->DisplayUploadSpeed(pDevice->m_szIPAddress, COL_UPLOADSPEED, pDevice->m_lfUploadSpeed);
+		DisplayUploadSpeed(pDevice->m_szIPAddress, COL_UPLOADSPEED, pDevice->m_lfUploadSpeed);
 		pDevice->m_ullUploadStartTime = GetTickCount64();
 	}
 	return true;
 }
-
 void CCheckOpenPortsDlg::OnSetFocus(CWnd* pOldWnd)
 {
 	CDialogEx::OnSetFocus(pOldWnd);
@@ -2021,7 +2022,7 @@ void CCheckOpenPortsDlg::EnableCloseButton(bool bEnable)
 {
 	UINT nMenuf = bEnable ? (MF_BYCOMMAND) : (MF_BYCOMMAND | MF_GRAYED | MF_DISABLED);
 
-	CMenu* pSysMenu = g_dlg->GetSystemMenu(FALSE);
+	CMenu* pSysMenu = g_pCCheckOpenPortsDlg->GetSystemMenu(FALSE);
 	if (pSysMenu)
 		pSysMenu->EnableMenuItem(SC_CLOSE, nMenuf);
 }
