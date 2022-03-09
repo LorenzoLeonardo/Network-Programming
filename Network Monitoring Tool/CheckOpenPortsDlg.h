@@ -53,6 +53,7 @@ typedef bool (*FNEnumNetworkAdapters)(FuncAdapterList);
 typedef HANDLE(*FNPTRCreatePacketListenerEx)(FNCallbackPacketListenerEx, void*);
 typedef bool (*FNPTRStartPacketListenerEx)(HANDLE);
 typedef void (*FNPTRStopPacketListenerEx)(HANDLE);
+typedef void (*FNPTRWaitPacketListenerEx)(HANDLE);
 typedef void (*FNPTRDeletePacketListenerEx)(HANDLE);
 typedef HANDLE (*FNPTRCreateLocalAreaListenerEx)();
 typedef	bool (*FNPTRStartLocalAreaListenerEx)(HANDLE, const char* ipAddress, const char* subNetMask, CallbackLocalAreaListener fnpPtr, int nPollingTimeMS);
@@ -90,6 +91,7 @@ public:
 	FNPTRCreatePacketListenerEx m_fnptrCreatePacketListenerEx;
 	FNPTRStartPacketListenerEx m_fnptrStartPacketListenerEx;
 	FNPTRStopPacketListenerEx m_fnptrStopPacketListenerEx;
+	FNPTRWaitPacketListenerEx m_fnptrWaitPacketListenerEx;
 	FNPTRDeletePacketListenerEx m_fnptrDeletePacketListenerEx;
 	FNPTRCreateLocalAreaListenerEx m_fnptrCreateLocalAreaListenerEx;
 	FNPTRStartLocalAreaListenerEx m_fnptrStartLocalAreaListenerEx;
@@ -216,11 +218,12 @@ protected:
 	HANDLE m_hThreadOpenPortListener;
 	HANDLE m_hThreadNICListener;
 	HANDLE m_hWaitEvent;
+	HANDLE m_hThisMainThread;
 	CButton m_ctrlBtnCheckOpenPorts;
 	CButton m_ctrlBtnStopSearchingPort;
 	CProgressCtrl m_ctrlProgressStatus;
 	CStatic m_ctrlStaticRouterUpTime;
-	bool m_bShowPacketInfo;
+	volatile bool m_bShowPacketInfo;
 	bool m_bOnCloseWasCalled;
 
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV support

@@ -137,6 +137,7 @@ extern "C" ENZTCPLIBRARY_API	bool		EnumNetworkAdapters(FuncAdapterList);
 extern "C" ENZTCPLIBRARY_API    HANDLE      CreatePacketListenerEx(FNCallbackPacketListenerEx fnpPtr, void* pObject);
 extern "C" ENZTCPLIBRARY_API	bool		StartPacketListenerEx(HANDLE);
 extern "C" ENZTCPLIBRARY_API	void		StopPacketListenerEx(HANDLE);
+extern "C" ENZTCPLIBRARY_API	void		WaitPacketListenerEx(HANDLE);
 extern "C" ENZTCPLIBRARY_API    void        DeletePacketListenerEx(HANDLE);
 extern "C" ENZTCPLIBRARY_API    HANDLE      CreateLocalAreaListenerEx();
 extern "C" ENZTCPLIBRARY_API	bool		StartLocalAreaListenerEx(HANDLE, const char* szStartingIPAddress, const char* subNetMask, CallbackLocalAreaListener pFncPtr, int nPollingTimeMS);

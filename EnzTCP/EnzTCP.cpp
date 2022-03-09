@@ -411,6 +411,15 @@ void ENZTCPLIBRARY_API StopPacketListenerEx(HANDLE hHandle)
     }
 }
 
+void ENZTCPLIBRARY_API	WaitPacketListenerEx(HANDLE hHandle)
+{
+    CPacketListener* pPacketListener = (CPacketListener*)hHandle;
+    if (pPacketListener)
+    {
+        pPacketListener->WaitListeningEx();
+    }
+}
+
 void ENZTCPLIBRARY_API DeletePacketListenerEx(HANDLE hHandle)
 {
     CPacketListener* pPacketListener = (CPacketListener*)hHandle;

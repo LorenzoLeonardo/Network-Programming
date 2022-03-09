@@ -251,6 +251,7 @@ bool CCheckOpenPortsDlg::InitDLL()
 		m_fnptrCreatePacketListenerEx = (FNPTRCreatePacketListenerEx)GetProcAddress(m_hDLLhandle, "CreatePacketListenerEx");
 		m_fnptrStartPacketListenerEx = (FNPTRStartPacketListenerEx)GetProcAddress(m_hDLLhandle, "StartPacketListenerEx");
 		m_fnptrStopPacketListenerEx = (FNPTRStopPacketListenerEx)GetProcAddress(m_hDLLhandle, "StopPacketListenerEx");
+		m_fnptrWaitPacketListenerEx = (FNPTRWaitPacketListenerEx)GetProcAddress(m_hDLLhandle, "WaitPacketListenerEx");
 		m_fnptrDeletePacketListenerEx = (FNPTRDeletePacketListenerEx)GetProcAddress(m_hDLLhandle, "DeletePacketListenerEx");
 		m_fnptrCreateLocalAreaListenerEx = (FNPTRCreateLocalAreaListenerEx)GetProcAddress(m_hDLLhandle, "CreateLocalAreaListenerEx");
 		m_fnptrStartLocalAreaListenerEx = (FNPTRStartLocalAreaListenerEx)GetProcAddress(m_hDLLhandle, "StartLocalAreaListenerEx");
@@ -264,6 +265,7 @@ bool CCheckOpenPortsDlg::InitDLL()
 
 BOOL CCheckOpenPortsDlg::OnInitDialog()
 {
+	m_hThisMainThread = GetCurrentThread();
 	CDialogEx::OnInitDialog();
 	::SetWindowTheme(GetDlgItem(IDC_STATIC_ROUTER_INFO)->GetSafeHwnd(), _T(""), _T(""));//To change text Color of Group Box
 	::SetWindowTheme(GetDlgItem(IDC_STATIC_ADAPTER_INFO)->GetSafeHwnd(), _T(""), _T(""));
@@ -376,7 +378,7 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	CString csIP(CA2W(m_vAdapterInfo[m_nCurrentNICSelect].AdapterInfo.IpAddressList.IpAddress.String));
 	m_ctrlLANConnected.SetAdapterIP(csIP);
 	m_hThreadNICListener = (HANDLE)_beginthreadex(NULL, 0, NICListenerThread, this, 0, NULL);
-	m_bShowPacketInfo = false;
+	m_bShowPacketInfo = true;
 	for (int i = 0; i < m_vAdapterInfo.size(); i++)
 		m_vAdapterInfo[i].hLANListener = m_fnptrCreateLocalAreaListenerEx();
 
@@ -1350,12 +1352,16 @@ bool CCheckOpenPortsDlg::ProcessNICPacketListener(unsigned char* buffer, int nSi
 		dwEndIP = (0xFFFFFFFF - dwMask) + dwBeginIP;
 
 		if (((ntohl(iphdr->unDestaddress) > dwBeginIP) && (ntohl(iphdr->unDestaddress) < dwEndIP)) && ((ntohl(iphdr->unSrcaddress) > dwBeginIP) && (ntohl(iphdr->unSrcaddress) < dwEndIP)))
+		{
 			return false;
+		}
 	}
 
 
 	if (m_pmodeless == NULL)
+	{
 		return false;
+	}
 
 	else
 	{
@@ -1401,15 +1407,16 @@ bool CCheckOpenPortsDlg::ProcessNICPacketListener(unsigned char* buffer, int nSi
 		if (GetIPFilterULONG() == iphdr->unDestaddress)
 		{
 			csReport = csText + sourceIP + _T(":") + csSrcPort + _T("->") + destIP + _T(":") + csDestPort + _T("\t\tSize: ") + to_wstring(nSize).c_str() + _T(" bytes\r\n");
-			m_pmodeless->UpdatePacketInfo(csReport, iphdr->ucIPProtocol);
+			if (m_pmodeless)
+				m_pmodeless->UpdatePacketInfo(csReport, iphdr->ucIPProtocol);
 		}
 		else if (GetIPFilterULONG() == iphdr->unSrcaddress)
 		{
 			csReport = csText + sourceIP + _T(":") + csSrcPort + _T("->") + destIP + _T(":") + csDestPort + _T("\t\tSize: ") + to_wstring(nSize).c_str() + _T(" bytes\r\n");
-			m_pmodeless->UpdatePacketInfo(csReport, iphdr->ucIPProtocol);
+			if (m_pmodeless)
+				m_pmodeless->UpdatePacketInfo(csReport, iphdr->ucIPProtocol);
 		}
 	}
-
 	return true;
 }
 void CCheckOpenPortsDlg::OnBnClickedButtonStartPacket()
@@ -1421,8 +1428,8 @@ void CCheckOpenPortsDlg::OnBnClickedButtonStartPacket()
 
 	if (m_hNICPacketListener)
 	{
-		if (!m_fnptrStartPacketListenerEx(m_hNICPacketListener))
-			::MessageBox(GetSafeHwnd(), _T("Packet Listener failed to start. Please run the tool as Administrator. To run as administrator, right click on the executable file and click run as administrator."), _T("Run as Administrator"), MB_ICONEXCLAMATION);
+		//if (!m_fnptrStartPacketListenerEx(m_hNICPacketListener))
+		//	::MessageBox(GetSafeHwnd(), _T("Packet Listener failed to start. Please run the tool as Administrator. To run as administrator, right click on the executable file and click run as administrator."), _T("Run as Administrator"), MB_ICONEXCLAMATION);
 
 		map<ULONG, CDeviceConnected*>::iterator it = m_mConnected.begin();
 		while (it != m_mConnected.end())
@@ -1456,12 +1463,13 @@ void CCheckOpenPortsDlg::OnBnClickedButtonStopPacket()
 void CCheckOpenPortsDlg::OnBnClickedButtonShowPackets()
 {
 	// TODO: Add your control notification handler code here
+	
 	if (m_bShowPacketInfo)
 	{
+		m_fnptrStartPacketListenerEx(m_hNICPacketListener);
 		m_ctrlBtnShowPacketInfo.SetWindowText(_T("Hide Packet Info"));
 		m_bShowPacketInfo = false;
-		//m_ctrlEditPacketReportArea.ShowWindow(true);
-
+	
 		if (m_pmodeless)
 		{
 			m_pmodeless->SetForegroundWindow();
@@ -1474,15 +1482,20 @@ void CCheckOpenPortsDlg::OnBnClickedButtonShowPackets()
 		}
 
 		m_pmodeless->GetClientRect(&m_rectModeless);
+
 	}
 	else
 	{
-		m_ctrlBtnShowPacketInfo.SetWindowText(_T("Show Packet Info"));
 		m_bShowPacketInfo = true;
-		//m_ctrlEditPacketReportArea.ShowWindow(false);
+		m_fnptrStopPacketListenerEx(m_hNICPacketListener);
+
+		m_ctrlBtnShowPacketInfo.SetWindowText(_T("Show Packet Info"));
+		
+	
 		if (m_pmodeless)
 		{
 			m_pmodeless->OnBnClickedCancel();
+	
 		}
 	}
 }

@@ -33,6 +33,7 @@ protected:
 	HBRUSH 	m_hBrushBackGround;
 	HBRUSH	m_hBrushEditArea;
 	bool m_bThisObjDeleted;
+	bool m_bIsCanceled;
 	virtual BOOL OnInitDialog();
 	static unsigned __stdcall  PacketInfoThread(void* parg);
 public:

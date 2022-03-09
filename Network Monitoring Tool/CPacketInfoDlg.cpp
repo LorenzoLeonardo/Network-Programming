@@ -5,7 +5,7 @@
 #include "afxdialogex.h"
 #include "CPacketInfoDlg.h"
 #include "CheckOpenPortsDlg.h"
-
+#include "../EnzTCP/DebugLog.h"
 // CPacketInfoDlg dialog
 
 IMPLEMENT_DYNAMIC(CPacketInfoDlg, CDialogEx)
@@ -48,68 +48,83 @@ void CPacketInfoDlg::PostNcDestroy()
 	{
 		((CCheckOpenPortsDlg*)m_pParent)->m_pmodeless = NULL;
 	}
-	//CloseHandle(m_hPacketInfoThread);
 	delete this;
-//	CDialogEx::PostNcDestroy();
 }
 
 void CPacketInfoDlg::OnBnClickedCancel()
 {
+	m_bIsCanceled = true;
 	DestroyWindow();
 }
 
 void CPacketInfoDlg::UpdatePacketInfo(CString csPacketInfo, int nProtocol)
 {
-	
-	if (m_ctrlEditPacketReportArea.m_hWnd)
+	try
 	{
-
-		if (((CButton*)GetDlgItem(IDC_CHECK_IGMP))->GetCheck() == BST_UNCHECKED
-			&& nProtocol == IGMP_PROTOCOL)
+		if (m_bIsCanceled)
 			return;
-		else if (((CButton*)GetDlgItem(IDC_CHECK_TCP))->GetCheck() == BST_UNCHECKED
-			&& nProtocol == TCP_PROTOCOL)
-			return;
-		else if (((CButton*)GetDlgItem(IDC_CHECK_UDP))->GetCheck() == BST_UNCHECKED
-			&& nProtocol == UDP_PROTOCOL)
-			return;
-		else if (((CButton*)GetDlgItem(IDC_CHECK_ICMP))->GetCheck() == BST_UNCHECKED
-			&& nProtocol == ICMP_PROTOCOL)
-			return;
-		
-
-
-		CString csText;
-		int nLineLimit = 50;
 		if (m_ctrlEditPacketReportArea.m_hWnd)
-			m_ctrlEditPacketReportArea.GetWindowText(csText);
-		csText += csPacketInfo;
-		//long nLength = m_ctrlEditPacketReportArea.GetLineCount();
-		//if (nLength < nLineLimit)
-		//{
-			m_ctrlEditPacketReportArea.SetSel(0, 0);
-			m_ctrlEditPacketReportArea.ReplaceSel(csPacketInfo);
-			long nLength = m_ctrlEditPacketReportArea.GetLineCount();
+		{
+			if (m_ctrlEditPacketReportArea.m_hWnd && ((CButton*)GetDlgItem(IDC_CHECK_IGMP))->GetCheck() == BST_UNCHECKED
+				&& nProtocol == IGMP_PROTOCOL)
+				return;
+			else if (m_ctrlEditPacketReportArea.m_hWnd && ((CButton*)GetDlgItem(IDC_CHECK_TCP))->GetCheck() == BST_UNCHECKED
+				&& nProtocol == TCP_PROTOCOL)
+				return;
+			else if (m_ctrlEditPacketReportArea.m_hWnd && ((CButton*)GetDlgItem(IDC_CHECK_UDP))->GetCheck() == BST_UNCHECKED
+				&& nProtocol == UDP_PROTOCOL)
+				return;
+			else if (m_ctrlEditPacketReportArea.m_hWnd && ((CButton*)GetDlgItem(IDC_CHECK_ICMP))->GetCheck() == BST_UNCHECKED
+				&& nProtocol == ICMP_PROTOCOL)
+				return;
+
+
+
+			CString csText;
+			int nLineLimit = 50;
+			long nLength = 0;
+			int len = 0;
+			int nBegin = 0;
+			int nEnd = 0;
+			if (m_ctrlEditPacketReportArea.m_hWnd)
+				m_ctrlEditPacketReportArea.GetWindowText(csText);
+			csText += csPacketInfo;
+
+			if (m_ctrlEditPacketReportArea.m_hWnd)
+				m_ctrlEditPacketReportArea.SetSel(0, 0);
+			if (m_ctrlEditPacketReportArea.m_hWnd)
+				m_ctrlEditPacketReportArea.ReplaceSel(csPacketInfo);
+			if (m_ctrlEditPacketReportArea.m_hWnd)
+				nLength = m_ctrlEditPacketReportArea.GetLineCount();
 			if (nLength == nLineLimit)
 			{
 				if (m_ctrlEditPacketReportArea.m_hWnd)
 					m_ctrlEditPacketReportArea.GetWindowText(csText);
 
-				int len = csText.ReverseFind(_T('\r'));
-				int nBegin = m_ctrlEditPacketReportArea.LineIndex(nLength - 2);
-				int nEnd = nBegin + len;
-				m_ctrlEditPacketReportArea.SetSel(nBegin, nEnd, TRUE);
-				m_ctrlEditPacketReportArea.ReplaceSel(_T(""));
-				m_ctrlEditPacketReportArea.SetSel(0, 0, TRUE);
+				len = csText.ReverseFind(_T('\r'));
+				if (m_ctrlEditPacketReportArea.m_hWnd)
+					nBegin = m_ctrlEditPacketReportArea.LineIndex(nLength - 2);
+				nEnd = nBegin + len;
+				if (m_ctrlEditPacketReportArea.m_hWnd)
+					m_ctrlEditPacketReportArea.SetSel(nBegin, nEnd, TRUE);
+				if (m_ctrlEditPacketReportArea.m_hWnd)
+					m_ctrlEditPacketReportArea.ReplaceSel(_T(""));
+				if (m_ctrlEditPacketReportArea.m_hWnd)
+					m_ctrlEditPacketReportArea.SetSel(0, 0, TRUE);
 			}
-		//}
+			//}
+		}
+	}
+	catch (exception e)
+	{
+		DEBUG_LOG(CA2W(e.what()).m_szBuffer);
 	}
 }
 
 BOOL CPacketInfoDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
-
+	m_bIsCanceled = false;
 	RECT rect, thisRect;
 	m_pParent->GetWindowRect(&rect);
 	GetClientRect(&thisRect);
