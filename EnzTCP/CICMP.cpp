@@ -40,9 +40,11 @@ int CICMP::InitializeLocalIPAndHostname()
     if (iResult != 0)
     {
         freeaddrinfo(result);
+        result = NULL;
         return iResult;
     }
     freeaddrinfo(result);
+    result = NULL;
     m_HostName = hostname;
     iResult = getaddrinfo(hostname, NULL, &hints, &result);
     if (iResult != 0)
@@ -51,6 +53,7 @@ int CICMP::InitializeLocalIPAndHostname()
     inet_ntop(AF_INET, (const void*)(result->ai_addr->sa_data+2), ipAddress, sizeof(ipAddress));
     m_HostIP = ipAddress;
     freeaddrinfo(result);
+    result = NULL;
     return iResult;
 }
 string CICMP::GetHostName(string ipAddress)
@@ -278,17 +281,10 @@ CLEANPUP:
 }
 bool CICMP::CheckDevice(string ipAddress, string& hostname, string& sMacAddress)
 {
-    //HANDLE hIcmpFile;
-    //struct hostent* remoteHost;
     unsigned long ipDest = INADDR_NONE;
     DWORD dwRetVal = 0;
-    //constexpr int nSendSize = 2;
-    //char SendData[nSendSize];
-   // LPVOID ReplyBuffer = NULL;
-   // DWORD ReplySize = 0;
     bool bRet = false;
-    //struct in_addr ReplyAddr;
-    //int iResult = 0;
+
     sMacAddress = "";
     // Validate the parameters
     if (ipAddress.empty())
@@ -296,82 +292,54 @@ bool CICMP::CheckDevice(string ipAddress, string& hostname, string& sMacAddress)
     hostname = GetHostName(ipAddress);
     if (hostname.empty())
         return bRet;
-  /*  memset(SendData, 0, sizeof(SendData));
-    SendData[0] = 1;
-
-    hIcmpFile = IcmpCreateFile();
-    if (hIcmpFile == INVALID_HANDLE_VALUE)
-          return false;
-
-    ReplySize = sizeof(ICMP_ECHO_REPLY) + sizeof(SendData) + nSendSize + 8;
-    ReplyBuffer = (VOID*)malloc(ReplySize);
-    if (ReplyBuffer == NULL)
-    {
-        IcmpCloseHandle(hIcmpFile);
-        return false;
-    }*/
     
     if(inet_pton(AF_INET, ipAddress.c_str(), &ipDest)!=1)
     {
-       // free(ReplyBuffer);
-      //  IcmpCloseHandle(hIcmpFile);
         return false;
     }
-    /*IPAddr dest; */
-    //dwRetVal = IcmpSendEcho(hIcmpFile, ipDest, (LPVOID)SendData, (WORD)strlen(SendData), NULL, ReplyBuffer, ReplySize, 500);
-   // if (Ping(hIcmpFile, m_HostIP, ipAddress, dest, PING_TIMEOUT))
-   // {
-        ULONG MacAddr[2];
-        ULONG PhysAddrLen = 6;
-        IPAddr ipSource;
-        LPBYTE bPhysAddr;
-        //PICMP_ECHO_REPLY pEchoReply = (PICMP_ECHO_REPLY)ReplyBuffer;
-  
 
-       // ReplyAddr.S_un.S_addr = pEchoReply->Address;
-        inet_pton(AF_INET, m_HostIP.c_str(), &ipSource);
+    ULONG MacAddr[2];
+    ULONG PhysAddrLen = 6;
+    IPAddr ipSource;
+    LPBYTE bPhysAddr;
+
+    inet_pton(AF_INET, m_HostIP.c_str(), &ipSource);
         
-        dwRetVal = SendARP(ipDest, ipSource, MacAddr, &PhysAddrLen);
-        if (dwRetVal == NO_ERROR)
+    dwRetVal = SendARP(ipDest, ipSource, MacAddr, &PhysAddrLen);
+    if (dwRetVal == NO_ERROR)
+    {
+        bPhysAddr = (BYTE*)&MacAddr;
+        if (PhysAddrLen)
         {
-            bPhysAddr = (BYTE*)&MacAddr;
-            if (PhysAddrLen)
+            char szMac[32];
+            memset(szMac, 0, sizeof(szMac));
+            for (int i = 0; i < 6; i++)
             {
-                char szMac[32];
-                memset(szMac, 0, sizeof(szMac));
-                for (int i = 0; i < 6; i++)
+                if (i < 5)
                 {
-                    if (i < 5)
-                    {
-                        memset(szMac, 0, sizeof(szMac));
-                        sprintf_s(szMac, sizeof(szMac), "%02X-", bPhysAddr[i]);
-                        sMacAddress += szMac;
-                    }
-                    else
-                    {
-                        memset(szMac, 0, sizeof(szMac));
-                        sprintf_s(szMac, sizeof(szMac), "%02X", bPhysAddr[i]);
-                        sMacAddress += szMac;
-                    }
+                    memset(szMac, 0, sizeof(szMac));
+                    sprintf_s(szMac, sizeof(szMac), "%02X-", bPhysAddr[i]);
+                    sMacAddress += szMac;
+                }
+                else
+                {
+                    memset(szMac, 0, sizeof(szMac));
+                    sprintf_s(szMac, sizeof(szMac), "%02X", bPhysAddr[i]);
+                    sMacAddress += szMac;
                 }
             }
-            bRet = true;
         }
-        else
-        {
-            char szIP[32];
-            inet_ntop(AF_INET, &ipDest, szIP, sizeof(szIP));
-            string sIP(szIP);
+        bRet = true;
+    }
+    else
+    {
+        char szIP[32];
+        inet_ntop(AF_INET, &ipDest, szIP, sizeof(szIP));
+        string sIP(szIP);
 
-           // DEBUG_LOG("CICMP::CheckDevice(): SendARP("+ sIP +") Error:"+to_string(dwRetVal));
             bRet = false;
-        }
-   // }
-   // else
-   //     bRet = false;
-    
-    //free(ReplyBuffer);
-  //  IcmpCloseHandle(hIcmpFile);
+    }
+
     return bRet;
 }
 

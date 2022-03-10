@@ -209,7 +209,7 @@ unsigned _stdcall CLocalAreaListener::MultiQueryingThreadEx(void* args)
 	}
 	delete obj;
 	obj = NULL;
-	_endthreadex(0);
+
 	return 0;
 }
 
@@ -272,7 +272,7 @@ unsigned _stdcall CLocalAreaListener::MainThreadEx(void* args)
 	
 	DEBUG_LOG("CLocalAreaListener:MainThreadEx() Thread Ended.");
 	pCLocalAreaListener->m_fnptrCallbackLocalAreaListener("stop", NULL, NULL, false);
-	_endthreadex(0);
+
 	return 0;
 }
 
@@ -281,7 +281,7 @@ unsigned _stdcall CLocalAreaListener::StopThread(void* args)
 	CLocalAreaListener* pCLocalAreaListener = (CLocalAreaListener*)args;
 	SetEvent(pCLocalAreaListener->m_hStopThread);
 	WaitForSingleObject(pCLocalAreaListener->m_hWaitThread, INFINITE);
-	_endthreadex(0);
+
 	return 0;
 }
 bool CLocalAreaListener::StartEx(const char* szStartingIPAddress, const char* subNetMask, CallbackLocalAreaListener pFncPtr, int nPollingTimeMS)

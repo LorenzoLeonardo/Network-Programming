@@ -21,24 +21,6 @@ inline string getCurrentDateTime(string s)
         strftime(buf, sizeof(buf)-1, "%Y-%m-%d", &tstruct);
     return string(buf);
 };
-/*inline void DEBUG_LOG(string logMsg) {
-
-    
-    DWORD value = 0;
-    DWORD BufferSize = 4;
-
-    RegGetValueA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Enzo Network Monitoring Tool", "DebugLog", RRF_RT_DWORD, NULL, (PVOID)&value, &BufferSize);
-    if (value)
-    {
-        g_mutxLog.lock();
-        string filePath = getCurrentDateTime("date") + ".txt";
-        string now = getCurrentDateTime("now");
-        ofstream ofs(filePath.c_str(), std::ios_base::out | std::ios_base::app);
-        ofs << now << '\t' << logMsg << '\n';
-        ofs.close();
-        g_mutxLog.unlock();
-    }
-}*/
 
 inline void DEBUG_LOG(string logMsg, ...)
 {
@@ -66,7 +48,7 @@ inline void DEBUG_LOG(string logMsg, ...)
             }
             memset(temp, 0, sizeof(char) * (len + 1));
         }
-        vsnprintf(temp, sizeof(char) * len, logMsg.c_str(), arg);
+        vsnprintf(temp, sizeof(char) * (len+1), logMsg.c_str(), arg);
         //printf(temp); // replace with any print function you want
         logMsg = temp;
         string filePath = getCurrentDateTime("date") + ".txt";
@@ -141,7 +123,7 @@ inline void DEBUG_LOG(wstring logMsg, ...)
             }
             memset(temp, 0, sizeof(wchar_t) * (len + 1));
         }
-        _vsnwprintf(temp, sizeof(wchar_t) * (len), logMsg.c_str(), arg);
+        _vsnwprintf(temp, sizeof(wchar_t) * (len + 1), logMsg.c_str(), arg);
         logMsg = temp;
         wstring filePath = getCurrentDateTime(L"date") + L".txt";
         wstring now = getCurrentDateTime(L"now");

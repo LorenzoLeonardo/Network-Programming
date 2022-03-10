@@ -134,7 +134,10 @@ smiVALUE CSNMP::Get(const char* szOID, DWORD &dwLastError)
     m_pSession->hPdu = SnmpCreatePdu(m_pSession->hSnmpSession, m_pSession->nPduType, m_pSession->nRequestId, 0, 0, m_pSession->hVbl);
 
     if (SNMPAPI_FAILURE == m_pSession->hPdu)
+    {
+        m_pSession->nError = SnmpFreeVbl(m_pSession->hVbl);
         return m_nvalue;
+    }
 
     // send the message to the agent
     m_pSession->nError = SnmpSendMsg(m_pSession->hSnmpSession, m_pSession->hManagerEntity, m_pSession->hAgentEntity, m_pSession->hViewContext, m_pSession->hPdu);

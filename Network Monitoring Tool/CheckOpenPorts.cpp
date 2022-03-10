@@ -207,7 +207,7 @@ BOOL CCheckOpenPortsApp::InitInstance()
 	ProcessAppToFirewall(_T("Enzo Tech Network Monitoring Tool"));
 	CShellManager *pShellManager = new CShellManager;
 
-	//SetRegistryKey(_T("Local AppWizard-Generated Applications"));
+	SetRegistryKey(_T("Local AppWizard-Generated Applications"));
 	CCheckOpenPortsDlg dlg;
 	
 	m_pMainWnd = &dlg;

@@ -70,7 +70,6 @@ CCheckOpenPortsDlg::CCheckOpenPortsDlg(CWnd* pParent /*=nullptr*/)
 	m_nCurrentRowSelected = -1;
 	m_bHasClickClose = FALSE;
 	m_hDLLhandle = NULL;
-	m_hWaitEvent = NULL;
 	m_hThreadRouter = NULL;
 	m_hThreadLANListener = NULL;
 	m_hNICPacketListener = NULL;
@@ -190,7 +189,7 @@ int CCheckOpenPortsDlg::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
 	if (CDialog::OnCreate(lpCreateStruct) == -1)
 		return -1;
-	m_hThreadClock = (HANDLE)_beginthreadex(NULL, 0, ClockThread, this, 0, NULL);
+	
 	return 0;
 }
 void CCheckOpenPortsDlg::UpdateClock()
@@ -265,8 +264,6 @@ bool CCheckOpenPortsDlg::InitDLL()
 
 BOOL CCheckOpenPortsDlg::OnInitDialog()
 {
-	
-	m_hThisMainThread = GetCurrentThread();
 	CDialogEx::OnInitDialog();
 	::SetWindowTheme(GetDlgItem(IDC_STATIC_ROUTER_INFO)->GetSafeHwnd(), _T(""), _T(""));//To change text Color of Group Box
 	::SetWindowTheme(GetDlgItem(IDC_STATIC_ADAPTER_INFO)->GetSafeHwnd(), _T(""), _T(""));
@@ -386,6 +383,7 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	m_hNICPacketListener = m_fnptrCreatePacketListenerEx(CallbackNICPacketListener, NULL);
 	m_hThreadRouter = (HANDLE)_beginthreadex(NULL, 0, RouterThread, this, 0, NULL);
 	m_hThreadNICListener = (HANDLE)_beginthreadex(NULL, 0, NICListenerThread, this, 0, NULL);
+	m_hThreadClock = (HANDLE)_beginthreadex(NULL, 0, ClockThread, this, 0, NULL);
 	OnBnClickedButtonStartListenLan();
 	OnBnClickedButtonShowPackets();
 	m_ctrlBtnListenPackets.EnableWindow(FALSE);
@@ -594,7 +592,7 @@ void CCheckOpenPortsDlg::OnClose()
 	}
 	if (IsLANStopped() && IsSearchingOpenPortStopped())
 	{
-		EnableCloseButton(false);
+	//	EnableCloseButton(false);
 		m_bHasClickClose = TRUE;
 		if (m_hThreadRouter)
 		{
@@ -602,7 +600,7 @@ void CCheckOpenPortsDlg::OnClose()
 			CloseHandle(m_hThreadRouter);
 		}
 
-		m_pfnPtrEndSNMP();
+		
 		
 		//Listening of Main Router Information
 
@@ -662,10 +660,12 @@ void CCheckOpenPortsDlg::OnClose()
 		}
 		m_mConnected.clear();
 
+		m_pfnPtrEndSNMP();
 		if(m_hDLLhandle)
 			FreeLibrary(m_hDLLhandle);
-
-		CDialog::OnClose();
+	
+		CDialogEx::OnClose();
+		//OnOK();
 	}
 	else
 	{
@@ -958,13 +958,7 @@ void CCheckOpenPortsDlg::UpdateDeviceConnected()
 	csConn.Format(_T("Device Connected: %d"), m_ctrlLANConnected.GetItemCount());
 	m_ctrlStaticNumDevice.SetWindowTextW(csConn);
 }
-void CCheckOpenPortsDlg::PumpWaitingMessages() {
-	MSG msg;
-	while (::PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE)) {
-		if (!AfxGetThread()->PumpMessage())
-			return;
-	}
-}
+
 void CCheckOpenPortsDlg::ProcessLANListener(const char* ipAddress, const char* hostName, const char* macAddress, bool bIsopen)
 {
 	if (strcmp(ipAddress, "start") == 0)
@@ -2082,5 +2076,5 @@ void CCheckOpenPortsDlg::OnOK()
 {
 	// TODO: Add your specialized code here and/or call the base class
 
-	//CDialogEx::OnOK();
+	CDialogEx::OnOK();
 }

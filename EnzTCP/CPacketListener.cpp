@@ -102,7 +102,7 @@ unsigned _stdcall CPacketListener::PollingThreadEx(void* args)
 	pBuffer = NULL;
 	DEBUG_LOG("CPacketListener: PollingThreadEx ("+ to_string((ULONG_PTR)pListener->m_pObject) + ") Thread Ended.");
 	SetEvent(pListener->m_hWaitThread);
-	_endthreadex(0);
+
 	return 0;
 }
 

@@ -113,44 +113,64 @@ public:
 		COL_DOWNLOADMAXSPEED,
 		COL_UPLOADMAXSPEED
 	};
-	HMODULE m_hDLLhandle;
-	int m_nCurrentRowSelected;
-	CIPAddressCtrl m_ctrlIPAddress;
-	CEdit m_ctrlResult;
-	CListCtrlCustom m_ctrlLANConnected;
-	map<ULONG, CDeviceConnected*> m_mConnected;
-	map<ULONG, int> m_mMonitorDeviceCurrent;
-	map<ULONG, int> m_mMonitorDeviceBefore;
-	vector<CNetworkInterfaceInfo> m_vAdapterInfo;
-	CEdit m_ctrlEditPacketReportArea;
-	CEdit m_ctrlEditDownloadSpeed;
-	CEdit m_ctrlEditUploadSpeed;
-	CEdit m_ctrlEditPacketReportUpload;
-	CButton m_ctrlBtnShowPacketInfo;
-	CButton m_ctrlBtnListenPackets;
-	CButton m_ctrlBtnUnlistenPackets;
-	CString m_ipFilter;
-	ULONG   m_ulIPFilter;
-	CEdit m_ctrlPortNum;
-	CButton m_ctrlBtnListen;
-	CButton m_ctrlBtnStopListening;
-	CCustomClock m_customClock;
-	RECT m_rectModeless;
-	bool m_bInitNIC;
-	int m_nCurrentNICSelect;
+	afx_msg void OnSetFocus(CWnd* pOldWnd);
+	afx_msg void OnNcLButtonUp(UINT nHitTest, CPoint point);
+	afx_msg void OnNcLButtonDown(UINT nHitTest, CPoint point);
+	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
+	afx_msg void OnMoving(UINT fwSide, LPRECT pRect);
+	afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
+	afx_msg void OnRButtonDblClk(UINT nFlags, CPoint point);
+	afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
+	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
+	afx_msg LRESULT OnNcHitTest(CPoint point);
+	afx_msg void OnNcMouseHover(UINT nFlags, CPoint point);
+	afx_msg void OnNcMouseMove(UINT nHitTest, CPoint point);
+	afx_msg void OnCbnSelchangeComboListAdapter();
+	afx_msg void OnBnClickedCheckInternetOnly();
+	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
+	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
+	afx_msg void OnMove(int x, int y);
+	afx_msg void OnBnClickedCheckDebug();
+	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
+	afx_msg void OnPaint();
+	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+	afx_msg HCURSOR OnQueryDragIcon();
+	afx_msg void OnBnClickedButtonStopSearchingOpenPorts();
+	afx_msg void OnBnClickedButtonCheckIfPortOpen();
+	afx_msg void OnBnClickedButtonStartSearchingOpenPort();
+	afx_msg void OnClose();
+	afx_msg void OnEnChangeEditArea();
+	afx_msg void OnBnClickedButtonStartListenLan();
+	afx_msg void OnBnClickedButtonStopListenLan();
+	afx_msg void OnNMClickListLan(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
+	afx_msg void OnHdnItemKeyDownListLan(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnLvnKeydownListLan(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnNMDblclkListLan(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnBnClickedButtonStartPacket();
+	afx_msg void OnBnClickedButtonStopPacket();
+	afx_msg void OnBnClickedButtonShowPackets();
+
 	inline string UnicodeToMultiByte(wstring& wstr);
 	inline wstring MultiByteToUnicode(string& wstr);
+	inline void DisplayUploadSpeed(CString szIPAddress, int nColumn, double ldData);
+	inline void DisplayDownloadSpeed(CString szIPAddress, int nColumn, double ldData);
+
 	void Increment();
 	int IsInTheList(CString csIPAddress);
 	void UpdateClock();
-	inline void DisplayUploadSpeed(CString szIPAddress, int nColumn, double ldData);
-	inline void DisplayDownloadSpeed(CString szIPAddress, int nColumn, double ldData);
+	void UpdateDeviceConnected();
+	void EnableCloseButton(bool bEnable);
+	bool InitDLL();
+	void InitAdapterUI();
+	void UpdateAdapterChanges();
+
 	bool HasClickClose()
 	{
 		return m_bHasClickClose;
 	}
-	void UpdateDeviceConnected();
-	void EnableCloseButton(bool bEnable);
+
 	void SetLANStop(bool b)
 	{
 		m_bLanStop = b;
@@ -187,8 +207,7 @@ public:
 	{
 		return m_ulIPFilter;
 	}
-	void InitAdapterUI();
-	void UpdateAdapterChanges();
+
 
 	bool IsInternetOnly()
 	{
@@ -196,107 +215,104 @@ public:
 	}
 protected:
 	volatile bool m_bIsInternetOnly;
-	HBRUSH m_hBrushBackGround;
-	HBRUSH m_hBrushEditArea;
-	HICON m_hIcon;
+	volatile bool m_bHasClickClose;
+	volatile bool m_bShowPacketInfo;
 	bool m_bStopPacketListener;
 	bool m_bStopSearchingOpenPorts;
 	bool m_bLanStop;
+	bool m_bOnCloseWasCalled;
+	bool m_bInitNIC;
+
+	HBRUSH m_hBrushBackGround;
+	HBRUSH m_hBrushEditArea;
+
+	HICON m_hIcon;
+
 	CString m_IPAddress;
-	int m_nThread;
-	volatile bool m_bHasClickClose;
 	CString m_csRouterModel;
 	CString m_csRouterBrand;
 	CString m_csRouterDescription;
-	CEdit m_ctrlEditPollingTime;
+	CString m_ipFilter;
 
+	int m_nThread;
+	int m_nCurrentRowSelected;
+	int m_nCurrentNICSelect;
+
+	HMODULE m_hDLLhandle;
+	
+	map<ULONG, CDeviceConnected*> m_mConnected;
+	map<ULONG, int> m_mMonitorDeviceCurrent;
+	map<ULONG, int> m_mMonitorDeviceBefore;
+
+	vector<CNetworkInterfaceInfo> m_vAdapterInfo;
+
+	ULONG   m_ulIPFilter;
+
+	RECT m_rectModeless;
+	
 	HANDLE m_hThreadRouter;
 	HANDLE m_hThreadLANListener;
 	HANDLE m_hNICPacketListener;
 	HANDLE m_hThreadClock;
 	HANDLE m_hThreadOpenPortListener;
 	HANDLE m_hThreadNICListener;
-	HANDLE m_hWaitEvent;
-	HANDLE m_hThisMainThread;
-	CButton m_ctrlBtnCheckOpenPorts;
-	CButton m_ctrlBtnStopSearchingPort;
-	CProgressCtrl m_ctrlProgressStatus;
-	CStatic m_ctrlStaticRouterUpTime;
-	volatile bool m_bShowPacketInfo;
-	bool m_bOnCloseWasCalled;
 
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV support
-	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
-	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
-	afx_msg void OnPaint();
-	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	afx_msg HCURSOR OnQueryDragIcon();
-	afx_msg void OnBnClickedButtonStopSearchingOpenPorts();
-	afx_msg void OnBnClickedButtonCheckIfPortOpen();
-	afx_msg void OnBnClickedButtonStartSearchingOpenPort();
-	afx_msg void OnClose();
-	afx_msg void OnEnChangeEditArea();
-	afx_msg void OnBnClickedButtonStartListenLan();
-	afx_msg void OnBnClickedButtonStopListenLan();
-	afx_msg void OnNMClickListLan(NMHDR* pNMHDR, LRESULT* pResult);
-	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
-	afx_msg void OnHdnItemKeyDownListLan(NMHDR* pNMHDR, LRESULT* pResult);
-	afx_msg void OnLvnKeydownListLan(NMHDR* pNMHDR, LRESULT* pResult);
-	afx_msg void OnNMDblclkListLan(NMHDR* pNMHDR, LRESULT* pResult);
-	afx_msg void OnBnClickedButtonStartPacket();
-	afx_msg void OnBnClickedButtonStopPacket();
-	afx_msg void OnBnClickedButtonShowPackets();
+	virtual BOOL OnInitDialog();
+	virtual void OnCancel();
+	virtual void OnOK();
+
 	DECLARE_MESSAGE_MAP()
 
-	static void CallbackLANListenerEx(const char* ipAddress, const char* hostName, const char* macAddress, bool bIsopen);
+	static void __stdcall CallbackLANListenerEx(const char* ipAddress, const char* hostName, const char* macAddress, bool bIsopen);
+	static void __stdcall CallBackEnumPort(char* ipAddress, int nPort, bool bIsopen, int nLastError);
+	static bool __stdcall CallbackNICPacketListener(unsigned char* buffer, int nSize, void* obj);
+	static void __stdcall CallBackEnumAdapters(void*);
+	static bool __stdcall CallbackPacketListenerDownloadEx(unsigned char* buffer, int nSize, void* pObject);
+	static bool __stdcall CallbackPacketListenerUploadEx(unsigned char* buffer, int nSize, void* pObject);
 	void ProcessLANListener(const char* ipAddress, const char* hostName, const char* macAddress, bool bIsopen);
-	static void CallBackEnumPort(char* ipAddress, int nPort, bool bIsopen, int nLastError);
-	static bool CallbackNICPacketListener(unsigned char* buffer, int nSize, void* obj);
-	bool ProcessNICPacketListener(unsigned char* buffer, int nSize, void* obj);
-	static void CallBackEnumAdapters(void*);
-	static bool CallbackPacketListenerDownloadEx(unsigned char* buffer, int nSize, void* pObject);
 	bool ProcessPacketListenerDownloadEx(unsigned char* buffer, int nSize, void* pObject);
-	static bool CallbackPacketListenerUploadEx(unsigned char* buffer, int nSize, void* pObject);
+	bool ProcessNICPacketListener(unsigned char* buffer, int nSize, void* obj);
 	bool ProcessPacketListenerUploadEx(unsigned char* buffer, int nSize, void* pObject);
+
 	static unsigned __stdcall  RouterThread(void* parg);
 	static unsigned __stdcall  ClockThread(void* parg);
 	static unsigned __stdcall  OpenPortListenerThread(void* parg);
 	static unsigned __stdcall  NICListenerThread(void* parg);
 	// Generated message map functions
-	virtual BOOL OnInitDialog();
-	bool InitDLL();
 
-public:
-	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
-	CStatic m_ctrlStaticLogo;
-	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
-	afx_msg void OnMove(int x, int y);
-	afx_msg void OnBnClickedCheckDebug();
-	void PumpWaitingMessages();
-protected:
+
 	CButton m_ctrlBtnDebug;
-public:
-	afx_msg void OnCbnSelchangeComboListAdapter();
-protected:
-	CEdit m_ctrlEditAdapterInfo;
-	CComboBox m_ctrlComboAdapterList;
-public:
-	afx_msg void OnSetFocus(CWnd* pOldWnd);
-	afx_msg void OnNcLButtonUp(UINT nHitTest, CPoint point);
-	afx_msg void OnNcLButtonDown(UINT nHitTest, CPoint point);
-	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
-	afx_msg void OnMoving(UINT fwSide, LPRECT pRect);
-	afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
-	afx_msg void OnRButtonDblClk(UINT nFlags, CPoint point);
-	afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
-	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
-	afx_msg LRESULT OnNcHitTest(CPoint point);
-	afx_msg void OnNcMouseHover(UINT nFlags, CPoint point);
-	afx_msg void OnNcMouseMove(UINT nHitTest, CPoint point);
+	CButton m_ctrlBtnShowPacketInfo;
+	CButton m_ctrlBtnListenPackets;
+	CButton m_ctrlBtnUnlistenPackets;
+	CButton m_ctrlBtnCheckOpenPorts;
+	CButton m_ctrlBtnStopSearchingPort;
+	CButton m_ctrlBtnListen;
+	CButton m_ctrlBtnStopListening;
+
+	CStatic m_ctrlStaticRouterUpTime;
 	CStatic m_ctrlStaticNICListen;
-	afx_msg void OnBnClickedCheckInternetOnly();
 	CStatic m_ctrlStaticRouterImage;
 	CStatic m_ctrlStaticNumDevice;
-	virtual void OnCancel();
-	virtual void OnOK();
+	CStatic m_ctrlStaticLogo;
+
+	CEdit m_ctrlResult;
+	CEdit m_ctrlEditAdapterInfo;
+	CEdit m_ctrlEditPollingTime;
+	CEdit m_ctrlEditPacketReportArea;
+	CEdit m_ctrlEditDownloadSpeed;
+	CEdit m_ctrlEditUploadSpeed;
+	CEdit m_ctrlEditPacketReportUpload;
+	CEdit m_ctrlPortNum;
+
+	CComboBox m_ctrlComboAdapterList;
+	
+	CProgressCtrl m_ctrlProgressStatus;
+
+	CIPAddressCtrl m_ctrlIPAddress;
+	
+	CListCtrlCustom m_ctrlLANConnected;
+
+	CCustomClock m_customClock;
 };
