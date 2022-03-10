@@ -38,25 +38,55 @@
 #pragma comment(lib, "Snmpapi.lib")
 #pragma comment(lib, "Mgmtapi.lib")
 
+#pragma pack(push, 1)
 typedef struct _tIPV4HDR
 {
-	UCHAR ucIPHeaderLen : 4; 
-	UCHAR ucIPVersion : 4; 
-	UCHAR ucIPTos; 
+	UCHAR ucIPHeaderLen : 4;
+	UCHAR ucIPVersion : 4;
+	UCHAR ucIPTos;
 	USHORT usIPTotalLength; 
 	USHORT usIPID; 
-	UCHAR ucIPFragOffset : 5; 
-	UCHAR ucIPMoreFragment : 1;
-	UCHAR ucIPDontFragment : 1;
-	UCHAR ucIPReservedZero : 1;
-	UCHAR ucIPFragOffset1; 
+	USHORT usFragAndFlags;
 	UCHAR ucIPTTL; 
 	UCHAR ucIPProtocol; 
 	USHORT usIPChecksum;
-	UINT unSrcaddress; 
-	UINT unDestaddress; 
+	union
+	{
+		UINT unSrcaddress;
+		UCHAR ucSrcaddress[4];
+	};
+	union
+	{
+		UINT unDestaddress;
+		UCHAR ucDestaddress[4];
+	};
+
 } IPV4_HDR;
 
+// TCP header
+typedef struct _tTCPHDR
+{
+	USHORT usSourcePort;
+	USHORT usDestPort;
+	UINT unSequence;
+	UINT unAcknowledge;
+	UCHAR ucNS : 1;
+	UCHAR ucReservedPart1 : 3;
+	UCHAR ucDataOffset : 4;
+	UCHAR ucFIN : 1;
+	UCHAR ucSYN : 1;
+	UCHAR ucRST : 1;
+	UCHAR ucPSH : 1;
+	UCHAR ucACK : 1;
+	UCHAR ucURG : 1;
+	UCHAR ucECN : 1;
+	UCHAR ucCWR : 1;
+	USHORT usWindow;
+	USHORT usChecksum;
+	USHORT usUrgentPointer;
+} TCP_HDR;
+
+//UDP Header
 typedef struct _tUDPHDR
 {
 	USHORT usSourcePort; 
@@ -65,29 +95,7 @@ typedef struct _tUDPHDR
 	USHORT usUDPChecksum;
 } UDP_HDR;
 
-// TCP header
-typedef struct _tTCPHDR
-{
-	USHORT usSourcePort; 
-	USHORT usDestPort; 
-	UINT unSequence; 
-	UINT unAcknowledge; 
-	UCHAR ucNS : 1; 
-	UCHAR ucReservedPart1 : 3; 
-	UCHAR ucDataOffset : 4; 
-	UCHAR ucFIN : 1; 
-	UCHAR ucSYN : 1; 
-	UCHAR ucRST : 1;
-	UCHAR ucPSH : 1; 
-	UCHAR ucACK : 1; 
-	UCHAR ucURG : 1;
-	UCHAR ucECN : 1;
-	UCHAR ucCWR : 1;
-	USHORT usWindow;
-	USHORT usChecksum; 
-	USHORT usUrgentPointer;
-} TCP_HDR;
-
+//ICMP Header
 typedef struct _tICMPHDR
 {
 	BYTE byType; 
@@ -97,6 +105,8 @@ typedef struct _tICMPHDR
 	USHORT usSeq;
 	ULONG  ulTimeStamp;
 } ICMP_HDR;
+
+#pragma pack(pop)
 
 class  ISocket
 {
