@@ -1267,7 +1267,7 @@ void CCheckOpenPortsDlg::UpdateAdapterChanges()
 	char szDefaultGateWay[32];
 	m_ctrlComboAdapterList.SetCurSel(0);
 	int i = m_ctrlComboAdapterList.GetCurSel();
-
+	
 	memset(szDefaultGateWay, 0, sizeof(szDefaultGateWay));
 	if (!m_vAdapterInfo.empty())
 	{
@@ -1307,8 +1307,12 @@ void CCheckOpenPortsDlg::UpdateAdapterChanges()
 
 			if (!m_bInitNIC)
 			{
-				OnBnClickedButtonStopListenLan();
-				OnBnClickedButtonStartListenLan();
+				if (m_nCurrentNICSelect != i)
+				{
+					OnBnClickedButtonStopListenLan();
+					m_nCurrentNICSelect = i;
+					OnBnClickedButtonStartListenLan();
+				}
 			}
 
 		}
@@ -1347,9 +1351,9 @@ bool CCheckOpenPortsDlg::ProcessNICPacketListener(unsigned char* buffer, int nSi
 		DWORD dwBeginIP = 0;
 		DWORD dwEndIP = 0;
 
-		inet_pton(AF_INET, m_vAdapterInfo[m_ctrlComboAdapterList.GetCurSel()].AdapterInfo.IpAddressList.IpMask.String, &dwMask);
+		inet_pton(AF_INET, m_vAdapterInfo[m_nCurrentNICSelect].AdapterInfo.IpAddressList.IpMask.String, &dwMask);
 		dwMask = ntohl(dwMask);
-		inet_pton(AF_INET, m_vAdapterInfo[m_ctrlComboAdapterList.GetCurSel()].AdapterInfo.IpAddressList.IpAddress.String, &dwBeginIP);
+		inet_pton(AF_INET, m_vAdapterInfo[m_nCurrentNICSelect].AdapterInfo.IpAddressList.IpAddress.String, &dwBeginIP);
 		dwBeginIP = dwMask & ntohl(dwBeginIP);
 		dwEndIP = (0xFFFFFFFF - dwMask) + dwBeginIP;
 
