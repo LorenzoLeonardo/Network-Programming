@@ -59,13 +59,14 @@ inline void DEBUG_LOG(string logMsg, ...)
         len = vsnprintf(NULL, 0, logMsg.c_str(), arg);
         va_end(copy);
         if (len >= sizeof(loc_buf)) {
-            temp = (char*)malloc(len + 1);
+            temp = (char*)malloc(sizeof(char) * (len + 1));
             if (temp == NULL) {
                 g_mutxLog.unlock();
                 return;
             }
+            memset(temp, 0, sizeof(char) * (len + 1));
         }
-        vsnprintf(temp, len + 1, logMsg.c_str(), arg);
+        vsnprintf(temp, sizeof(char) * len, logMsg.c_str(), arg);
         //printf(temp); // replace with any print function you want
         logMsg = temp;
         string filePath = getCurrentDateTime("date") + ".txt";

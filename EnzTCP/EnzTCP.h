@@ -28,6 +28,8 @@
 #define IGMP_PROTOCOL 2
 #define TCP_PROTOCOL 6
 #define UDP_PROTOCOL 17
+#define MAX_PORT 65535
+#define POLLING_TIME 500
 
 #pragma comment(lib, "Ws2_32.lib")
 #pragma comment(lib, "Mswsock.lib")

@@ -5,24 +5,7 @@
 #include "afxdialogex.h"
 #include "CSaveDeviceInfoDlg.h"
 #include <ws2tcpip.h>
-typedef struct _tIPV4HDR
-{
-	UCHAR ucIPHeaderLen : 4;
-	UCHAR ucIPVersion : 4;
-	UCHAR ucIPTos;
-	USHORT usIPTotalLength;
-	USHORT usIPID;
-	UCHAR ucIPFragOffset : 5;
-	UCHAR ucIPMoreFragment : 1;
-	UCHAR ucIPDontFragment : 1;
-	UCHAR ucIPReservedZero : 1;
-	UCHAR ucIPFragOffset1;
-	UCHAR ucIPTTL;
-	UCHAR ucIPProtocol;
-	USHORT usIPChecksum;
-	UINT unSrcaddress;
-	UINT unDestaddress;
-} IPV4_HDR;
+
 
 CSaveDeviceInfoDlg* g_pCSaveDeviceInfoDlg = NULL;
 // CSaveDeviceInfoDlg dialog
@@ -125,7 +108,7 @@ void CSaveDeviceInfoDlg::DisplaySpeed(unsigned char* buffer, int nSize, void* pO
 	else if(m_csIPAddress == destIP)
 		pDevice->m_ullDownloadSize += nSize;
 
-	if ((timeCurrent - pDevice->m_ullTimeStarted) >= 1000)
+	if ((timeCurrent - pDevice->m_ullTimeStarted) >= POLLING_TIME)
 	{
 		pDevice->m_lfUploadSpeed = ((double)pDevice->m_ullUploadSize / (double)(timeCurrent - pDevice->m_ullTimeStarted)) * 8;
 		pDevice->m_ullUploadSize = 0;

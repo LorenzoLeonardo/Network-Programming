@@ -24,6 +24,7 @@ BOOL APIENTRY DllMain(HMODULE hModule,
     switch (ul_reason_for_call)
     {
     case DLL_PROCESS_ATTACH:
+        DisableThreadLibraryCalls(hModule);
         DEBUG_LOG("Application Started");
         memset(g_szAdapterName, 0, sizeof(char) * (MAX_ADAPTER_NAME_LENGTH + 4));
         g_ulAdapterIP = 0;
@@ -338,12 +339,12 @@ bool ENZTCPLIBRARY_API EnumNetworkAdapters(FuncAdapterList pFunc)
     ULONG ulOutBufLen = 0;
     bool bRet = false;
 
-    int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+/*    int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
     if (iResult != 0)
     {
         DEBUG_LOG("EnumNetworkAdapters(): Exception (" + to_string(WSAGetLastError()) + ")");
         return bRet;
-    }
+    }*/
 
     if (GetAdaptersInfo(pAdapterInfo, &ulOutBufLen) == ERROR_BUFFER_OVERFLOW) 
     {
@@ -374,7 +375,7 @@ bool ENZTCPLIBRARY_API EnumNetworkAdapters(FuncAdapterList pFunc)
         free(pAdapterInfo);
         pAdapterInfo = NULL;
     }
-    WSACleanup();
+//    WSACleanup();
     return bRet;
 }
 
@@ -471,6 +472,6 @@ void ENZTCPLIBRARY_API DeleteLocalAreaListenerEx(HANDLE hHandle)
 void ENZTCPLIBRARY_API SetNICAdapterToUse(const char* szAdapterName, ULONG ulIPAddress)
 {
     
-    memcpy(g_szAdapterName, szAdapterName, sizeof(g_szAdapterName));
+    strcpy_s(g_szAdapterName, sizeof(g_szAdapterName), szAdapterName);
     g_ulAdapterIP = ulIPAddress;
 }

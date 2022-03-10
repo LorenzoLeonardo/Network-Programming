@@ -44,6 +44,7 @@ bool CSNMP::InitSNMP(const char* szAgentIPAddress, const char* szCommunity, int 
     {
         dwLastError = SnmpGetLastError(m_pSession->hSnmpSession);
         SnmpUtilMemFree(m_pSession);
+        m_pSession = NULL;
         WSACleanup();
         DEBUG_LOG("CSNMP::InitSNMP(): SNMPAPI_FAILURE == m_pSession->hSnmpSession");
         return false;
@@ -55,6 +56,7 @@ bool CSNMP::InitSNMP(const char* szAgentIPAddress, const char* szCommunity, int 
     {
         dwLastError = SnmpGetLastError(m_pSession->hSnmpSession);
         SnmpUtilMemFree(m_pSession);
+        m_pSession = NULL;
         WSACleanup();
         DEBUG_LOG("CSNMP::InitSNMP(): SNMPAPI_FAILURE == m_pSession->hAgentEntity");
         return false;
@@ -69,6 +71,7 @@ bool CSNMP::InitSNMP(const char* szAgentIPAddress, const char* szCommunity, int 
     {
         dwLastError = SnmpGetLastError(m_pSession->hSnmpSession);
         SnmpUtilMemFree(m_pSession);
+        m_pSession = NULL;
         WSACleanup();
         DEBUG_LOG("CSNMP::InitSNMP(): SNMPAPI_FAILURE == m_pSession->hManagerEntity");
         return false;
@@ -88,6 +91,7 @@ bool CSNMP::InitSNMP(const char* szAgentIPAddress, const char* szCommunity, int 
     {
         dwLastError = SnmpGetLastError(m_pSession->hSnmpSession);
         SnmpUtilMemFree(m_pSession);
+        m_pSession = NULL;
         WSACleanup();
         DEBUG_LOG("CSNMP::Get(): SNMPAPI_FAILURE == m_pSession->hViewContext");
         return false;
@@ -97,16 +101,23 @@ bool CSNMP::InitSNMP(const char* szAgentIPAddress, const char* szCommunity, int 
 }
 void CSNMP::EndSNMP()
 {
-    if(m_pSession!=NULL)
+    if (m_pSession != NULL)
+    {
         SnmpUtilMemFree(m_pSession);
+        m_pSession = NULL;
+    }
     WSACleanup();
 }
 
 smiVALUE CSNMP::Get(const char* szOID, DWORD &dwLastError)
 {
+    memset(&m_nvalue, 0, sizeof(m_nvalue));
+
+    if (m_pSession == NULL)
+        return m_nvalue;
+
     m_pSession->nPduType = SNMP_PDU_GET; //Get
 
-    memset(&m_nvalue, 0, sizeof(m_nvalue));
     smiOID oid;
     SnmpStrToOid(szOID, &oid);
     m_pSession->hVbl = SnmpCreateVbl(m_pSession->hSnmpSession, &oid, NULL);

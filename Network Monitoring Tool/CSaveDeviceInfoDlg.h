@@ -4,6 +4,7 @@
 #include "CCustomText.h"
 #include "CCustomClock.h"
 #include "CDeviceConnected.h"
+#include "../EnzTCP/EnzTCP.h"
 // CSaveDeviceInfoDlg dialog
 #include <mutex>
 

@@ -179,7 +179,7 @@ bool CPacketListener::StartListeningEx(ULONG ulNICIP)
 	memset(szHostname, 0, sizeof(szHostname));
 
 	//m_bIsStopped = false;
-	m_socket = NULL;
+	m_socket = INVALID_SOCKET;
 	m_socket = socket(AF_INET, SOCK_RAW, IPPROTO_IP);
 	if (m_socket == INVALID_SOCKET)
 		return false;
@@ -204,7 +204,7 @@ bool CPacketListener::StartListeningEx(ULONG ulNICIP)
 	if (iResult != NULL)
 	{
 		closesocket(m_socket);
-		m_socket = NULL;
+		m_socket = INVALID_SOCKET;
 		return false;
 	}
 
@@ -225,7 +225,7 @@ bool CPacketListener::StartListeningEx(ULONG ulNICIP)
 	{
 		freeaddrinfo(result);
 		closesocket(m_socket);
-		m_socket = NULL;
+		m_socket = INVALID_SOCKET;
 		return false;
 	}
 
@@ -233,7 +233,7 @@ bool CPacketListener::StartListeningEx(ULONG ulNICIP)
 	{
 		freeaddrinfo(result);
 		closesocket(m_socket);
-		m_socket = NULL;
+		m_socket = INVALID_SOCKET;
 		return false;
 	}
 	CleanupHandles();
@@ -257,7 +257,7 @@ void CPacketListener::StopListeningEx()
 	if (m_socket!=INVALID_SOCKET)
 	{
 		closesocket(m_socket);
-		m_socket = NULL;
+		m_socket = INVALID_SOCKET;
 	}
 }
 
