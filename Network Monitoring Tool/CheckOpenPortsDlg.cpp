@@ -388,6 +388,8 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	m_hThreadNICListener = (HANDLE)_beginthreadex(NULL, 0, NICListenerThread, this, 0, NULL);
 	OnBnClickedButtonStartListenLan();
 	OnBnClickedButtonShowPackets();
+	m_ctrlBtnListenPackets.EnableWindow(FALSE);
+	m_ctrlBtnUnlistenPackets.EnableWindow(TRUE);
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
 
@@ -584,7 +586,12 @@ void CCheckOpenPortsDlg::OnClose()
 	OnBnClickedButtonStopListenLan();
 	OnBnClickedButtonStopSearchingOpenPorts();
 	OnBnClickedButtonStopPacket();
-	
+	if (m_pmodeless)
+	{
+		if(m_hNICPacketListener)
+			m_fnptrStopPacketListenerEx(m_hNICPacketListener);
+		m_pmodeless->OnBnClickedCancel();
+	}
 	if (IsLANStopped() && IsSearchingOpenPortStopped())
 	{
 		EnableCloseButton(false);
