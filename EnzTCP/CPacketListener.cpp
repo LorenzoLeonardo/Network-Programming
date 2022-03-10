@@ -60,7 +60,11 @@ void CPacketListener::PollingThread(void* args)
 	unsigned char* upBuffer = NULL;
 	
 	if (pBuffer == NULL)
+	{
+		DEBUG_LOG("CPacketListener: Out of Memory.");
+		DEBUG_LOG("CPacketListener: Thread Ended.");
 		return;
+	}
 	do
 	{
 		nBytes = recvfrom(pListener->GetSocket(), pBuffer, MAX_PACKET_SIZE, 0, NULL, 0);
@@ -79,7 +83,7 @@ void CPacketListener::PollingThread(void* args)
 unsigned _stdcall CPacketListener::PollingThreadEx(void* args)
 {
 	CPacketListener* pListener = (CPacketListener*)args;
-	DEBUG_LOG("CPacketListener: PollingThreadEx (" + to_string((ULONG_PTR)pListener->m_pObject) + ") Thread Started.");
+	DEBUG_LOG("CPacketListener: PollingThreadEx (" + to_string(GetCurrentThreadId()) + ") Thread Started.");
 	
 	int nBytes = 0;
 	char* pBuffer = (char*)malloc(MAX_PACKET_SIZE);
@@ -88,6 +92,8 @@ unsigned _stdcall CPacketListener::PollingThreadEx(void* args)
 	if (pBuffer == NULL)
 	{
 		SetEvent(pListener->m_hWaitThread);
+		DEBUG_LOG("CPacketListener: Out of Memory." + to_string(GetCurrentThreadId()));
+		DEBUG_LOG("CPacketListener: PollingThreadEx (" + to_string(GetCurrentThreadId()) + ") Thread Ended.");
 		return 0;
 	}
 	do
@@ -100,7 +106,7 @@ unsigned _stdcall CPacketListener::PollingThreadEx(void* args)
 
 	free(pBuffer);
 	pBuffer = NULL;
-	DEBUG_LOG("CPacketListener: PollingThreadEx ("+ to_string((ULONG_PTR)pListener->m_pObject) + ") Thread Ended.");
+	DEBUG_LOG("CPacketListener: PollingThreadEx ("+ to_string(GetCurrentThreadId()) + ") Thread Ended.");
 	SetEvent(pListener->m_hWaitThread);
 
 	return 0;

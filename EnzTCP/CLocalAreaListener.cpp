@@ -246,9 +246,13 @@ unsigned _stdcall CLocalAreaListener::MainThreadEx(void* args)
 			ulTemp = htonl(ulTemp);
 			inet_ntop(AF_INET, &ulTemp, szIP, sizeof(szIP));
 			CLANObject* obj = new CLANObject();
+			if (!obj)
+				break;
 			obj->m_pCLocalAreaListener = pCLocalAreaListener;
 			obj->ipAddress = szIP;
 			HANDLE hThread = (HANDLE)_beginthreadex(NULL, 0, MultiQueryingThreadEx, obj, 0, NULL);
+			if (!hThread)
+				break;
 			pCLocalAreaListener->m_mapThreadsEx[hThread] = i;
 		}
 		map<HANDLE, int>::iterator it = pCLocalAreaListener->m_mapThreadsEx.begin();
