@@ -41,7 +41,7 @@ inline void DEBUG_LOG(string logMsg, ...)
         len = vsnprintf(NULL, 0, logMsg.c_str(), arg);
         va_end(copy);
         if (len >= sizeof(loc_buf)) {
-            temp = (char*)malloc(sizeof(char) * (len + 1));
+            temp = (char*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(char) * (len + 1));
             if (temp == NULL) {
                 g_mutxLog.unlock();
                 return;
@@ -58,7 +58,7 @@ inline void DEBUG_LOG(string logMsg, ...)
         ofs.close();
         va_end(arg);
         if (len >= sizeof(loc_buf)) {
-            free(temp);
+            HeapFree(GetProcessHeap(),0, temp);
         }
         g_mutxLog.unlock();
     }
@@ -116,7 +116,7 @@ inline void DEBUG_LOG(wstring logMsg, ...)
         len = _vsnwprintf(NULL, 0, logMsg.c_str(), arg);
         va_end(copy);
         if (len >= (sizeof(loc_buf)/sizeof(wchar_t))) {
-            temp = (wchar_t*)malloc(sizeof(wchar_t) * (len + 1));
+            temp = (wchar_t*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(wchar_t) * (len + 1));
             if (temp == NULL) {
                 g_mutxLog.unlock();
                 return;
@@ -133,7 +133,7 @@ inline void DEBUG_LOG(wstring logMsg, ...)
         ofs.close();
         va_end(arg);
         if (len >= sizeof(loc_buf)) {
-            free(temp);
+            HeapFree(GetProcessHeap(), 0, temp);
         }
         g_mutxLog.unlock();
     }
