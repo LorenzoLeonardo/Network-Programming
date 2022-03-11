@@ -47,6 +47,7 @@ public:
 // Implementation
 protected:
 	DECLARE_MESSAGE_MAP()
+
 };
 
 CAboutDlg::CAboutDlg() : CDialogEx(IDD_ABOUTBOX)
@@ -59,6 +60,7 @@ void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 }
 
 BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
+
 END_MESSAGE_MAP()
 
 
@@ -164,24 +166,24 @@ BEGIN_MESSAGE_MAP(CCheckOpenPortsDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_STOP_PACKET, &CCheckOpenPortsDlg::OnBnClickedButtonStopPacket)
 	ON_BN_CLICKED(IDC_BUTTON_SHOW_PACKETS, &CCheckOpenPortsDlg::OnBnClickedButtonShowPackets)
 	ON_WM_MOUSEMOVE()
-	ON_WM_LBUTTONDOWN()
-	ON_WM_MOVE()
-	//ON_MESSAGE(WM_RESET_CONNECTION, OnResetConnection)
+	ON_WM_MOVE()	
 	ON_BN_CLICKED(IDC_CHECK_DEBUG, &CCheckOpenPortsDlg::OnBnClickedCheckDebug)
 	ON_CBN_SELCHANGE(IDC_COMBO_LIST_ADAPTER, &CCheckOpenPortsDlg::OnCbnSelchangeComboListAdapter)
-	ON_WM_SETFOCUS()
-	ON_WM_NCLBUTTONUP()
-	ON_WM_NCLBUTTONDOWN()
-	ON_WM_LBUTTONUP()
 	ON_WM_MOVING()
 	ON_WM_LBUTTONDBLCLK()
 	ON_WM_RBUTTONDBLCLK()
 	ON_WM_RBUTTONDOWN()
 	ON_WM_RBUTTONUP()
-	ON_WM_NCHITTEST()
+	ON_WM_NCMOUSELEAVE()
+	ON_BN_CLICKED(IDC_CHECK_INTERNET_ONLY, &CCheckOpenPortsDlg::OnBnClickedCheckInternetOnly)
+	ON_WM_NCLBUTTONDOWN()
+	ON_WM_NCLBUTTONUP()
 	ON_WM_NCMOUSEHOVER()
 	ON_WM_NCMOUSEMOVE()
-	ON_BN_CLICKED(IDC_CHECK_INTERNET_ONLY, &CCheckOpenPortsDlg::OnBnClickedCheckInternetOnly)
+	ON_WM_LBUTTONUP()
+	ON_WM_LBUTTONDOWN()
+	ON_WM_MOUSEHOVER()
+	ON_WM_MOUSELEAVE()
 END_MESSAGE_MAP()
 
 
@@ -481,6 +483,8 @@ void CCheckOpenPortsDlg::OnPaint()
 	}
 	else
 	{
+		if (m_pmodeless)
+			m_pmodeless->SetFocus();
 		CDialogEx::OnPaint();
 	}
 }
@@ -880,11 +884,11 @@ unsigned __stdcall  CCheckOpenPortsDlg::RouterThread(void* parg)
 				break;
 			}
 			ULONG ulDays = value.value.uNumber / 8640000;
-			float fRem = remainder(value.value.uNumber / (float)8640000, (float)8640000) - ulDays;
+			double fRem = remainder(value.value.uNumber / (float)8640000, (float)8640000) - ulDays;
 			ULONG ulHour = fRem * 24;
-			fRem = (float)(fRem * 24) - ulHour;
+			fRem = (double)(fRem * 24) - ulHour;
 			ULONG ulMin = fRem * 60;
-			fRem = (float)(fRem * 60) - ulMin;
+			fRem = (double)(fRem * 60) - ulMin;
 			ULONG ulSec = fRem * 60;
 
 			csFormat = _T("");
@@ -1455,6 +1459,7 @@ void CCheckOpenPortsDlg::OnBnClickedButtonShowPackets()
 			m_pmodeless = new CPacketInfoDlg(this);
 			m_pmodeless->Create(CPacketInfoDlg::IDD, GetDesktopWindow());
 			m_pmodeless->ShowWindow(SW_SHOW);
+			m_pmodeless->SetFocus();
 		}
 
 		m_pmodeless->GetClientRect(&m_rectModeless);
@@ -1523,49 +1528,49 @@ void CCheckOpenPortsDlg::OnMouseMove(UINT nFlags, CPoint point)
 }
 
 
-void CCheckOpenPortsDlg::OnLButtonDown(UINT nFlags, CPoint point)
-{
-	// TODO: Add your message handler code here and/or call default
-	RECT rect, rectDlg, translatedRect;
-	this->GetWindowRect(&rectDlg);
-	m_ctrlStaticLogo.GetWindowRect(&rect);
-	m_ctrlStaticLogo.GetClientRect(&translatedRect);
-
-	translatedRect.left = rect.left - rectDlg.left - 10;
-	translatedRect.top = rect.top - rectDlg.top - 30;
-	translatedRect.right = rect.right - rectDlg.left - 10;
-	translatedRect.bottom = rect.bottom - rectDlg.top - 30;
-
-	if ((translatedRect.left <= (point.x)) && ((point.x) <= translatedRect.right) &&
-		((translatedRect.top) <= point.y) && (point.y <= (translatedRect.bottom)))
-	{
-		ShellExecute(NULL, _T("open"), _T("https://m.me/Lorenzo.Leonardo.92"), NULL, NULL, SW_SHOWNORMAL);
-	}
-
-	this->GetWindowRect(&rectDlg);
-	m_ctrlStaticRouterImage.GetWindowRect(&rect);
-	m_ctrlStaticRouterImage.GetClientRect(&translatedRect);
-
-	translatedRect.left = rect.left - rectDlg.left - 10;
-	translatedRect.top = rect.top - rectDlg.top - 30;
-	translatedRect.right = rect.right - rectDlg.left - 10;
-	translatedRect.bottom = rect.bottom - rectDlg.top - 30;
-	if((translatedRect.left <= (point.x)) && ((point.x) <= translatedRect.right) &&
-		((translatedRect.top) <= point.y) && (point.y <= (translatedRect.bottom)))
-	{
-		CString csLink;
-		char szDefaultGateway[32];
-		memset(szDefaultGateway, 0, sizeof(szDefaultGateway));
-
-		m_pfnPtrGetDefaultGatewayEx(m_vAdapterInfo[m_nCurrentNICSelect].AdapterInfo.AdapterName, szDefaultGateway, sizeof(szDefaultGateway));
-		csLink = _T("http://");
-		csLink.AppendFormat(_T("%s"), CA2W(szDefaultGateway).m_szBuffer);
-		ShellExecute(NULL, _T("open"), csLink, NULL, NULL, SW_SHOWNORMAL);
-	}
-	if (m_pmodeless)
-		m_pmodeless->SetForegroundWindow();
-	CDialogEx::OnLButtonDown(nFlags, point);
-}
+//void CCheckOpenPortsDlg::OnLButtonDown(UINT nFlags, CPoint point)
+//{
+//	// TODO: Add your message handler code here and/or call default
+//	RECT rect, rectDlg, translatedRect;
+//	this->GetWindowRect(&rectDlg);
+//	m_ctrlStaticLogo.GetWindowRect(&rect);
+//	m_ctrlStaticLogo.GetClientRect(&translatedRect);
+//
+//	translatedRect.left = rect.left - rectDlg.left - 10;
+//	translatedRect.top = rect.top - rectDlg.top - 30;
+//	translatedRect.right = rect.right - rectDlg.left - 10;
+//	translatedRect.bottom = rect.bottom - rectDlg.top - 30;
+//
+//	if ((translatedRect.left <= (point.x)) && ((point.x) <= translatedRect.right) &&
+//		((translatedRect.top) <= point.y) && (point.y <= (translatedRect.bottom)))
+//	{
+//		ShellExecute(NULL, _T("open"), _T("https://m.me/Lorenzo.Leonardo.92"), NULL, NULL, SW_SHOWNORMAL);
+//	}
+//
+//	this->GetWindowRect(&rectDlg);
+//	m_ctrlStaticRouterImage.GetWindowRect(&rect);
+//	m_ctrlStaticRouterImage.GetClientRect(&translatedRect);
+//
+//	translatedRect.left = rect.left - rectDlg.left - 10;
+//	translatedRect.top = rect.top - rectDlg.top - 30;
+//	translatedRect.right = rect.right - rectDlg.left - 10;
+//	translatedRect.bottom = rect.bottom - rectDlg.top - 30;
+//	if((translatedRect.left <= (point.x)) && ((point.x) <= translatedRect.right) &&
+//		((translatedRect.top) <= point.y) && (point.y <= (translatedRect.bottom)))
+//	{
+//		CString csLink;
+//		char szDefaultGateway[32];
+//		memset(szDefaultGateway, 0, sizeof(szDefaultGateway));
+//
+//		m_pfnPtrGetDefaultGatewayEx(m_vAdapterInfo[m_nCurrentNICSelect].AdapterInfo.AdapterName, szDefaultGateway, sizeof(szDefaultGateway));
+//		csLink = _T("http://");
+//		csLink.AppendFormat(_T("%s"), CA2W(szDefaultGateway).m_szBuffer);
+//		ShellExecute(NULL, _T("open"), csLink, NULL, NULL, SW_SHOWNORMAL);
+//	}
+//	if (m_pmodeless)
+//		m_pmodeless->SetForegroundWindow();
+//	CDialogEx::OnLButtonDown(nFlags, point);
+//}
 
 
 void CCheckOpenPortsDlg::OnMove(int x, int y)
@@ -1883,47 +1888,47 @@ bool CCheckOpenPortsDlg::ProcessPacketListenerUploadEx(unsigned char* buffer, in
 	}
 	return true;
 }
-void CCheckOpenPortsDlg::OnSetFocus(CWnd* pOldWnd)
-{
-	if (m_pmodeless)
-		m_pmodeless->SetForegroundWindow();
-	CDialogEx::OnSetFocus(pOldWnd);
-	// TODO: Add your message handler code here
-}
+//void CCheckOpenPortsDlg::OnSetFocus(CWnd* pOldWnd)
+//{
+//	if (m_pmodeless)
+//		m_pmodeless->SetForegroundWindow();
+//	CDialogEx::OnSetFocus(pOldWnd);
+//	// TODO: Add your message handler code here
+//}
 
 
-void CCheckOpenPortsDlg::OnNcLButtonUp(UINT nHitTest, CPoint point)
-{
-	// TODO: Add your message handler code here and/or call default
-	if (m_pmodeless)
-		m_pmodeless->SetForegroundWindow();
-	CDialogEx::OnNcLButtonUp(nHitTest, point);
-}
+//void CCheckOpenPortsDlg::OnNcLButtonUp(UINT nHitTest, CPoint point)
+//{
+//	// TODO: Add your message handler code here and/or call default
+//	if (m_pmodeless)
+//		m_pmodeless->SetForegroundWindow();
+//	CDialogEx::OnNcLButtonUp(nHitTest, point);
+//}
 
 
-void CCheckOpenPortsDlg::OnNcLButtonDown(UINT nHitTest, CPoint point)
-{
-	// TODO: Add your message handler code here and/or call default
-	if (m_pmodeless)
-		m_pmodeless->SetForegroundWindow();
-	CDialogEx::OnNcLButtonDown(nHitTest, point);
-}
+//void CCheckOpenPortsDlg::OnNcLButtonDown(UINT nHitTest, CPoint point)
+//{
+//	// TODO: Add your message handler code here and/or call default
+//	if (m_pmodeless)
+//		m_pmodeless->SetForegroundWindow();
+//	CDialogEx::OnNcLButtonDown(nHitTest, point);
+//}
 
 
-void CCheckOpenPortsDlg::OnLButtonUp(UINT nFlags, CPoint point)
-{
-	// TODO: Add your message handler code here and/or call default
-	if(m_pmodeless)
-		m_pmodeless->SetForegroundWindow();
-	CDialogEx::OnLButtonUp(nFlags, point);
-}
+//void CCheckOpenPortsDlg::OnLButtonUp(UINT nFlags, CPoint point)
+//{
+//	// TODO: Add your message handler code here and/or call default
+//	if(m_pmodeless)
+//		m_pmodeless->SetForegroundWindow();
+//	CDialogEx::OnLButtonUp(nFlags, point);
+//}
 
 
 void CCheckOpenPortsDlg::OnMoving(UINT fwSide, LPRECT pRect)
 {
 
 	if (m_pmodeless)
-		m_pmodeless->SetForegroundWindow();
+		m_pmodeless->SetFocus();
 	// TODO: Add your message handler code here
 	CDialogEx::OnMoving(fwSide, pRect);
 }
@@ -1933,7 +1938,7 @@ void CCheckOpenPortsDlg::OnLButtonDblClk(UINT nFlags, CPoint point)
 {
 	// TODO: Add your message handler code here and/or call default
 	if (m_pmodeless)
-		m_pmodeless->SetForegroundWindow();
+		m_pmodeless->SetFocus();
 	CDialogEx::OnLButtonDblClk(nFlags, point);
 }
 
@@ -1942,7 +1947,7 @@ void CCheckOpenPortsDlg::OnRButtonDblClk(UINT nFlags, CPoint point)
 {
 	// TODO: Add your message handler code here and/or call default
 	if (m_pmodeless)
-		m_pmodeless->SetForegroundWindow();
+		m_pmodeless->SetFocus();
 	CDialogEx::OnRButtonDblClk(nFlags, point);
 }
 
@@ -1951,7 +1956,7 @@ void CCheckOpenPortsDlg::OnRButtonDown(UINT nFlags, CPoint point)
 {
 	// TODO: Add your message handler code here and/or call default
 	if (m_pmodeless)
-		m_pmodeless->SetForegroundWindow();
+		m_pmodeless->SetFocus();
 	CDialogEx::OnRButtonDown(nFlags, point);
 }
 
@@ -1960,37 +1965,8 @@ void CCheckOpenPortsDlg::OnRButtonUp(UINT nFlags, CPoint point)
 {
 	// TODO: Add your message handler code here and/or call default
 	if (m_pmodeless)
-		m_pmodeless->SetForegroundWindow();
+		m_pmodeless->SetFocus();
 	CDialogEx::OnRButtonUp(nFlags, point);
-}
-
-
-LRESULT CCheckOpenPortsDlg::OnNcHitTest(CPoint point)
-{
-	// TODO: Add your message handler code here and/or call default
-	if (m_pmodeless)
-		m_pmodeless->SetForegroundWindow();
-	return CDialogEx::OnNcHitTest(point);
-}
-
-
-void CCheckOpenPortsDlg::OnNcMouseHover(UINT nFlags, CPoint point)
-{
-	// This feature requires Windows 2000 or greater.
-	// The symbols _WIN32_WINNT and WINVER must be >= 0x0500.
-	// TODO: Add your message handler code here and/or call default
-	if (m_pmodeless)
-		m_pmodeless->SetForegroundWindow();
-	CDialogEx::OnNcMouseHover(nFlags, point);
-}
-
-
-void CCheckOpenPortsDlg::OnNcMouseMove(UINT nHitTest, CPoint point)
-{
-	// TODO: Add your message handler code here and/or call default
-	if (m_pmodeless)
-		m_pmodeless->SetForegroundWindow();
-	CDialogEx::OnNcMouseMove(nHitTest, point);
 }
 
 
@@ -2034,4 +2010,90 @@ void CCheckOpenPortsDlg::OnOK()
 	// TODO: Add your specialized code here and/or call the base class
 
 	CDialogEx::OnOK();
+}
+
+
+void CCheckOpenPortsDlg::OnNcLButtonDown(UINT nHitTest, CPoint point)
+{
+	// TODO: Add your message handler code here and/or call default
+	if (m_pmodeless)
+		m_pmodeless->SetFocus();
+	CDialogEx::OnNcLButtonDown(nHitTest, point);
+}
+
+
+void CCheckOpenPortsDlg::OnNcLButtonUp(UINT nHitTest, CPoint point)
+{
+	// TODO: Add your message handler code here and/or call default
+	if (m_pmodeless)
+		m_pmodeless->SetFocus();
+	CDialogEx::OnNcLButtonUp(nHitTest, point);
+}
+
+
+void CCheckOpenPortsDlg::OnNcMouseHover(UINT nFlags, CPoint point)
+{
+	// This feature requires Windows 2000 or greater.
+	// The symbols _WIN32_WINNT and WINVER must be >= 0x0500.
+	// TODO: Add your message handler code here and/or call default
+	if (m_pmodeless)
+		m_pmodeless->SetFocus();
+	CDialogEx::OnNcMouseHover(nFlags, point);
+}
+
+
+void CCheckOpenPortsDlg::OnNcMouseMove(UINT nHitTest, CPoint point)
+{
+	// TODO: Add your message handler code here and/or call default
+	if (m_pmodeless)
+		m_pmodeless->SetFocus();
+	CDialogEx::OnNcMouseMove(nHitTest, point);
+}
+
+
+
+void CCheckOpenPortsDlg::OnNcMouseLeave()
+{
+	// This feature requires Windows 2000 or greater.
+	// The symbols _WIN32_WINNT and WINVER must be >= 0x0500.
+	// TODO: Add your message handler code here and/or call default
+	if (m_pmodeless)
+		m_pmodeless->SetFocus();
+	CDialogEx::OnNcMouseLeave();
+}
+
+
+void CCheckOpenPortsDlg::OnLButtonUp(UINT nFlags, CPoint point)
+{
+	// TODO: Add your message handler code here and/or call default
+	if (m_pmodeless)
+		m_pmodeless->SetFocus();
+	CDialogEx::OnLButtonUp(nFlags, point);
+}
+
+
+void CCheckOpenPortsDlg::OnLButtonDown(UINT nFlags, CPoint point)
+{
+	// TODO: Add your message handler code here and/or call default
+	if (m_pmodeless)
+		m_pmodeless->SetFocus();
+	CDialogEx::OnLButtonDown(nFlags, point);
+}
+
+
+void CCheckOpenPortsDlg::OnMouseHover(UINT nFlags, CPoint point)
+{
+	// TODO: Add your message handler code here and/or call default
+	if (m_pmodeless)
+		m_pmodeless->SetFocus();
+	CDialogEx::OnMouseHover(nFlags, point);
+}
+
+
+void CCheckOpenPortsDlg::OnMouseLeave()
+{
+	// TODO: Add your message handler code here and/or call default
+	if (m_pmodeless)
+		m_pmodeless->SetFocus();
+	CDialogEx::OnMouseLeave();
 }
