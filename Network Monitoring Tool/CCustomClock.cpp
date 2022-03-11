@@ -118,7 +118,7 @@ void CCustomClock::DrawClock(CClientDC* dcSrc, int x, int y)
 	dcSrc->SetTextColor(m_textColor);
 	dcSrc->SetBkColor(m_textBKColor);
 	dcSrc->TextOut(x, m_nFontSize + y, csDate, csDate.GetLength());
-	csDate.Format(_T("%s, %s %02d, %04d"), CalcDayOfWeek(sysTime.wYear, sysTime.wMonth, sysTime.wDay), GetMonthName(sysTime.wMonth), sysTime.wDay, sysTime.wYear);
+	csDate.Format(_T("%s, %s %02d, %04d"), CalcDayOfWeek(sysTime.wYear, sysTime.wMonth, sysTime.wDay).GetBuffer(), GetMonthName(sysTime.wMonth).GetBuffer(), sysTime.wDay, sysTime.wYear);
 	dcSrc->TextOut(x, m_nFontSize + y, csDate, csDate.GetLength());
 	GetTextExtentPoint32(dcSrc->GetSafeHdc(), csDate, csDate.GetLength(), &size);
 	GetTextMetrics(dcSrc->GetSafeHdc(), &tm);

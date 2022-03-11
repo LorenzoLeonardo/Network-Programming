@@ -86,8 +86,8 @@ unsigned _stdcall CPacketListener::PollingThreadEx(void* args)
 	DEBUG_LOG("CPacketListener: PollingThreadEx (" + to_string(GetCurrentThreadId()) + ") Thread Started.");
 	
 	int nBytes = 0;
-	char* pBuffer = (char*)malloc(MAX_PACKET_SIZE);
-	unsigned char* upBuffer = NULL;
+	unsigned char* pBuffer = (unsigned char*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, MAX_PACKET_SIZE);
+
 
 	if (pBuffer == NULL)
 	{
@@ -98,13 +98,12 @@ unsigned _stdcall CPacketListener::PollingThreadEx(void* args)
 	}
 	do
 	{
-		nBytes = recvfrom(pListener->GetSocket(), pBuffer, MAX_PACKET_SIZE, 0, NULL, 0);
-		upBuffer = reinterpret_cast<unsigned char*> (pBuffer);
-		pListener->m_fnCallbackDisplayEx(upBuffer, nBytes, pListener->m_pObject);
-		memset(upBuffer, 0, MAX_PACKET_SIZE);
+		nBytes = recvfrom(pListener->GetSocket(), (char* )pBuffer, MAX_PACKET_SIZE, 0, NULL, 0);
+
+		pListener->m_fnCallbackDisplayEx(pBuffer, nBytes, pListener->m_pObject);
 	} while ((nBytes > 0) && (WaitForSingleObject(pListener->m_hStopThread,0)!= WAIT_OBJECT_0));
 
-	free(pBuffer);
+	HeapFree(GetProcessHeap(), 0, pBuffer);
 	pBuffer = NULL;
 	DEBUG_LOG("CPacketListener: PollingThreadEx ("+ to_string(GetCurrentThreadId()) + ") Thread Ended.");
 	SetEvent(pListener->m_hWaitThread);

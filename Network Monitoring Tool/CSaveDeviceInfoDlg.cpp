@@ -167,7 +167,7 @@ bool CSaveDeviceInfoDlg::SaveDeviceName()
 	CString csDevName, csMacAddress;
 	HKEY hKey;
 	DWORD dwError = 0;
-
+	bool bRet = false;
 	m_fnptrStopPacketListenerEx(m_hPacketListener);
 	m_ctrlEditDevicename.GetWindowText(csDevName);
 	m_ctrlEditMACAddress.GetWindowText(csMacAddress);
@@ -184,11 +184,12 @@ bool CSaveDeviceInfoDlg::SaveDeviceName()
 		LONG setRes = RegSetValueEx(hKey, csMacAddress, 0, REG_SZ, (LPBYTE)csDevName.GetBuffer(), sizeof(TCHAR) * csDevName.GetLength());
 
 		if (setRes == ERROR_SUCCESS)
-			return true;
+			bRet = true;
 		else
-			return false;
+			bRet = false;
 	}
-	return false;
+	RegCloseKey(hKey);
+	return bRet;
 }
 
 

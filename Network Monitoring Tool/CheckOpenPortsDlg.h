@@ -152,8 +152,6 @@ public:
 	afx_msg void OnBnClickedButtonStopPacket();
 	afx_msg void OnBnClickedButtonShowPackets();
 
-	inline string UnicodeToMultiByte(wstring& wstr);
-	inline wstring MultiByteToUnicode(string& wstr);
 	inline void DisplayUploadSpeed(CString szIPAddress, int nColumn, double ldData);
 	inline void DisplayDownloadSpeed(CString szIPAddress, int nColumn, double ldData);
 
@@ -299,7 +297,7 @@ protected:
 
 	CEdit m_ctrlResult;
 	CEdit m_ctrlEditAdapterInfo;
-	CEdit m_ctrlEditPollingTime;
+	//CEdit m_ctrlEditPollingTime;
 	CEdit m_ctrlEditPacketReportArea;
 	CEdit m_ctrlEditDownloadSpeed;
 	CEdit m_ctrlEditUploadSpeed;

@@ -126,39 +126,32 @@ void  CCheckOpenPortsApp::ElevateProcess()
 
 int CCheckOpenPortsApp::ProcessAppToFirewall(LPCTSTR szAppName)
 {
-	CFirewall* firewall = new CFirewall();
+	CFirewall firewall;
 	HRESULT hr = S_OK;
 	INetFwProfile* fwProfile = NULL;
-	TCHAR* szFileNamePath = NULL;
+	TCHAR szFileNamePath[MAX_PATH];
 	BOOL bIsAppEnable = false;
-	DWORD dwSize = sizeof(TCHAR) * (MAX_PATH + 1);
 
-	szFileNamePath = (TCHAR*)malloc(dwSize);
-	if (!szFileNamePath)
-		return 0;
-	memset(szFileNamePath, 0, dwSize);
-	GetModuleFileName(NULL, szFileNamePath, dwSize);
+	memset(szFileNamePath, 0, sizeof(szFileNamePath));
+
+	GetModuleFileName(NULL, szFileNamePath, sizeof(szFileNamePath));
 
 	// Initialize COM.
-	if (firewall->InitializeCOM())
+	if (firewall.InitializeCOM())
 	{
-		hr = firewall->WindowsFirewallInitialize(&fwProfile);
+		hr = firewall.WindowsFirewallInitialize(&fwProfile);
 		if (FAILED(hr))
 		{
 			DEBUG_LOG(_T("WindowsFirewallInitialize failed: 0x%08lx\n"), hr);
-			firewall->UninitializeCOM();
-			free(szFileNamePath);
-			delete firewall;
+			firewall.UninitializeCOM();
 			return false;
 		}
-		hr = firewall->WindowsFirewallAppIsEnabled(fwProfile, szFileNamePath, &bIsAppEnable);
+		hr = firewall.WindowsFirewallAppIsEnabled(fwProfile, szFileNamePath, &bIsAppEnable);
 		if (FAILED(hr))
 		{
 			DEBUG_LOG(_T("WindowsFirewallAddApp failed: 0x%08lx\n"), hr);
-			firewall->WindowsFirewallCleanup(fwProfile);
-			firewall->UninitializeCOM();
-			free(szFileNamePath);
-			delete firewall;
+			firewall.WindowsFirewallCleanup(fwProfile);
+			firewall.UninitializeCOM();
 			return false;
 		}
 		if (!bIsAppEnable)
@@ -168,30 +161,47 @@ int CCheckOpenPortsApp::ProcessAppToFirewall(LPCTSTR szAppName)
 			int bRet = ::MessageBox(GetMainWnd()->GetSafeHwnd(), csMsg, _T("Enzo Tech Network Monitoring Tool"), MB_YESNO | MB_ICONQUESTION);
 			if (IDYES == bRet)
 			{
-				hr = firewall->WindowsFirewallAddApp(fwProfile, szFileNamePath, szAppName);
+				hr = firewall.WindowsFirewallAddApp(fwProfile, szFileNamePath, szAppName);
 				if (FAILED(hr))
 				{
 					DEBUG_LOG(_T("WindowsFirewallAddApp failed: 0x%08lx\n"), hr);
-					firewall->WindowsFirewallCleanup(fwProfile);
-					firewall->UninitializeCOM();
-					free(szFileNamePath);
-					delete firewall;
+					firewall.WindowsFirewallCleanup(fwProfile);
+					firewall.UninitializeCOM();
 					return false;
 				}
 			}
 
 		}
 	}
-	free(szFileNamePath);
-	firewall->WindowsFirewallCleanup(fwProfile);
-	firewall->UninitializeCOM();
-	delete firewall;
+	firewall.WindowsFirewallCleanup(fwProfile);
+	firewall.UninitializeCOM();
+
 	return true;
 }
 
 BOOL CCheckOpenPortsApp::InitInstance()
 {
+	// InitCommonControlsEx() is required on Windows XP if an application
+// manifest specifies use of ComCtl32.dll version 6 or later to enable
+// visual styles.  Otherwise, any window creation will fail.
+	INITCOMMONCONTROLSEX InitCtrls;
+	InitCtrls.dwSize = sizeof(InitCtrls);
+	// Set this to include all the common control classes you want to use
+	// in your application.
+	InitCtrls.dwICC = ICC_WIN95_CLASSES;
+	InitCommonControlsEx(&InitCtrls);
+
 	CWinApp::InitInstance();
+
+	AfxEnableControlContainer();
+	
+	CShellManager* pShellManager = new CShellManager;
+
+	// Activate "Windows Native" visual manager for enabling themes in MFC controls
+	CMFCVisualManager::SetDefaultManager(RUNTIME_CLASS(CMFCVisualManagerWindows));
+
+	SetRegistryKey(_T("Local AppWizard-Generated Applications"));
+
 	if (!IsAdministrator())
 	{
 		CString csMsg;
@@ -205,18 +215,31 @@ BOOL CCheckOpenPortsApp::InitInstance()
 			ElevateProcess();
 	}
 	ProcessAppToFirewall(_T("Enzo Tech Network Monitoring Tool"));
-	CShellManager *pShellManager = new CShellManager;
 
-	SetRegistryKey(_T("Local AppWizard-Generated Applications"));
 	CCheckOpenPortsDlg dlg;
-	
 	m_pMainWnd = &dlg;
 	INT_PTR nResponse = dlg.DoModal();
+	if (nResponse == IDOK)
+	{
+		// TODO: Place code here to handle when the dialog is
+		//  dismissed with OK
+	}
+	else if (nResponse == IDCANCEL)
+	{
+		// TODO: Place code here to handle when the dialog is
+		//  dismissed with Cancel
+	}
+	else if (nResponse == -1)
+	{
+		TRACE(traceAppMsg, 0, "Warning: dialog creation failed, so application is terminating unexpectedly.\n");
+		TRACE(traceAppMsg, 0, "Warning: if you are using MFC controls on the dialog, you cannot #define _AFX_NO_MFC_CONTROLS_IN_DIALOGS.\n");
+	}
 
-	
 	// Delete the shell manager created above.
 	if (pShellManager != nullptr)
+	{
 		delete pShellManager;
+	}
 	
 
 #if !defined(_AFXDLL) && !defined(_AFX_NO_MFC_CONTROLS_IN_DIALOGS)

@@ -37,8 +37,7 @@ BOOL APIENTRY DllMain(HMODULE hModule,
         }
         if (g_pLocalAreaListener != NULL)
         {
-  
-            delete g_pLocalAreaListener;
+             delete g_pLocalAreaListener;
             g_pLocalAreaListener = NULL;
         }
         if (g_pPacketListener != NULL)
@@ -96,9 +95,10 @@ void ENZTCPLIBRARY_API CloseServer(HANDLE hHandle)
 
 HANDLE ENZTCPLIBRARY_API ConnectToServer(const char* ipAddress, const char* portNum, int* pnlastError)
 {
+    CSocketClient* pSocket = NULL;
     try
     {
-        CSocketClient* pSocket = new CSocketClient(ipAddress, portNum);
+        pSocket = new CSocketClient(ipAddress, portNum);
         int nLastError = 0;
         if (pSocket == NULL)
             throw (HANDLE)SOCKET_ERROR;
@@ -116,6 +116,11 @@ HANDLE ENZTCPLIBRARY_API ConnectToServer(const char* ipAddress, const char* port
     catch (HANDLE nError)
     {
         DEBUG_LOG("ConnectToServer(): Exception (" + to_string((ULONG_PTR)nError) + ")");
+        if (pSocket)
+        {
+            delete pSocket;
+            pSocket = NULL;
+        }
         return nError;
     }
 }
@@ -186,6 +191,11 @@ bool ENZTCPLIBRARY_API StartLocalAreaListening(const char* ipAddress, const char
     catch (int nError)
     {
         DEBUG_LOG("StartLocalAreaListening(): Exception (" + to_string(nError) + ")");
+        if (g_pLocalAreaListener != NULL)
+        {
+            delete g_pLocalAreaListener;
+            g_pLocalAreaListener = NULL;
+        }
         return nError == 0;
     }
     return true;
@@ -260,6 +270,11 @@ bool ENZTCPLIBRARY_API StartPacketListener(FNCallbackPacketListener fnpPtr)
         catch (int nError)
         {
             DEBUG_LOG("StartPacketListener(): Exception (" + to_string(nError) + ")");
+            if (g_pPacketListener != NULL)
+            {
+                delete g_pPacketListener;
+                g_pPacketListener = NULL;
+            }
             return !(nError==INVALID_SOCKET);
         }
     }
@@ -311,6 +326,11 @@ bool ENZTCPLIBRARY_API GetNetworkDeviceStatus(const char* ipAddress, char* hostn
         {
             *pError = nError;
             DEBUG_LOG("GetNetworkDeviceStatus(): Exception (" + to_string(nError) + ")");
+            if (g_pICMP)
+            {
+                delete g_pICMP;
+                g_pICMP = NULL;
+            }
             return bRet;
         }
     }
@@ -341,7 +361,7 @@ bool ENZTCPLIBRARY_API EnumNetworkAdapters(FuncAdapterList pFunc)
 
     if (GetAdaptersInfo(pAdapterInfo, &ulOutBufLen) == ERROR_BUFFER_OVERFLOW) 
     {
-        pAdapterInfo = (PIP_ADAPTER_INFO)malloc(ulOutBufLen);
+        pAdapterInfo = (PIP_ADAPTER_INFO)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, ulOutBufLen);
         if (pAdapterInfo)
         {
             if (GetAdaptersInfo(pAdapterInfo, &ulOutBufLen) == NO_ERROR)
@@ -365,7 +385,7 @@ bool ENZTCPLIBRARY_API EnumNetworkAdapters(FuncAdapterList pFunc)
 
     if (pAdapterInfo)
     {
-        free(pAdapterInfo);
+        HeapFree(GetProcessHeap(), 0, pAdapterInfo);
         pAdapterInfo = NULL;
     }
     return bRet;
@@ -382,7 +402,12 @@ HANDLE ENZTCPLIBRARY_API CreatePacketListenerEx(FNCallbackPacketListenerEx fnpPt
     catch (int nError)
     {
         DEBUG_LOG("CreatePacketListenerEx(): Exception ("+to_string(nError)+")");
-        return NULL;
+        if (pPacketListener)
+        {
+            delete pPacketListener;
+            pPacketListener = NULL;
+        }
+        return pPacketListener;
     }
 }
 
@@ -434,6 +459,11 @@ HANDLE ENZTCPLIBRARY_API CreateLocalAreaListenerEx()
     catch (int nError)
     {
         DEBUG_LOG("CreateLocalAreaListenerEx(): Exception (" + to_string(nError) + ")");
+        if (pLanListener)
+        {
+            delete pLanListener;
+            pLanListener = NULL;
+        }
         return pLanListener;
     }
 }
