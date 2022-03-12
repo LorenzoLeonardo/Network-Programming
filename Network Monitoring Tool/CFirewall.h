@@ -23,7 +23,7 @@ public:
     HRESULT WindowsFirewallPortIsEnabled(IN INetFwProfile* fwProfile, IN LONG portNumber, IN NET_FW_IP_PROTOCOL ipProtocol, OUT BOOL* fwPortEnabled);
     HRESULT WindowsFirewallAddApp(IN INetFwProfile* fwProfile, IN const wchar_t* fwProcessImageFileName, IN const wchar_t* fwName );
     HRESULT WindowsFirewallAppIsEnabled(IN INetFwProfile* fwProfile,IN const wchar_t* fwProcessImageFileName,OUT BOOL* fwAppEnabled);
-    void WindowsFirewallCleanup(IN INetFwProfile* fwProfile);
+    void WindowsFirewallCleanup(IN INetFwProfile* &fwProfile);
     HRESULT WindowsFirewallInitialize(OUT INetFwProfile** fwProfile);
 };
 

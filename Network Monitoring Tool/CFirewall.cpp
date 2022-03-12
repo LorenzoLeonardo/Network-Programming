@@ -93,7 +93,7 @@ error:
 }
 
 
-void CFirewall::WindowsFirewallCleanup(IN INetFwProfile* fwProfile)
+void CFirewall::WindowsFirewallCleanup(IN INetFwProfile* &fwProfile)
 {
     // Release the firewall profile.
     if (fwProfile != NULL)
