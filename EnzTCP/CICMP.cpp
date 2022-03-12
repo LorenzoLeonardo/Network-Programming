@@ -132,6 +132,7 @@ bool CICMP::Ping(HANDLE hIcmpFile,string sSrc, string sDest, IPAddr &dest, UCHAR
         }
         free(pDataReply);
     }
+    IcmpCloseHandle(hIcmpFile);
     return bRet;
 }
 bool CICMP::CheckDeviceEx(string ipAddress, string& hostname, string& sMacAddress)
@@ -293,10 +294,8 @@ bool CICMP::CheckDevice(string ipAddress, string& hostname, string& sMacAddress)
     if (hostname.empty())
         return bRet;
     
-    if(inet_pton(AF_INET, ipAddress.c_str(), &ipDest)!=1)
-    {
-        return false;
-    }
+    inet_pton(AF_INET, ipAddress.c_str(), &ipDest);
+
 
     ULONG MacAddr[2];
     ULONG PhysAddrLen = 6;
@@ -331,13 +330,19 @@ bool CICMP::CheckDevice(string ipAddress, string& hostname, string& sMacAddress)
         }
         bRet = true;
     }
-    else
+    else if (dwRetVal == ERROR_BAD_NET_NAME)
     {
         char szIP[32];
         inet_ntop(AF_INET, &ipDest, szIP, sizeof(szIP));
         string sIP(szIP);
-
+        if (Ping(IcmpCreateFile(), m_HostIP, sIP, ipDest, (UCHAR)POLLING_TIME))
+            bRet = true;
+        else
             bRet = false;
+    }
+    else
+    {
+        bRet = false;
     }
 
     return bRet;
@@ -407,14 +412,25 @@ bool CICMP::CheckDevice(string ipAddress, string& hostname, string& sMacAddress,
         }
         bRet = true;
     }
-    else
+    else if (dwRetVal == ERROR_BAD_NET_NAME)
     {
-        *pError = dwRetVal;
         char szIP[32];
         inet_ntop(AF_INET, &ipDest, szIP, sizeof(szIP));
         string sIP(szIP);
-
-        //DEBUG_LOG("CICMP::CheckDevice(): SendARP(" + sIP + ") Error:" + to_string(dwRetVal));
+        if (Ping(IcmpCreateFile(), m_HostIP, sIP, ipDest, (UCHAR)POLLING_TIME))
+        {
+            bRet = true;
+            *pError = ERROR_SUCCESS;
+        }
+        else
+        {
+            bRet = false;
+            *pError = dwRetVal;
+        }
+    }
+    else
+    {
+        *pError = dwRetVal;
         bRet = false;
     }
     return bRet;
