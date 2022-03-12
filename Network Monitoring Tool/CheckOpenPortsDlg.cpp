@@ -564,6 +564,7 @@ void CCheckOpenPortsDlg::OnClose()
 	OnBnClickedButtonStopListenLan();
 	OnBnClickedButtonStopSearchingOpenPorts();
 	OnBnClickedButtonStopPacket();
+	
 	if (m_pmodeless)
 	{
 		if(m_hNICPacketListener)
@@ -572,24 +573,9 @@ void CCheckOpenPortsDlg::OnClose()
 	}
 	if (IsLANStopped() && IsSearchingOpenPortStopped())
 	{
-	//	EnableCloseButton(false);
+		EnableCloseButton(false);
 		m_bHasClickClose = TRUE;
-		if (m_hThreadRouter)
-		{
-			WaitForSingleObject(m_hThreadRouter, INFINITE);
-			CloseHandle(m_hThreadRouter);
-		}
 
-		
-		
-		//Listening of Main Router Information
-
-		//Clock Thread
-		if (m_hThreadClock)
-		{
-			WaitForSingleObject(m_hThreadClock, INFINITE);
-			CloseHandle(m_hThreadClock);
-		}
 		//Tjhrea for checking if additional NIC is added
 		if (m_hThreadNICListener)
 		{
@@ -640,12 +626,26 @@ void CCheckOpenPortsDlg::OnClose()
 		}
 		m_mConnected.clear();
 
-		m_pfnPtrEndSNMP();
+		//Listening of Main Router Information
+		if (m_hThreadRouter)
+		{
+			WaitForSingleObject(m_hThreadRouter, INFINITE);
+			CloseHandle(m_hThreadRouter);
+			m_pfnPtrEndSNMP();
+		}
+		//Clock Thread
+		if (m_hThreadClock)
+		{
+			WaitForSingleObject(m_hThreadClock, INFINITE);
+			CloseHandle(m_hThreadClock);
+		}
+
+
 		if(m_hDLLhandle)
 			FreeLibrary(m_hDLLhandle);
 	
-		CDialogEx::OnClose();
-		//OnOK();
+		
+		OnOK();
 	}
 	else
 	{
@@ -820,13 +820,13 @@ unsigned __stdcall  CCheckOpenPortsDlg::RouterThread(void* parg)
 				return 0;
 			}
 	#ifdef UNICODE
-			sTemp = (char*)malloc(sizeof(char) * (value.value.sNumber + 1));
+			sTemp = (char*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY, sizeof(char) * (value.value.sNumber + 1));
 			if (sTemp)
 			{
 				memset(sTemp, 0, sizeof(char) * (value.value.sNumber + 1));
 				memcpy_s(sTemp, sizeof(char) * (value.value.sNumber), value.value.string.ptr, value.value.sNumber);
 				csBrand = CA2W(sTemp);
-				free(sTemp);
+				HeapFree(GetProcessHeap(), 0, sTemp);
 				sTemp = NULL;
 			}
 	#else		
@@ -839,13 +839,13 @@ unsigned __stdcall  CCheckOpenPortsDlg::RouterThread(void* parg)
 				return 0;
 			}
 	#ifdef UNICODE
-			sTemp = (char*)malloc(sizeof(char) * (value.value.sNumber + 1));
+			sTemp = (char*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(char) * (value.value.sNumber + 1));
 			if (sTemp)
 			{
 				memset(sTemp, 0, sizeof(char) * (value.value.sNumber + 1));
 				memcpy_s(sTemp, sizeof(char) * (value.value.sNumber), value.value.string.ptr, value.value.sNumber);
 				csModel = CA2W(sTemp);
-				free(sTemp);
+				HeapFree(GetProcessHeap(), 0, sTemp);
 				sTemp = NULL;
 			}
 	#else
@@ -860,13 +860,13 @@ unsigned __stdcall  CCheckOpenPortsDlg::RouterThread(void* parg)
 			}
 	#ifdef UNICODE
 
-			sTemp = (char*)malloc(sizeof(char) * (value.value.sNumber + 1));
+			sTemp = (char*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(char) * (value.value.sNumber + 1));
 			if (sTemp)
 			{
 				memset(sTemp, 0, sizeof(char) * (value.value.sNumber + 1));
 				memcpy_s(sTemp, sizeof(char) * (value.value.sNumber), value.value.string.ptr, value.value.sNumber);
 				csDesc = CA2W(sTemp);
-				free(sTemp);
+				HeapFree(GetProcessHeap(), 0, sTemp);
 				sTemp = NULL;
 			}
 	#else
@@ -1117,8 +1117,6 @@ void CCheckOpenPortsDlg::ProcessLANListener(const char* ipAddress, const char* h
 							m_ctrlLANConnected.SetItemText(j, 0, to_wstring(j + 1).c_str());
 						}
 
-						m_fnptrStopPacketListenerEx(m_mConnected[it->first]->m_hPacketListenerDownload);
-						m_fnptrStopPacketListenerEx(m_mConnected[it->first]->m_hPacketListenerUpload);
 						m_fnptrDeletePacketListenerEx(m_mConnected[it->first]->m_hPacketListenerDownload);
 						m_fnptrDeletePacketListenerEx(m_mConnected[it->first]->m_hPacketListenerUpload);
 

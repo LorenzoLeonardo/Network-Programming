@@ -202,7 +202,7 @@ BOOL CCheckOpenPortsApp::InitInstance()
 
 	SetRegistryKey(_T("Local AppWizard-Generated Applications"));
 
-	if (!IsAdministrator())
+/*	if (!IsAdministrator())
 	{
 		CString csMsg;
 
@@ -214,7 +214,7 @@ BOOL CCheckOpenPortsApp::InitInstance()
 		else
 			ElevateProcess();
 	}
-	ProcessAppToFirewall(_T("Enzo Tech Network Monitoring Tool"));
+	ProcessAppToFirewall(_T("Enzo Tech Network Monitoring Tool"));*/
 
 	CCheckOpenPortsDlg dlg;
 	m_pMainWnd = &dlg;

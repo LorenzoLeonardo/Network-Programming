@@ -12,7 +12,7 @@ typedef bool (*FNCallbackPacketListenerEx)(unsigned char* buffer, int nSize, voi
 typedef HANDLE(*FNPTRCreatePacketListenerEx)(FNCallbackPacketListenerEx, void*);
 typedef bool (*FNPTRStartPacketListenerEx)(HANDLE);
 typedef void (*FNPTRStopPacketListenerEx)(HANDLE);
-typedef void (*FNPTRDeletePacketListenerEx)(HANDLE);
+typedef void (*FNPTRDeletePacketListenerEx)(HANDLE &);
 
 class CSpeedObj
 {

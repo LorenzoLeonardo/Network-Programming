@@ -53,11 +53,11 @@ typedef HANDLE(*FNPTRCreatePacketListenerEx)(FNCallbackPacketListenerEx, void*);
 typedef bool (*FNPTRStartPacketListenerEx)(HANDLE);
 typedef void (*FNPTRStopPacketListenerEx)(HANDLE);
 typedef void (*FNPTRWaitPacketListenerEx)(HANDLE);
-typedef void (*FNPTRDeletePacketListenerEx)(HANDLE);
+typedef void (*FNPTRDeletePacketListenerEx)(HANDLE &);
 typedef HANDLE (*FNPTRCreateLocalAreaListenerEx)();
 typedef	bool (*FNPTRStartLocalAreaListenerEx)(HANDLE, const char* ipAddress, const char* subNetMask, FNCallbackLocalAreaListener fnpPtr, int nPollingTimeMS);
 typedef void (*FNPTRStopLocalAreaListenerEx)(HANDLE);
-typedef void (*FNPTRDeleteLocalAreaListenerEx)(HANDLE);
+typedef void (*FNPTRDeleteLocalAreaListenerEx)(HANDLE &);
 typedef void (*FNPTRSetNICAdapterToUse)(const char* szAdapterName, ULONG ipAddress);
 
 template <typename Map>

@@ -8,15 +8,15 @@
 #include "CPacketListener.h"
 #include "DebugLog.h"
 
-COpenPortListener* g_pOpenPorts = NULL;
-CLocalAreaListener* g_pLocalAreaListener = NULL;
-CPacketListener* g_pPacketListener = NULL;
-CSNMP*   g_SNMP = NULL;
-CICMP* g_pICMP = NULL;
-char g_szAdapterName[MAX_ADAPTER_NAME_LENGTH + 4];
-ULONG g_ulAdapterIP;
+static COpenPortListener* g_pOpenPorts = NULL;
+static CLocalAreaListener* g_pLocalAreaListener = NULL;
+static CPacketListener* g_pPacketListener = NULL;
+static CSNMP*   g_SNMP = NULL;
+static CICMP* g_pICMP = NULL;
+static char g_szAdapterName[MAX_ADAPTER_NAME_LENGTH + 4];
+static ULONG g_ulAdapterIP;
 
-BOOL APIENTRY DllMain(HMODULE hModule,
+extern "C" BOOL APIENTRY DllMain(HMODULE hModule,
     DWORD  ul_reason_for_call,
     LPVOID lpReserved
 )
@@ -438,7 +438,7 @@ void ENZTCPLIBRARY_API	WaitPacketListenerEx(HANDLE hHandle)
     }
 }
 
-void ENZTCPLIBRARY_API DeletePacketListenerEx(HANDLE hHandle)
+void ENZTCPLIBRARY_API DeletePacketListenerEx(HANDLE &hHandle)
 {
     CPacketListener* pPacketListener = (CPacketListener*)hHandle;
     if (pPacketListener)
@@ -481,7 +481,7 @@ void ENZTCPLIBRARY_API StopLocalAreaListenerEx(HANDLE hHandle)
     if (pLanListener)
         return pLanListener->StopEx();
 }
-void ENZTCPLIBRARY_API DeleteLocalAreaListenerEx(HANDLE hHandle)
+void ENZTCPLIBRARY_API DeleteLocalAreaListenerEx(HANDLE &hHandle)
 {
     CLocalAreaListener* pLanListener = (CLocalAreaListener*)hHandle;
     if (pLanListener)
