@@ -26,7 +26,7 @@ CLocalAreaListener::CLocalAreaListener()
 		throw nError;
 	}
 }
-CLocalAreaListener::CLocalAreaListener(const char* szStartingIPAddress, const char* subNetMask, CallbackLocalAreaListener pFncPtr, int nPollingTimeMS)
+CLocalAreaListener::CLocalAreaListener(const char* szStartingIPAddress, const char* subNetMask, FNCallbackLocalAreaListener pFncPtr, int nPollingTimeMS)
 {
 	m_fnptrCallbackLocalAreaListener = pFncPtr;
 	m_szStartingIP = szStartingIPAddress;
@@ -288,7 +288,7 @@ unsigned _stdcall CLocalAreaListener::StopThread(void* args)
 
 	return 0;
 }
-bool CLocalAreaListener::StartEx(const char* szStartingIPAddress, const char* subNetMask, CallbackLocalAreaListener pFncPtr, int nPollingTimeMS)
+bool CLocalAreaListener::StartEx(const char* szStartingIPAddress, const char* subNetMask, FNCallbackLocalAreaListener pFncPtr, int nPollingTimeMS)
 {
 	m_fnptrCallbackLocalAreaListener = pFncPtr;
 	m_szStartingIP = szStartingIPAddress;

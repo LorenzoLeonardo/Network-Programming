@@ -128,7 +128,7 @@ BOOL CPacketInfoDlg::OnInitDialog()
 	RECT rect, thisRect;
 	m_pParent->GetWindowRect(&rect);
 	GetClientRect(&thisRect);
-	MoveWindow(rect.right-8,rect.top+32, thisRect.right, thisRect.bottom);
+	MoveWindow(rect.right-8,rect.top, thisRect.right, thisRect.bottom);
 
 	//::SetWindowTheme(GetDlgItem(IDC_CHECK_IGMP)->GetSafeHwnd(), _T(""), _T(""));
 	//::SetWindowTheme(GetDlgItem(IDC_CHECK_ICMP)->GetSafeHwnd(), _T(""), _T(""));

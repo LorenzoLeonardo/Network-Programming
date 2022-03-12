@@ -58,20 +58,22 @@ void CListCtrlCustom::OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult)
 
 		case CDDS_SUBITEM | CDDS_PREPAINT | CDDS_ITEM:
 		{
-			if (iRow % 2)
-			{
-				lplvcd->clrTextBk = m_colRow1;
-			}
-			else
-			{
-				lplvcd->clrTextBk = m_colRow2;
-			}
-
 			CString csString;
 			csString = this->GetItemText((int)iRow, (int)CCheckOpenPortsDlg::COL_IPADDRESS);
 			if (csString.Compare(m_csIP) == 0)
 			{
 				lplvcd->clrTextBk = RGB(255, 255, 0);
+			}
+			else
+			{
+				if (iRow % 2)
+				{
+					lplvcd->clrTextBk = m_colRow1;
+				}
+				else
+				{
+					lplvcd->clrTextBk = m_colRow2;
+				}
 			}
 
 			*pResult = CDRF_DODEFAULT;
@@ -90,7 +92,7 @@ BOOL CListCtrlCustom::OnEraseBkgnd(CDC* pDC)
 {
 	// TODO: Add your message handler code here and/or call default
 
-	CRect rect;
+/*	CRect rect;
 	GetClientRect(rect);
 
 
@@ -113,7 +115,7 @@ BOOL CListCtrlCustom::OnEraseBkgnd(CDC* pDC)
 	}
 
 	brush0.DeleteObject();
-	brush1.DeleteObject();
+	brush1.DeleteObject();*/
 
 	return FALSE;
 }

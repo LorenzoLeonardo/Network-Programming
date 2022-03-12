@@ -16,6 +16,7 @@
 #define IDB_BITMAP1                     135
 #define IDD_DIALOG_DEVICE_INFO          137
 #define IDB_BITMAP2                     145
+#define IDR_TOOLBAR1                    146
 #define IDC_IPADDRESS_IP                1000
 #define IDC_EDIT_AREA                   1001
 #define IDC_BUTTON_PORT                 1002
@@ -66,14 +67,18 @@
 #define IDC_STATIC_NIC_LISTEN           1036
 #define IDC_STATIC_ROUTER_PIC           1037
 #define IDC_STATIC_NUM_DEVICE           1038
+#define IDC_STATIC_NET_MON              1039
+#define ID_BUTTON32773                  32773
+#define ID_BUTTON32774                  32774
+#define ID_BUTTON32775                  32775
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        146
-#define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1039
+#define _APS_NEXT_RESOURCE_VALUE        148
+#define _APS_NEXT_COMMAND_VALUE         32776
+#define _APS_NEXT_CONTROL_VALUE         1040
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

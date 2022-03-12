@@ -129,9 +129,6 @@ void CCheckOpenPortsDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BUTTON_STOP_LAN, m_ctrlBtnStopListening);
 	DDX_Control(pDX, IDC_STATIC_UPTIME, m_ctrlStaticRouterUpTime);
 	DDX_Control(pDX, IDC_BUTTON_STOP_SEARCHINGPORTS, m_ctrlBtnStopSearchingPort);
-	DDX_Control(pDX, IDC_EDIT_PACKET_REPORT, m_ctrlEditPacketReportArea);
-	DDX_Control(pDX, IDC_EDIT_SPEED_DOWN, m_ctrlEditDownloadSpeed);
-	DDX_Control(pDX, IDC_EDIT_SPEED_UP, m_ctrlEditUploadSpeed);
 	DDX_Control(pDX, IDC_BUTTON_SHOW_PACKETS, m_ctrlBtnShowPacketInfo);
 	DDX_Control(pDX, IDC_BUTTON_START_PACKET, m_ctrlBtnListenPackets);
 	DDX_Control(pDX, IDC_BUTTON_STOP_PACKET, m_ctrlBtnUnlistenPackets);
@@ -197,7 +194,7 @@ int CCheckOpenPortsDlg::OnCreate(LPCREATESTRUCT lpCreateStruct)
 void CCheckOpenPortsDlg::UpdateClock()
 {
 	CClientDC cdc(this);
-	m_customClock.DrawClock(&cdc, 480, 15);
+	m_customClock.DrawClock(&cdc,450, 50);
 }
 unsigned __stdcall  CCheckOpenPortsDlg::ClockThread(void* parg)
 {
@@ -273,6 +270,7 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	::SetWindowTheme(GetDlgItem(IDC_STATIC_OPEN_PORTS)->GetSafeHwnd(), _T(""), _T(""));
 	::SetWindowTheme(GetDlgItem(IDC_CHECK_DEBUG)->GetSafeHwnd(), _T(""), _T(""));
 	::SetWindowTheme(GetDlgItem(IDC_CHECK_INTERNET_ONLY)->GetSafeHwnd(), _T(""), _T(""));
+	::SetWindowTheme(GetDlgItem(IDC_STATIC_NET_MON)->GetSafeHwnd(), _T(""), _T(""));
 	LPCTSTR lpcRecHeader[] = { _T("No."), _T("IP Address"), _T("Device Name"), _T("MAC Address"), _T("Download Speed"), _T("Upload Speed"),  _T("Max Download Speed"), _T("Max Upload Speed") };
 	int nCol = 0;
 	char szDefaultGateWay[32];
@@ -329,7 +327,7 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	m_ctrlPortNum.SetWindowText(_T("80"));
 	//m_ctrlEditPollingTime.SetWindowText(_T("50"));
 	m_ctrlBtnStopListening.EnableWindow(FALSE);
-	m_ctrlLANConnected.SetExtendedStyle(LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT);
+	m_ctrlLANConnected.SetExtendedStyle(LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT| LVS_EX_DOUBLEBUFFER);
 
 	m_bInitNIC = true;
 	m_pfnPtrEnumNetworkAdapters(CallBackEnumAdapters);
@@ -1317,6 +1315,8 @@ bool CCheckOpenPortsDlg::ProcessNICPacketListener(unsigned char* buffer, int nSi
 	iphdr = (IPV4_HDR*)buffer;
 	iphdrlen = iphdr->ucIPHeaderLen * 4;
 
+	if (m_bShowPacketInfo)
+		return false;
 	if (IsInternetOnly())
 	{
 		DWORD dwMask = 0;
@@ -1582,7 +1582,7 @@ void CCheckOpenPortsDlg::OnMove(int x, int y)
 	{
 		RECT  rectParent;
 		GetClientRect(&rectParent);
-		m_pmodeless->MoveWindow(x + rectParent.right, y, m_rectModeless.right, m_rectModeless.bottom+3);
+		m_pmodeless->MoveWindow(x + rectParent.right, y-32, m_rectModeless.right, m_rectModeless.bottom+3);
 		m_pmodeless->SetForegroundWindow();
 		// TODO: Add your message handler code here
 	}
@@ -1714,7 +1714,7 @@ inline void CCheckOpenPortsDlg::DisplayDownloadSpeed(CString szIPAddress, int nC
 
 	for (int i = 0; i < m_ctrlLANConnected.GetItemCount(); ++i)
 	{
-		CString szText = m_ctrlLANConnected.GetItemText(i, 1);
+		CString szText = m_ctrlLANConnected.GetItemText(i, COL_IPADDRESS);
 		if (szText == szIPAddress)
 		{
 			findResult = i;
@@ -1733,7 +1733,9 @@ inline void CCheckOpenPortsDlg::DisplayDownloadSpeed(CString szIPAddress, int nC
 			lvItem.iItem = findResult;
 			lvItem.iSubItem = nColumn;
 			lvItem.pszText = csFormat.GetBuffer();
+			m_ctrlLANConnected.EnsureVisible(findResult, TRUE);
 			m_ctrlLANConnected.SetItem(&lvItem);
+			m_ctrlLANConnected.RedrawItems(findResult, findResult);
 		}
 	}
 }
@@ -1751,7 +1753,7 @@ inline void CCheckOpenPortsDlg::DisplayUploadSpeed(CString szIPAddress, int nCol
 
 	for (int i = 0; i < m_ctrlLANConnected.GetItemCount(); ++i)
 	{
-		CString szText = m_ctrlLANConnected.GetItemText(i, 1);
+		CString szText = m_ctrlLANConnected.GetItemText(i, COL_IPADDRESS);
 		if (szText == szIPAddress)
 		{
 			findResult = i;
@@ -1770,7 +1772,9 @@ inline void CCheckOpenPortsDlg::DisplayUploadSpeed(CString szIPAddress, int nCol
 			lvItem.iItem = findResult;
 			lvItem.iSubItem = nColumn;
 			lvItem.pszText = csFormat.GetBuffer();
+			m_ctrlLANConnected.EnsureVisible(findResult, TRUE);
 			m_ctrlLANConnected.SetItem(&lvItem);
+			m_ctrlLANConnected.RedrawItems(findResult, findResult);
 		}
 	}
 }

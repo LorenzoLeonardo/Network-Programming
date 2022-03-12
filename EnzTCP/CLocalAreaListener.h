@@ -10,16 +10,16 @@
 
 using namespace std;
 
-typedef void (*CallbackLocalAreaListener)(const char* ipAddress, const char* hostName, const char* macAddress, bool bIsConnected);
+typedef void (*FNCallbackLocalAreaListener)(const char* ipAddress, const char* hostName, const char* macAddress, bool bIsConnected);
 
 class CLocalAreaListener
 {
 public:
 	CLocalAreaListener();
 
-	CLocalAreaListener(const char *szStartingIPAddress, const char* subNetMask, CallbackLocalAreaListener pFncPtr, int nPollingTimesMS);
+	CLocalAreaListener(const char *szStartingIPAddress, const char* subNetMask, FNCallbackLocalAreaListener pFncPtr, int nPollingTimesMS);
 	~CLocalAreaListener();
-	CallbackLocalAreaListener m_fnptrCallbackLocalAreaListener;
+	FNCallbackLocalAreaListener m_fnptrCallbackLocalAreaListener;
 	
 	static void MainThread(void* args);
 	static void MultiQueryingThread(void* args);
@@ -56,7 +56,7 @@ public:
 	static unsigned _stdcall MainThreadEx(void* args);
 	static unsigned _stdcall MultiQueryingThreadEx(void* args);
 	static unsigned _stdcall StopThread(void* args);
-	bool StartEx(const char* szStartingIPAddress, const char* subNetMask, CallbackLocalAreaListener pFncPtr, int nPollingTimeMS);
+	bool StartEx(const char* szStartingIPAddress, const char* subNetMask, FNCallbackLocalAreaListener pFncPtr, int nPollingTimeMS);
 	void StopEx();
 private:
 

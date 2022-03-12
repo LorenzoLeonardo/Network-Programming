@@ -35,9 +35,9 @@ using namespace std;
 
 #define WM_RESET_CONNECTION WM_USER + 1
 
-typedef  void(*LPEnumOpenPorts)(const char*, int, FuncFindOpenPort);
+typedef  void(*LPEnumOpenPorts)(const char*, int, FNCallbackFindOpenPort);
 typedef  bool(*LPIsPortOpen)(const char*, int, int*);
-typedef bool (*FNStartLocalAreaListening)(const char* ipAddress, const char* subnetMask, CallbackLocalAreaListener fnpPtr, int nPollingTime);
+typedef bool (*FNStartLocalAreaListening)(const char* ipAddress, const char* subnetMask, FNCallbackLocalAreaListener fnpPtr, int nPollingTime);
 typedef void (*FNStopLocalAreaListening)();
 typedef bool (*FNStartSNMP)(const char* szAgentIPAddress, const char* szCommunity, int nVersion, DWORD & dwLastError);
 typedef smiVALUE (*FNSNMPGet)(const char* szOID, DWORD & dwLastError);
@@ -48,14 +48,14 @@ typedef bool (*FNStopSearchingOpenPorts)();
 typedef bool (*FNStartPacketListener)(FNCallbackPacketListener);
 typedef void (*FNStopPacketListener)();
 typedef bool (*FNGetNetworkDeviceStatus)(const char* ipAddress, char* hostname, int nSizeHostName, char* macAddress, int nSizeMacAddress, DWORD * pError);
-typedef bool (*FNEnumNetworkAdapters)(FuncAdapterList);
+typedef bool (*FNEnumNetworkAdapters)(FNCallbackAdapterList);
 typedef HANDLE(*FNPTRCreatePacketListenerEx)(FNCallbackPacketListenerEx, void*);
 typedef bool (*FNPTRStartPacketListenerEx)(HANDLE);
 typedef void (*FNPTRStopPacketListenerEx)(HANDLE);
 typedef void (*FNPTRWaitPacketListenerEx)(HANDLE);
 typedef void (*FNPTRDeletePacketListenerEx)(HANDLE);
 typedef HANDLE (*FNPTRCreateLocalAreaListenerEx)();
-typedef	bool (*FNPTRStartLocalAreaListenerEx)(HANDLE, const char* ipAddress, const char* subNetMask, CallbackLocalAreaListener fnpPtr, int nPollingTimeMS);
+typedef	bool (*FNPTRStartLocalAreaListenerEx)(HANDLE, const char* ipAddress, const char* subNetMask, FNCallbackLocalAreaListener fnpPtr, int nPollingTimeMS);
 typedef void (*FNPTRStopLocalAreaListenerEx)(HANDLE);
 typedef void (*FNPTRDeleteLocalAreaListenerEx)(HANDLE);
 typedef void (*FNPTRSetNICAdapterToUse)(const char* szAdapterName, ULONG ipAddress);
@@ -262,12 +262,12 @@ protected:
 
 	DECLARE_MESSAGE_MAP()
 
-	static void __stdcall CallbackLANListenerEx(const char* ipAddress, const char* hostName, const char* macAddress, bool bIsopen);
-	static void __stdcall CallBackEnumPort(char* ipAddress, int nPort, bool bIsopen, int nLastError);
-	static bool __stdcall CallbackNICPacketListener(unsigned char* buffer, int nSize, void* obj);
-	static void __stdcall CallBackEnumAdapters(void*);
-	static bool __stdcall CallbackPacketListenerDownloadEx(unsigned char* buffer, int nSize, void* pObject);
-	static bool __stdcall CallbackPacketListenerUploadEx(unsigned char* buffer, int nSize, void* pObject);
+	static void CallbackLANListenerEx(const char* ipAddress, const char* hostName, const char* macAddress, bool bIsopen);
+	static void CallBackEnumPort(char* ipAddress, int nPort, bool bIsopen, int nLastError);
+	static bool CallbackNICPacketListener(unsigned char* buffer, int nSize, void* obj);
+	static void CallBackEnumAdapters(void*);
+	static bool CallbackPacketListenerDownloadEx(unsigned char* buffer, int nSize, void* pObject);
+	static bool CallbackPacketListenerUploadEx(unsigned char* buffer, int nSize, void* pObject);
 	void ProcessLANListener(const char* ipAddress, const char* hostName, const char* macAddress, bool bIsopen);
 	bool ProcessPacketListenerDownloadEx(unsigned char* buffer, int nSize, void* pObject);
 	bool ProcessNICPacketListener(unsigned char* buffer, int nSize, void* obj);
@@ -297,10 +297,6 @@ protected:
 
 	CEdit m_ctrlResult;
 	CEdit m_ctrlEditAdapterInfo;
-	//CEdit m_ctrlEditPollingTime;
-	CEdit m_ctrlEditPacketReportArea;
-	CEdit m_ctrlEditDownloadSpeed;
-	CEdit m_ctrlEditUploadSpeed;
 	CEdit m_ctrlEditPacketReportUpload;
 	CEdit m_ctrlPortNum;
 

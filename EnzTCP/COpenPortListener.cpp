@@ -20,7 +20,7 @@ COpenPortListener::COpenPortListener(string ipTargetIPAddress, int nPort)
 	g_objPtrCCheckOpenPorts = this;
 	m_tMonitor = NULL;
 }
-COpenPortListener::COpenPortListener(string ipTargetIPAddress, int nNumberOfPorts, FuncFindOpenPort pfnPtr)
+COpenPortListener::COpenPortListener(string ipTargetIPAddress, int nNumberOfPorts, FNCallbackFindOpenPort pfnPtr)
 {
 	m_pfnFindOpenPort = pfnPtr;
 	m_nNumPorts = nNumberOfPorts;

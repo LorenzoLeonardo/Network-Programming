@@ -14,11 +14,11 @@ class COpenPortListener
 {
 public :
 	COpenPortListener();
-	COpenPortListener(string ipTargetIPAddress, int nNumberOfPorts, FuncFindOpenPort pfnPtr);
+	COpenPortListener(string ipTargetIPAddress, int nNumberOfPorts, FNCallbackFindOpenPort pfnPtr);
 	COpenPortListener(string ipTargetIPAddress, int nPort);
 
 	~COpenPortListener();
-	FuncFindOpenPort m_pfnFindOpenPort;
+	FNCallbackFindOpenPort m_pfnFindOpenPort;
 	void StartSearchingOpenPorts();
 	void StopSearchingOpenPorts();
 	string GetIPAddress();

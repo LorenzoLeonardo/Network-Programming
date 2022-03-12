@@ -62,7 +62,7 @@ BOOL APIENTRY DllMain(HMODULE hModule,
     return TRUE;
 }
 
-HANDLE ENZTCPLIBRARY_API OpenServer(const char* sport, FuncNewConnection pfnPtr)
+HANDLE ENZTCPLIBRARY_API OpenServer(const char* sport, FNCallbackNewConnection pfnPtr)
 {
     CTCPListener* Ptr = new CTCPListener(sport, pfnPtr);
     return (HANDLE)Ptr;
@@ -135,7 +135,7 @@ void ENZTCPLIBRARY_API DisconnectFromServer(HANDLE hHandle)
     }
 }
 
-void ENZTCPLIBRARY_API EnumOpenPorts(char* ipAddress, int nNumPorts, FuncFindOpenPort pfnPtr)
+void ENZTCPLIBRARY_API EnumOpenPorts(char* ipAddress, int nNumPorts, FNCallbackFindOpenPort pfnPtr)
 {
     if(g_pOpenPorts != NULL)
     {
@@ -174,7 +174,7 @@ bool ENZTCPLIBRARY_API IsPortOpen(char* ipAddress, int nNumPorts, int *pnlastErr
    }
 }
 
-bool ENZTCPLIBRARY_API StartLocalAreaListening(const char* ipAddress, const char* subNetMask, CallbackLocalAreaListener fnpPtr, int nPollingTimeMS)
+bool ENZTCPLIBRARY_API StartLocalAreaListening(const char* ipAddress, const char* subNetMask, FNCallbackLocalAreaListener fnpPtr, int nPollingTimeMS)
 {
     try
     {
@@ -353,7 +353,7 @@ bool ENZTCPLIBRARY_API GetNetworkDeviceStatus(const char* ipAddress, char* hostn
     }
 }
 
-bool ENZTCPLIBRARY_API EnumNetworkAdapters(FuncAdapterList pFunc)
+bool ENZTCPLIBRARY_API EnumNetworkAdapters(FNCallbackAdapterList pFunc)
 {
     PIP_ADAPTER_INFO pAdapterInfo = NULL, pAdapter = NULL;
     ULONG ulOutBufLen = 0;
@@ -467,7 +467,7 @@ HANDLE ENZTCPLIBRARY_API CreateLocalAreaListenerEx()
         return pLanListener;
     }
 }
-bool ENZTCPLIBRARY_API StartLocalAreaListenerEx(HANDLE hHandle,const char* szStartingIPAddress, const char* subNetMask, CallbackLocalAreaListener pFncPtr, int nPollingTimeMS)
+bool ENZTCPLIBRARY_API StartLocalAreaListenerEx(HANDLE hHandle,const char* szStartingIPAddress, const char* subNetMask, FNCallbackLocalAreaListener pFncPtr, int nPollingTimeMS)
 {
     CLocalAreaListener* pLanListener = (CLocalAreaListener*)hHandle;
     if (pLanListener)
