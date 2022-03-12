@@ -970,6 +970,8 @@ void CCheckOpenPortsDlg::ProcessLANListener(const char* ipAddress, const char* h
 			{
 				m_fnptrStartPacketListenerEx(tDeviceDetails->m_hPacketListenerDownload);
 				m_fnptrStartPacketListenerEx(tDeviceDetails->m_hPacketListenerUpload);
+				m_ctrlBtnListenPackets.EnableWindow(FALSE);
+				m_ctrlBtnUnlistenPackets.EnableWindow(TRUE);
 			}
 
 			if (tDeviceDetails->m_szIPAddress == tDeviceDetails->m_szHostName)
@@ -1282,6 +1284,8 @@ void CCheckOpenPortsDlg::UpdateAdapterChanges()
 		OnBnClickedButtonStopListenLan();
 		OnBnClickedButtonStopSearchingOpenPorts();
 		OnBnClickedButtonStopPacket();
+		m_nCurrentNICSelect = -1;
+		m_bStopPacketListener = false;
 		AfxMessageBox(_T("All Network Interfaces are disconnected. Please check your ethernet ports or WIFI adapters."));
 	}
 }
@@ -1681,10 +1685,12 @@ void CCheckOpenPortsDlg::OnCbnSelchangeComboListAdapter()
 	else
 	{
 		m_ctrlEditAdapterInfo.SetWindowText(_T(""));
-		AfxMessageBox(_T("All Network Interfaces are disconnected. Please check your ethernet ports or WIFI adapters."));
 		OnBnClickedButtonStopListenLan();
 		OnBnClickedButtonStopSearchingOpenPorts();
 		OnBnClickedButtonStopPacket();
+		m_nCurrentNICSelect = -1;
+		m_bStopPacketListener = false;
+		AfxMessageBox(_T("All Network Interfaces are disconnected. Please check your ethernet ports or WIFI adapters."));
 	}
 }
 

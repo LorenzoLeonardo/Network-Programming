@@ -52,17 +52,6 @@ CLocalAreaListener::CLocalAreaListener(const char* szStartingIPAddress, const ch
 CLocalAreaListener::~CLocalAreaListener()
 {
 	//WaitToEndThreads();
-	if (m_threadMain != NULL)
-	{
-		delete m_threadMain;
-		m_threadMain = NULL;
-	}
-	if (m_objICMP != NULL)
-	{
-		delete m_objICMP;
-		m_objICMP = NULL;
-	}
-
 	if (m_hMainThread)
 	{
 		WaitForSingleObject(m_hStopThread, INFINITE);
@@ -78,6 +67,18 @@ CLocalAreaListener::~CLocalAreaListener()
 		m_hMainThread = NULL;
 		m_hMainStopThread = NULL;
 	}
+
+	if (m_threadMain != NULL)
+	{
+		delete m_threadMain;
+		m_threadMain = NULL;
+	}
+	if (m_objICMP != NULL)
+	{
+		delete m_objICMP;
+		m_objICMP = NULL;
+	}
+
 }
 map<thread*, int>* CLocalAreaListener::GetThreads()
 {
@@ -191,7 +192,9 @@ void CLocalAreaListener::Stop()
 bool CLocalAreaListener::CheckIPDeviceConnected(string ipAddress,string &hostName, string &macAddress)
 {
 	if (m_objICMP)
+	{
 		return 	m_objICMP->CheckDevice(ipAddress, hostName, macAddress);
+	}
 	else
 		return false;
 }
@@ -294,7 +297,7 @@ bool CLocalAreaListener::StartEx(const char* szStartingIPAddress, const char* su
 	m_szStartingIP = szStartingIPAddress;
 	m_szSubnetMask = subNetMask;
 	m_nPollingTimeMS = nPollingTimeMS;
-
+	m_objICMP->InitializeLocalIPAndHostname(m_szStartingIP.c_str());
 	if (m_hMainThread)
 	{
 		WaitForSingleObject(m_hStopThread, INFINITE);

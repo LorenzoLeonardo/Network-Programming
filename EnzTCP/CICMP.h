@@ -50,7 +50,7 @@ public:
 	bool CheckDevice(string ipAddress, string& hostname, string& sMacAddress, DWORD* pError);
 	bool CheckDeviceEx(string ipAddress, string& hostname, string& sMacAddress);
 	string GetHostName(string ipAddress);
-	int InitializeLocalIPAndHostname();
+	int InitializeLocalIPAndHostname(const char*);
 
 };
 

@@ -14,6 +14,7 @@ static CPacketListener* g_pPacketListener = NULL;
 static CSNMP*   g_SNMP = NULL;
 static CICMP* g_pICMP = NULL;
 static char g_szAdapterName[MAX_ADAPTER_NAME_LENGTH + 4];
+static char g_szAdapterIP[32];
 static ULONG g_ulAdapterIP;
 
 extern "C" BOOL APIENTRY DllMain(HMODULE hModule,
@@ -27,6 +28,7 @@ extern "C" BOOL APIENTRY DllMain(HMODULE hModule,
         DisableThreadLibraryCalls(hModule);
         DEBUG_LOG("EnzTCP Library is Loaded.");
         memset(g_szAdapterName, 0, sizeof(char) * (MAX_ADAPTER_NAME_LENGTH + 4));
+        memset(g_szAdapterIP, 0, sizeof(g_szAdapterIP));
         g_ulAdapterIP = 0;
         break;
     case DLL_PROCESS_DETACH:
@@ -306,7 +308,7 @@ bool ENZTCPLIBRARY_API GetNetworkDeviceStatus(const char* ipAddress, char* hostn
                 *pError = ERROR_NOT_ENOUGH_MEMORY;
                 throw *pError;
             }
-
+            g_pICMP->InitializeLocalIPAndHostname(g_szAdapterIP);
             bRet = g_pICMP->CheckDevice(ipAddress, shostName, smacAddress, pError);
             if (nSizeHostName < shostName.length())
             {
@@ -336,6 +338,7 @@ bool ENZTCPLIBRARY_API GetNetworkDeviceStatus(const char* ipAddress, char* hostn
     }
     else
     {
+        g_pICMP->InitializeLocalIPAndHostname(g_szAdapterIP);
         bRet = g_pICMP->CheckDevice(ipAddress, shostName, smacAddress, pError);
         if (nSizeHostName < shostName.length())
         {
@@ -495,4 +498,5 @@ void ENZTCPLIBRARY_API SetNICAdapterToUse(const char* szAdapterName, ULONG ulIPA
 {
     strcpy_s(g_szAdapterName, sizeof(g_szAdapterName), szAdapterName);
     g_ulAdapterIP = ulIPAddress;
+    inet_ntop(AF_INET, &g_ulAdapterIP, g_szAdapterIP, sizeof(g_szAdapterIP));
 }

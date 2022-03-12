@@ -7,21 +7,18 @@ CICMP::CICMP()
     int iResult = WSAStartup(MAKEWORD(2, 2), &m_wsaData);
     if (iResult != 0)
         throw iResult;
-
-    iResult = InitializeLocalIPAndHostname();
-    if (iResult !=0)
-        throw iResult;
 }
 CICMP::~CICMP()
 {
    WSACleanup();
 }
-int CICMP::InitializeLocalIPAndHostname()
+int CICMP::InitializeLocalIPAndHostname(const char* szIP)
 {
     struct addrinfo* result = NULL, * ptr = NULL, hints;
     int iResult = 0;
     char hostname[NI_MAXHOST];
     char ipAddress[INET_ADDRSTRLEN];
+    ULONG ulIP, ulNICIP;
 
     memset(hostname, 0, sizeof(hostname));
     memset(ipAddress, 0, sizeof(ipAddress));
@@ -31,6 +28,7 @@ int CICMP::InitializeLocalIPAndHostname()
     hints.ai_protocol = IPPROTO_ICMP;
     hints.ai_flags = AI_ALL;
     char szLocalHost[] = "localhost";
+    inet_pton(AF_INET, szIP, &ulNICIP);
 
     iResult = getaddrinfo(szLocalHost, NULL, &hints, &result);
     if (iResult != 0)
@@ -50,6 +48,17 @@ int CICMP::InitializeLocalIPAndHostname()
     if (iResult != 0)
         return iResult;
 
+    ptr = result;
+    while (ptr != NULL)
+    {
+        memcpy(&ulIP, (ptr->ai_addr->sa_data + 2), sizeof(ulIP));
+        if (ulIP == ulNICIP)
+        {
+            result = ptr;
+            break;
+        }
+        ptr = ptr->ai_next;
+    }
     inet_ntop(AF_INET, (const void*)(result->ai_addr->sa_data+2), ipAddress, sizeof(ipAddress));
     m_HostIP = ipAddress;
     freeaddrinfo(result);
@@ -294,7 +303,8 @@ bool CICMP::CheckDevice(string ipAddress, string& hostname, string& sMacAddress)
     if (hostname.empty())
         return bRet;
     
-    inet_pton(AF_INET, ipAddress.c_str(), &ipDest);
+    if (inet_pton(AF_INET, ipAddress.c_str(), &ipDest) != 1)
+        return bRet;
 
 
     ULONG MacAddr[2];
@@ -302,7 +312,8 @@ bool CICMP::CheckDevice(string ipAddress, string& hostname, string& sMacAddress)
     IPAddr ipSource;
     LPBYTE bPhysAddr;
 
-    inet_pton(AF_INET, m_HostIP.c_str(), &ipSource);
+    if(inet_pton(AF_INET, m_HostIP.c_str(), &ipSource) != 1)
+        return bRet;
         
     dwRetVal = SendARP(ipDest, ipSource, MacAddr, &PhysAddrLen);
     if (dwRetVal == NO_ERROR)
