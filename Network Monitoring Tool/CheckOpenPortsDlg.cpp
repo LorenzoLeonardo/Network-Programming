@@ -101,7 +101,11 @@ CCheckOpenPortsDlg::CCheckOpenPortsDlg(CWnd* pParent /*=nullptr*/)
 	m_fnptrStopLocalAreaListenerEx = NULL;
 	m_fnptrDeleteLocalAreaListenerEx = NULL;
 	m_fnptrSetNICAdapterToUse = NULL;
+	g_pCCheckOpenPortsDlg = this;
+	m_bStopSearchingOpenPorts = TRUE;
+	m_bLanStop = TRUE;
 	m_bIsInternetOnly = false;
+	m_bShowPacketInfo = false;
 	m_customClock.SetFontStyle(_T("Yu Gothic UI"));
 	m_customClock.SetFontSize(40);
 	m_customClock.SetFontWeight(FW_NORMAL);
@@ -221,12 +225,6 @@ unsigned __stdcall  CCheckOpenPortsDlg::OpenPortListenerThread(void* parg)
 	return 0;
 }
 
-//LRESULT CCheckOpenPortsDlg::OnResetConnection(WPARAM wParam, LPARAM lParam)
-//{
-//	OnBnClickedButtonStartListenLan();
-//	OnBnClickedButtonStartPacket();
-//	return 0;
-//}
 void CCheckOpenPortsDlg::InitAdapterUI()
 {
 	m_ctrlComboAdapterList.SetCurSel(0);
@@ -259,32 +257,92 @@ bool CCheckOpenPortsDlg::InitDLL()
 		m_fnptrSetNICAdapterToUse = (FNPTRSetNICAdapterToUse)GetProcAddress(m_hDLLhandle, "SetNICAdapterToUse");
 		return true;
 	}
+	CString csMsg;
+	csMsg.Format(IDS_ENZDLL);
+	AfxMessageBox(csMsg, MB_ICONERROR);
+	OnOK();
 	return false;
 }
-
-BOOL CCheckOpenPortsDlg::OnInitDialog()
+bool CCheckOpenPortsDlg::InitGUIControls()
 {
-	CDialogEx::OnInitDialog();
+	LPCTSTR lpcRecHeader[] = { _T("No."), _T("IP Address"), _T("Device Name"), _T("MAC Address"), _T("Download Speed"), _T("Upload Speed"),  _T("Max Download Speed"), _T("Max Upload Speed") };
+	DWORD value = 0;
+	DWORD BufferSize = 4;
+
 	::SetWindowTheme(GetDlgItem(IDC_STATIC_ROUTER_INFO)->GetSafeHwnd(), _T(""), _T(""));//To change text Color of Group Box
 	::SetWindowTheme(GetDlgItem(IDC_STATIC_ADAPTER_INFO)->GetSafeHwnd(), _T(""), _T(""));
 	::SetWindowTheme(GetDlgItem(IDC_STATIC_OPEN_PORTS)->GetSafeHwnd(), _T(""), _T(""));
 	::SetWindowTheme(GetDlgItem(IDC_CHECK_DEBUG)->GetSafeHwnd(), _T(""), _T(""));
 	::SetWindowTheme(GetDlgItem(IDC_CHECK_INTERNET_ONLY)->GetSafeHwnd(), _T(""), _T(""));
 	::SetWindowTheme(GetDlgItem(IDC_STATIC_NET_MON)->GetSafeHwnd(), _T(""), _T(""));
-	LPCTSTR lpcRecHeader[] = { _T("No."), _T("IP Address"), _T("Device Name"), _T("MAC Address"), _T("Download Speed"), _T("Upload Speed"),  _T("Max Download Speed"), _T("Max Upload Speed") };
-	int nCol = 0;
-	char szDefaultGateWay[32];
 
-	if (!InitDLL())
+	m_ctrlLANConnected.SetExtendedStyle(LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
+	m_ctrlLANConnected.InsertColumn(COL_NUMBER, lpcRecHeader[COL_NUMBER], LVCFMT_FIXED_WIDTH, 30);
+	m_ctrlLANConnected.InsertColumn(COL_IPADDRESS, lpcRecHeader[COL_IPADDRESS], LVCFMT_LEFT, 100);
+	m_ctrlLANConnected.InsertColumn(COL_DEVICENAME, lpcRecHeader[COL_DEVICENAME], LVCFMT_LEFT, 110);
+	m_ctrlLANConnected.InsertColumn(COL_MACADDRESS, lpcRecHeader[COL_MACADDRESS], LVCFMT_LEFT, 0);
+	m_ctrlLANConnected.InsertColumn(COL_DOWNLOADSPEED, lpcRecHeader[COL_DOWNLOADSPEED], LVCFMT_LEFT, 100);
+	m_ctrlLANConnected.InsertColumn(COL_UPLOADSPEED, lpcRecHeader[COL_UPLOADSPEED], LVCFMT_LEFT, 100);
+	m_ctrlLANConnected.InsertColumn(COL_DOWNLOADMAXSPEED, lpcRecHeader[COL_DOWNLOADMAXSPEED], LVCFMT_LEFT, 120);
+	m_ctrlLANConnected.InsertColumn(COL_UPLOADMAXSPEED, lpcRecHeader[COL_UPLOADMAXSPEED], LVCFMT_LEFT, 120);
+	m_ctrlBtnStopSearchingPort.EnableWindow(false);
+	m_ctrlProgressStatus.ShowWindow(FALSE);
+	m_ctrlPortNum.SetWindowText(_T("80"));
+	m_ctrlBtnStopListening.EnableWindow(FALSE);
+	m_ctrlBtnListenPackets.EnableWindow(FALSE);
+	m_ctrlBtnUnlistenPackets.EnableWindow(TRUE);
+
+	RegGetValue(HKEY_LOCAL_MACHINE, REGISTRY_PATH, _T("DebugLog"), /*RRF_RT_ANY*/RRF_RT_DWORD, NULL, (PVOID)&value, &BufferSize);
+	if (value)
+		m_ctrlBtnDebug.SetCheck(BST_CHECKED);
+	else
+		m_ctrlBtnDebug.SetCheck(BST_UNCHECKED);
+	return true;
+}
+bool CCheckOpenPortsDlg::InitNIC()
+{
+	char szDefaultGateWay[32];
+	m_bInitNIC = true;
+	m_pfnPtrEnumNetworkAdapters(CallBackEnumAdapters);
+	if (m_vAdapterInfo.empty())
 	{
 		CString csMsg;
-
-		csMsg.Format(IDS_ENZDLL);
+		csMsg.Format(IDS_NIC_DISCONNECTED);
 		AfxMessageBox(csMsg, MB_ICONERROR);
 		OnOK();
 		return false;
 	}
+	m_bInitNIC = false;
+	InitAdapterUI();
+
+	m_nCurrentNICSelect = m_ctrlComboAdapterList.GetCurSel();
+	m_fnptrSetNICAdapterToUse(m_vAdapterInfo[m_nCurrentNICSelect].AdapterInfo.AdapterName, m_vAdapterInfo[m_ctrlComboAdapterList.GetCurSel()].AdapterInfo.IpAddressList.Context);
+	if (m_pfnPtrGetDefaultGatewayEx(m_vAdapterInfo[m_nCurrentNICSelect].AdapterInfo.AdapterName, szDefaultGateWay, sizeof(szDefaultGateWay)))
+	{
+		m_ipFilter = m_vAdapterInfo[m_nCurrentNICSelect].AdapterInfo.IpAddressList.IpAddress.String;
+		inet_pton(AF_INET, CW2A(m_ipFilter), &m_ulIPFilter);
+	}
+	else
+	{
+		CString csMsg;
+
+		csMsg.Format(IDS_NIC_DISCONNECTED);
+		AfxMessageBox(csMsg, MB_ICONERROR);
+		OnOK();
+		return false;
+	}
+
+	m_ctrlIPAddress.SetWindowText(CA2W(szDefaultGateWay));
+	m_ctrlStaticNICListen.SetWindowText(CA2W(m_vAdapterInfo[m_nCurrentNICSelect].AdapterInfo.Description));
+	m_ctrlLANConnected.SetAdapterIP(CA2W(m_vAdapterInfo[m_nCurrentNICSelect].AdapterInfo.IpAddressList.IpAddress.String).m_szBuffer);
 	
+	for (int i = 0; i < m_vAdapterInfo.size(); i++)
+		m_vAdapterInfo[i].hLANListener = m_fnptrCreateLocalAreaListenerEx();
+	return true;
+}
+BOOL CCheckOpenPortsDlg::OnInitDialog()
+{
+	CDialogEx::OnInitDialog();
 	// Add "About..." menu item to system menu.
 
 	// IDM_ABOUTBOX must be in the system command range.
@@ -309,76 +367,9 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// Set big icon
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
-	DWORD value = 0;
-	DWORD BufferSize = 4;
-
-	RegGetValue(HKEY_LOCAL_MACHINE, REGISTRY_PATH, _T("DebugLog"), /*RRF_RT_ANY*/RRF_RT_DWORD, NULL, (PVOID)&value, &BufferSize);
-	if (value)
-		m_ctrlBtnDebug.SetCheck(BST_CHECKED);
-	else
-		m_ctrlBtnDebug.SetCheck(BST_UNCHECKED);
-	m_pmodeless = NULL;
-	// TODO: Add extra initialization here
-	g_pCCheckOpenPortsDlg = this;
-	m_bStopSearchingOpenPorts = TRUE;
-	m_bLanStop = TRUE;
-	m_ctrlBtnStopSearchingPort.EnableWindow(false);
-	m_ctrlProgressStatus.ShowWindow(FALSE);
-	m_ctrlPortNum.SetWindowText(_T("80"));
-	//m_ctrlEditPollingTime.SetWindowText(_T("50"));
-	m_ctrlBtnStopListening.EnableWindow(FALSE);
-	m_ctrlLANConnected.SetExtendedStyle(LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT| LVS_EX_DOUBLEBUFFER);
-
-	m_bInitNIC = true;
-	m_pfnPtrEnumNetworkAdapters(CallBackEnumAdapters);
-	if (m_vAdapterInfo.empty())
-	{
-		CString csMsg;
-		csMsg.Format(IDS_NIC_DISCONNECTED);
-		AfxMessageBox(csMsg, MB_ICONERROR);
-		OnOK();
-		return false;
-	}
-	
-	m_bInitNIC = false;
-	InitAdapterUI();
-	
-	m_ctrlLANConnected.InsertColumn(COL_NUMBER, lpcRecHeader[COL_NUMBER], LVCFMT_FIXED_WIDTH, 30);
-	m_ctrlLANConnected.InsertColumn(COL_IPADDRESS, lpcRecHeader[COL_IPADDRESS], LVCFMT_LEFT, 100);
-	m_ctrlLANConnected.InsertColumn(COL_DEVICENAME, lpcRecHeader[COL_DEVICENAME], LVCFMT_LEFT, 110);
-	m_ctrlLANConnected.InsertColumn(COL_MACADDRESS, lpcRecHeader[COL_MACADDRESS], LVCFMT_LEFT, 0);
-	m_ctrlLANConnected.InsertColumn(COL_DOWNLOADSPEED, lpcRecHeader[COL_DOWNLOADSPEED], LVCFMT_LEFT, 100);
-	m_ctrlLANConnected.InsertColumn(COL_UPLOADSPEED, lpcRecHeader[COL_UPLOADSPEED], LVCFMT_LEFT, 100);
-	m_ctrlLANConnected.InsertColumn(COL_DOWNLOADMAXSPEED, lpcRecHeader[COL_DOWNLOADMAXSPEED], LVCFMT_LEFT, 120);
-	m_ctrlLANConnected.InsertColumn(COL_UPLOADMAXSPEED, lpcRecHeader[COL_UPLOADMAXSPEED], LVCFMT_LEFT, 120);
-
-	m_ctrlBtnListenPackets.EnableWindow(TRUE);
-	m_ctrlBtnUnlistenPackets.EnableWindow(FALSE);
-	m_nCurrentNICSelect = m_ctrlComboAdapterList.GetCurSel();
-	m_fnptrSetNICAdapterToUse(m_vAdapterInfo[m_nCurrentNICSelect].AdapterInfo.AdapterName, m_vAdapterInfo[m_ctrlComboAdapterList.GetCurSel()].AdapterInfo.IpAddressList.Context);
-	if (m_pfnPtrGetDefaultGatewayEx(m_vAdapterInfo[m_nCurrentNICSelect].AdapterInfo.AdapterName, szDefaultGateWay, sizeof(szDefaultGateWay)))
-	{
-		m_ipFilter = m_vAdapterInfo[m_nCurrentNICSelect].AdapterInfo.IpAddressList.IpAddress.String;
-		inet_pton(AF_INET, CW2A(m_ipFilter), &m_ulIPFilter);
-	}
-	else
-	{
-		CString csMsg;
-
-		csMsg.Format(IDS_NIC_DISCONNECTED);
-		AfxMessageBox(csMsg, MB_ICONERROR);
-		OnOK();
-		return false;
-	}
-	CString csGateWay(szDefaultGateWay);
-	m_ctrlIPAddress.SetWindowText(csGateWay);
-	m_ctrlStaticNICListen.SetWindowText(CA2W(m_vAdapterInfo[m_nCurrentNICSelect].AdapterInfo.Description));
-	CString csIP(CA2W(m_vAdapterInfo[m_nCurrentNICSelect].AdapterInfo.IpAddressList.IpAddress.String));
-	m_ctrlLANConnected.SetAdapterIP(csIP);
-
-	m_bShowPacketInfo = false;
-	for (int i = 0; i < m_vAdapterInfo.size(); i++)
-		m_vAdapterInfo[i].hLANListener = m_fnptrCreateLocalAreaListenerEx();
+	InitGUIControls();
+	InitDLL();
+	InitNIC();
 
 	m_hNICPacketListener = m_fnptrCreatePacketListenerEx(CallbackNICPacketListener, NULL);
 	m_hThreadRouter = (HANDLE)_beginthreadex(NULL, 0, RouterThread, this, 0, NULL);
@@ -386,8 +377,7 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	m_hThreadClock = (HANDLE)_beginthreadex(NULL, 0, ClockThread, this, 0, NULL);
 	OnBnClickedButtonStartListenLan();
 	OnBnClickedButtonShowPackets();
-	m_ctrlBtnListenPackets.EnableWindow(FALSE);
-	m_ctrlBtnUnlistenPackets.EnableWindow(TRUE);
+
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
 

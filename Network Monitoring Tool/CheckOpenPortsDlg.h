@@ -161,6 +161,8 @@ public:
 	void UpdateDeviceConnected();
 	void EnableCloseButton(bool bEnable);
 	bool InitDLL();
+	bool InitGUIControls();
+	bool InitNIC();
 	void InitAdapterUI();
 	void UpdateAdapterChanges();
 
