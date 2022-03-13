@@ -178,6 +178,7 @@ void CListCtrlCustom::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 	CString csString;
 	csString = this->GetItemText((int)lpDrawItemStruct->itemID, (int)CCheckOpenPortsDlg::COL_IPADDRESS);
 
+	memset(lpBuffer, 0, sizeof(lpBuffer));
 	lvi.mask = LVIF_TEXT | LVIF_PARAM;
 	lvi.iItem = lpDrawItemStruct->itemID;
 	lvi.iSubItem = 0;
@@ -246,10 +247,10 @@ void CListCtrlCustom::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 
 		pDC->SelectObject(GetStockObject(DEFAULT_GUI_FONT));
 
-		UINT		uFormat = DT_LEFT;
+		UINT		uFormat = DT_END_ELLIPSIS| DT_PATH_ELLIPSIS | DT_WORD_ELLIPSIS | DT_MODIFYSTRING;
 
 		//lpDrawItemStruct->rcItem.top = 2;
-		::DrawText(lpDrawItemStruct->hDC, lpBuffer, _tcslen(lpBuffer),
+		::DrawText(lpDrawItemStruct->hDC, lpBuffer, (int)_tcslen(lpBuffer),
 			&rectText, uFormat);
 
 		pDC->SelectStockObject(SYSTEM_FONT);
