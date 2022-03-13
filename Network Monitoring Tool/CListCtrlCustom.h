@@ -41,8 +41,15 @@ protected:
    // afx_msg void PreSubclassWindow();
     afx_msg void OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult);
     afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+    afx_msg void MeasureItem(LPMEASUREITEMSTRUCT lpMeasureItemStruct);
+    afx_msg LRESULT	OnSetFont(WPARAM wParam, LPARAM lParam);
     DECLARE_MESSAGE_MAP()
     CString m_csIP;
     CHeaderCtrlCustom m_ctrlHeader;
+    CFont m_NewListFont;
+public:
+    virtual void DrawItem(LPDRAWITEMSTRUCT /*lpDrawItemStruct*/);
+    afx_msg void OnMeasureItem(int nIDCtl, LPMEASUREITEMSTRUCT lpMeasureItemStruct);
+    void OnInitialize();
 };
 

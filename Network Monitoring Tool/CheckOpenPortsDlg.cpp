@@ -277,6 +277,7 @@ bool CCheckOpenPortsDlg::InitGUIControls()
 	::SetWindowTheme(GetDlgItem(IDC_STATIC_NET_MON)->GetSafeHwnd(), _T(""), _T(""));
 
 	m_ctrlLANConnected.SetExtendedStyle(LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
+	m_ctrlLANConnected.OnInitialize();
 	m_ctrlLANConnected.InsertColumn(COL_NUMBER, lpcRecHeader[COL_NUMBER], LVCFMT_FIXED_WIDTH, 30);
 	m_ctrlLANConnected.InsertColumn(COL_IPADDRESS, lpcRecHeader[COL_IPADDRESS], LVCFMT_LEFT, 100);
 	m_ctrlLANConnected.InsertColumn(COL_DEVICENAME, lpcRecHeader[COL_DEVICENAME], LVCFMT_LEFT, 110);
