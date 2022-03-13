@@ -1086,6 +1086,7 @@ void CCheckOpenPortsDlg::ProcessLANListener(const char* ipAddress, const char* h
 	{
 		if (strcmp(ipAddress, "end") == 0)
 		{
+			
 			if (!m_mMonitorDeviceBefore.empty())
 			{
 				map<ULONG, int>::iterator it = m_mMonitorDeviceCurrent.begin();
@@ -1096,6 +1097,7 @@ void CCheckOpenPortsDlg::ProcessLANListener(const char* ipAddress, const char* h
 					it++;
 				}
 				it = m_mMonitorDeviceBefore.begin();
+				
 				while (it != m_mMonitorDeviceBefore.end())
 				{
 					char szIP[32];
@@ -1104,7 +1106,9 @@ void CCheckOpenPortsDlg::ProcessLANListener(const char* ipAddress, const char* h
 					int nRow = IsInTheList(cs);
 					if (nRow != -1)
 					{
+						//m_ctrlLANConnected.LockWindowUpdate();
 						m_ctrlLANConnected.DeleteItem(nRow);
+						//m_ctrlLANConnected.UnlockWindowUpdate();
 						for (int j = nRow; j < m_ctrlLANConnected.GetItemCount(); j++)
 						{
 							m_ctrlLANConnected.SetItemText(j, 0, to_wstring(j + 1).c_str());
@@ -1122,8 +1126,9 @@ void CCheckOpenPortsDlg::ProcessLANListener(const char* ipAddress, const char* h
 					}
 					it++;
 				}
+				
 			}
-
+			
 			m_mMonitorDeviceBefore = m_mMonitorDeviceCurrent;
 			m_mMonitorDeviceCurrent.clear();
 

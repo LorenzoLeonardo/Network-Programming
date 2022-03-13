@@ -5,7 +5,7 @@
 CHeaderCtrlCustom::CHeaderCtrlCustom()
 {
 
-
+	
 }
 CHeaderCtrlCustom:: ~CHeaderCtrlCustom()
 {
@@ -14,11 +14,11 @@ CHeaderCtrlCustom:: ~CHeaderCtrlCustom()
 
 
 
+
 CListCtrlCustom::CListCtrlCustom()
 {
-	m_colRow1 = RGB(240, 255, 255);
-	m_colRow2 = RGB(0, 255, 255);
-
+	m_colRow1 = RGB(240, 240, 240);
+	m_colRow2 = RGB(204, 213, 240);//RGB(0, 255, 255);
 }
 
 CListCtrlCustom::~CListCtrlCustom()
@@ -62,6 +62,7 @@ void CListCtrlCustom::OnInitialize()
 
 		m_ctrlHeader.SetItem(i, &hdItem);
 	}
+	GetClientRect(&m_rect);
 }
 
 LRESULT CListCtrlCustom::OnSetFont(WPARAM wParam, LPARAM)
@@ -94,37 +95,39 @@ void CListCtrlCustom::OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult)
 		case CDDS_PREPAINT:
 		{
 			*pResult = CDRF_NOTIFYITEMDRAW;
+			CDC* pDC = CDC::FromHandle(lplvcd->nmcd.hdc);
+			RECT rect = m_rect;
+
+			
+
+			rect.bottom = m_nColumnHeight;
+			CBrush brush0(m_colRow1);
+			CBrush brush1(m_colRow2);
+
+			int chunk_height = GetCountPerPage();
+
+			for (int i = 0; i <= chunk_height+1; i++)
+			{
+				pDC->FillRect(&rect, i % 2 ? &brush1 : &brush0);
+				rect.top += m_nColumnHeight;
+				rect.bottom += m_nColumnHeight;
+			}
 			return;
 		}
 		// Modify item text and or background
+		
 		case CDDS_ITEMPREPAINT:
 		{
-		
-			*pResult = CDRF_NOTIFYSUBITEMDRAW;
+			*pResult = CDRF_NOTIFYPOSTPAINT;//CDRF_NOTIFYSUBITEMDRAW;
+
+
 			return;
 		}
 
-		case CDDS_SUBITEM | CDDS_PREPAINT | CDDS_ITEM:
+		case CDDS_POSTPAINT://CDDS_SUBITEM | CDDS_PREPAINT | CDDS_ITEM:
 		{
-			CString csString;
-			csString = this->GetItemText((int)iRow, (int)CCheckOpenPortsDlg::COL_IPADDRESS);
-			if (csString.Compare(m_csIP) == 0)
-			{
-				lplvcd->clrTextBk = RGB(255, 255, 0);
-			}
-			else
-			{
-				if (iRow % 2)
-				{
-					lplvcd->clrTextBk = m_colRow1;
-				}
-				else
-				{
-					lplvcd->clrTextBk = m_colRow2;
-				}
-			}
+			*pResult = CDRF_SKIPDEFAULT;
 
-			*pResult = CDRF_DODEFAULT;
 			return;
 		}
 	}
@@ -136,35 +139,18 @@ int CListCtrlCustom::InsertItem(_In_ UINT nMask, _In_ int nItem, _In_z_ LPCTSTR 
 	return CListCtrl::InsertItem(nMask, nItem, lpszItem, nState, nStateMask, nImage, lParam);
 }
 
+BOOL CListCtrlCustom::DeleteItem(_In_ int nItem)
+{
+	LockWindowUpdate();
+	BOOL bRet =  CListCtrl::DeleteItem(nItem);
+	UnlockWindowUpdate();
+	RedrawWindow();
+	return bRet;
+}
 BOOL CListCtrlCustom::OnEraseBkgnd(CDC* pDC)
 {
 	// TODO: Add your message handler code here and/or call default
 
-/*	CRect rect;
-	GetClientRect(rect);
-
-
-	POINT mypoint;
-
-	memset(&mypoint, 0, sizeof(mypoint));
-	CBrush brush0(m_colRow1);
-	CBrush brush1(m_colRow2);
-	
-	int chunk_height = GetCountPerPage();
-	pDC->FillRect(&rect, &brush0);
-
-	for (int i = 0; i <= chunk_height; i++)
-	{
-		GetItemPosition(i, &mypoint);
-		rect.top = mypoint.y;
-		GetItemPosition(i + 1, &mypoint);
-		rect.bottom = mypoint.y;
-		pDC->FillRect(&rect, i % 2 ? &brush0 : &brush1);
-	}
-
-	brush0.DeleteObject();
-	brush1.DeleteObject();
-	*/
 	return FALSE;
 }
 
@@ -189,7 +175,7 @@ void CListCtrlCustom::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 	lvc.mask = LVCF_WIDTH | LVCF_FMT;
 	lvcprev.mask = LVCF_WIDTH | LVCF_FMT;
 
-	
+	lpDrawItemStruct->rcItem.bottom = lpDrawItemStruct->rcItem.top + m_nColumnHeight;
 	RECT rectText = lpDrawItemStruct->rcItem;
 	rectText.top += 6;
 	
@@ -238,8 +224,8 @@ void CListCtrlCustom::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 					pDC->FillSolidRect(&lpDrawItemStruct->rcItem, m_colRow1);// GetSysColor(COLOR_WINDOW));
 				else
 					pDC->FillSolidRect(&lpDrawItemStruct->rcItem, m_colRow2);
-				pDC->SetTextColor(GetSysColor(COLOR_WINDOWTEXT));
 			}
+			pDC->SetTextColor(GetSysColor(COLOR_WINDOWTEXT));
 		}
 
 		pDC->SelectObject(GetStockObject(DEFAULT_GUI_FONT));
@@ -281,4 +267,44 @@ void CListCtrlCustom::MeasureItem(LPMEASUREITEMSTRUCT lpMeasureItemStruct)
 		lpMeasureItemStruct->itemHeight = ((-lf.lfHeight + nAdj));
 	else
 		lpMeasureItemStruct->itemHeight = ((lf.lfHeight + nAdj) );
+
+	m_nColumnHeight = lpMeasureItemStruct->itemHeight;
+}
+
+BEGIN_MESSAGE_MAP(CHeaderCtrlCustom, CHeaderCtrl)
+ON_NOTIFY_REFLECT(NM_CUSTOMDRAW, &CHeaderCtrlCustom::OnNMCustomdraw)
+END_MESSAGE_MAP()
+
+
+void CHeaderCtrlCustom::OnNMCustomdraw(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	LPNMCUSTOMDRAW pNMCD = reinterpret_cast<LPNMCUSTOMDRAW>(pNMHDR);
+	// TODO: Add your control notification handler code here
+	*pResult = CDRF_DODEFAULT;
+
+/*	if (pNMCD->dwDrawStage == CDDS_PREPAINT)
+	{
+		CDC* pDC = CDC::FromHandle(pNMCD->hdc);
+		CRect rect(0, 0, 0, 0);
+		GetClientRect(&rect);
+		pDC->FillSolidRect(&rect, RGB(64, 86, 141));
+		pDC->SetTextColor(RGB(255, 255, 255));
+		*pResult = CDRF_NOTIFYITEMDRAW;
+	}*/
+/*	else if (pNMCD->dwDrawStage == CDDS_ITEMPREPAINT)
+	{
+		HDITEM hditem;
+		TCHAR buffer[MAX_PATH] = { 0 };
+		SecureZeroMemory(&hditem, sizeof(HDITEM));
+		hditem.mask = HDI_TEXT;
+		hditem.pszText = buffer;
+		hditem.cchTextMax = MAX_PATH;
+		GetItem(pNMCD->dwItemSpec, &hditem);
+		CDC* pDC = CDC::FromHandle(pNMCD->hdc);
+		pDC->SetTextColor(RGB(255, 255, 255));
+		pDC->SetBkColor(RGB(64, 86, 141));
+		CString str(buffer);
+		pDC->DrawText(str, CRect(pNMCD->rc), DT_VCENTER | DT_LEFT);
+		*pResult = CDRF_SKIPDEFAULT;
+	}*/
 }

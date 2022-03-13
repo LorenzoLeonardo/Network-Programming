@@ -20,6 +20,8 @@ public:
     CHeaderCtrlCustom();
     virtual ~CHeaderCtrlCustom();
 
+    DECLARE_MESSAGE_MAP()
+    afx_msg void OnNMCustomdraw(NMHDR* pNMHDR, LRESULT* pResult);
 };
 
 class CListCtrlCustom :
@@ -33,6 +35,8 @@ public:
 
     int InsertItem(_In_ UINT nMask, _In_ int nItem, _In_z_ LPCTSTR lpszItem, _In_ UINT nState,
         _In_ UINT nStateMask, _In_ int nImage, _In_ LPARAM lParam);
+    BOOL DeleteItem(_In_ int nItem);
+
     void SetAdapterIP(CString ip)
     {
         m_csIP = ip;
@@ -47,6 +51,8 @@ protected:
     CString m_csIP;
     CHeaderCtrlCustom m_ctrlHeader;
     CFont m_NewListFont;
+    int m_nColumnHeight;
+    RECT m_rect;
 public:
     virtual void DrawItem(LPDRAWITEMSTRUCT /*lpDrawItemStruct*/);
     afx_msg void OnMeasureItem(int nIDCtl, LPMEASUREITEMSTRUCT lpMeasureItemStruct);
