@@ -17,7 +17,7 @@ CHeaderCtrlCustom:: ~CHeaderCtrlCustom()
 
 CListCtrlCustom::CListCtrlCustom()
 {
-	m_colRow1 = RGB(240, 240, 240);
+	m_colRow1 = RGB(250, 250, 250);
 	m_colRow2 = RGB(204, 213, 240);//RGB(0, 255, 255);
 }
 
