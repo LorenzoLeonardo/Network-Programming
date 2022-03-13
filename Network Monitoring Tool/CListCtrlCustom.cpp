@@ -43,7 +43,7 @@ END_MESSAGE_MAP()
 
 void CListCtrlCustom::OnInitialize()
 {
-	m_NewListFont.CreatePointFont(80, _T("Microsoft Sans Serif"));
+	m_NewListFont.CreatePointFont(85, _T("Microsoft Sans Serif"));
 	SetFont(&m_NewListFont);
 	SetBkColor(RGB(128, 128, 128));
 	CHeaderCtrl* pHeader = NULL;
@@ -101,7 +101,7 @@ void CListCtrlCustom::OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult)
 			*pResult = CDRF_NOTIFYITEMDRAW;
 			CDC* pDC = CDC::FromHandle(lplvcd->nmcd.hdc);
 			RECT rect = m_rect;
-
+			rect.top -= 2;
 			rect.bottom = m_nColumnHeight;
 			CBrush brush0(m_colRow1);
 			CBrush brush1(m_colRow2);
@@ -130,7 +130,7 @@ void CListCtrlCustom::OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult)
 			*pResult = CDRF_NOTIFYITEMDRAW;
 			CDC* pDC = CDC::FromHandle(lplvcd->nmcd.hdc);
 			RECT rect = m_rect;
-
+			rect.top -= 2;
 			rect.bottom = m_nColumnHeight;
 			CBrush brush0(m_colRow1);
 			CBrush brush1(m_colRow2);
