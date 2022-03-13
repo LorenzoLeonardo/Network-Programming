@@ -346,9 +346,9 @@ bool CICMP::CheckDevice(string ipAddress, string& hostname, string& sMacAddress)
         char szIP[32];
         inet_ntop(AF_INET, &ipDest, szIP, sizeof(szIP));
         string sIP(szIP);
-        if (Ping(IcmpCreateFile(), m_HostIP, sIP, ipDest, (UCHAR)POLLING_TIME))
-            bRet = true;
-        else
+        //if (Ping(IcmpCreateFile(), m_HostIP, sIP, ipDest, (UCHAR)POLLING_TIME))
+        //    bRet = true;
+        //else
             bRet = false;
     }
     else
@@ -428,16 +428,16 @@ bool CICMP::CheckDevice(string ipAddress, string& hostname, string& sMacAddress,
         char szIP[32];
         inet_ntop(AF_INET, &ipDest, szIP, sizeof(szIP));
         string sIP(szIP);
-        if (Ping(IcmpCreateFile(), m_HostIP, sIP, ipDest, (UCHAR)POLLING_TIME))
-        {
-            bRet = true;
-            *pError = ERROR_SUCCESS;
-        }
-        else
-        {
+       // if (Ping(IcmpCreateFile(), m_HostIP, sIP, ipDest, (UCHAR)POLLING_TIME))
+       // {
+        //    bRet = true;
+       //     *pError = ERROR_SUCCESS;
+       // }
+       // else
+       // {
             bRet = false;
             *pError = dwRetVal;
-        }
+       // }
     }
     else
     {

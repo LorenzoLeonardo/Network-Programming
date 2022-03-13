@@ -19,6 +19,8 @@ CListCtrlCustom::CListCtrlCustom()
 {
 	m_colRow1 = RGB(250, 250, 250);
 	m_colRow2 = RGB(204, 213, 240);//RGB(0, 255, 255);
+	m_nColumnHeight = 0;
+	m_rect = { 0,0,0,0 };
 }
 
 CListCtrlCustom::~CListCtrlCustom()
@@ -35,13 +37,15 @@ BEGIN_MESSAGE_MAP(CListCtrlCustom, CListCtrl)
 	ON_WM_MEASUREITEM_REFLECT()
 	ON_WM_MEASUREITEM()
 	ON_MESSAGE(WM_SETFONT, OnSetFont)
+	ON_NOTIFY(HDN_ITEMCHANGINGA, 0, &CListCtrlCustom::OnHdnItemchanging)
+	ON_NOTIFY(HDN_ITEMCHANGINGW, 0, &CListCtrlCustom::OnHdnItemchanging)
 END_MESSAGE_MAP()
 
 void CListCtrlCustom::OnInitialize()
 {
 	m_NewListFont.CreatePointFont(80, _T("Microsoft Sans Serif"));
 	SetFont(&m_NewListFont);
-
+	SetBkColor(RGB(128, 128, 128));
 	CHeaderCtrl* pHeader = NULL;
 	pHeader = GetHeaderCtrl();
 
@@ -58,7 +62,7 @@ void CListCtrlCustom::OnInitialize()
 	{
 		m_ctrlHeader.GetItem(i, &hdItem);
 
-		hdItem.fmt |= HDF_OWNERDRAW;
+		hdItem.fmt |= HDF_OWNERDRAW| HDF_CENTER;
 
 		m_ctrlHeader.SetItem(i, &hdItem);
 	}
@@ -98,8 +102,6 @@ void CListCtrlCustom::OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult)
 			CDC* pDC = CDC::FromHandle(lplvcd->nmcd.hdc);
 			RECT rect = m_rect;
 
-			
-
 			rect.bottom = m_nColumnHeight;
 			CBrush brush0(m_colRow1);
 			CBrush brush1(m_colRow2);
@@ -118,16 +120,29 @@ void CListCtrlCustom::OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult)
 		
 		case CDDS_ITEMPREPAINT:
 		{
-			*pResult = CDRF_NOTIFYPOSTPAINT;//CDRF_NOTIFYSUBITEMDRAW;
-
+			*pResult = CDRF_NOTIFYITEMDRAW;//CDRF_NOTIFYSUBITEMDRAW;
 
 			return;
 		}
 
 		case CDDS_POSTPAINT://CDDS_SUBITEM | CDDS_PREPAINT | CDDS_ITEM:
 		{
-			*pResult = CDRF_SKIPDEFAULT;
+			*pResult = CDRF_NOTIFYITEMDRAW;
+			CDC* pDC = CDC::FromHandle(lplvcd->nmcd.hdc);
+			RECT rect = m_rect;
 
+			rect.bottom = m_nColumnHeight;
+			CBrush brush0(m_colRow1);
+			CBrush brush1(m_colRow2);
+
+			int chunk_height = GetCountPerPage();
+
+			for (int i = 0; i <= chunk_height + 1; i++)
+			{
+				pDC->FillRect(&rect, i % 2 ? &brush1 : &brush0);
+				rect.top += m_nColumnHeight;
+				rect.bottom += m_nColumnHeight;
+			}
 			return;
 		}
 	}
@@ -144,6 +159,7 @@ BOOL CListCtrlCustom::DeleteItem(_In_ int nItem)
 	LockWindowUpdate();
 	BOOL bRet =  CListCtrl::DeleteItem(nItem);
 	UnlockWindowUpdate();
+	//RedrawItems(nItem, GetItemCount());
 	RedrawWindow();
 	return bRet;
 }
@@ -273,6 +289,8 @@ void CListCtrlCustom::MeasureItem(LPMEASUREITEMSTRUCT lpMeasureItemStruct)
 
 BEGIN_MESSAGE_MAP(CHeaderCtrlCustom, CHeaderCtrl)
 ON_NOTIFY_REFLECT(NM_CUSTOMDRAW, &CHeaderCtrlCustom::OnNMCustomdraw)
+ON_NOTIFY(HDN_ITEMCHANGINGA, 0, &CHeaderCtrlCustom::OnHdnItemchanging)
+ON_NOTIFY(HDN_ITEMCHANGINGW, 0, &CHeaderCtrlCustom::OnHdnItemchanging)
 END_MESSAGE_MAP()
 
 
@@ -282,29 +300,67 @@ void CHeaderCtrlCustom::OnNMCustomdraw(NMHDR* pNMHDR, LRESULT* pResult)
 	// TODO: Add your control notification handler code here
 	*pResult = CDRF_DODEFAULT;
 
-/*	if (pNMCD->dwDrawStage == CDDS_PREPAINT)
+	if (pNMCD->dwDrawStage == CDDS_PREPAINT)
 	{
-		CDC* pDC = CDC::FromHandle(pNMCD->hdc);
-		CRect rect(0, 0, 0, 0);
-		GetClientRect(&rect);
-		pDC->FillSolidRect(&rect, RGB(64, 86, 141));
-		pDC->SetTextColor(RGB(255, 255, 255));
+	//	CDC* pDC = CDC::FromHandle(pNMCD->hdc);
+	//	CRect rect(0, 0, 0, 0);
+	//	GetClientRect(&rect);
+	//	pDC->FillSolidRect(&rect, RGB(64, 86, 141));
+	//	pDC->SetTextColor(RGB(255, 255, 255));
 		*pResult = CDRF_NOTIFYITEMDRAW;
-	}*/
-/*	else if (pNMCD->dwDrawStage == CDDS_ITEMPREPAINT)
+	}
+	else if (pNMCD->dwDrawStage == CDDS_ITEMPREPAINT)
 	{
-		HDITEM hditem;
+
+		*pResult = CDRF_NOTIFYPOSTPAINT;
+	}
+	else if (pNMCD->dwDrawStage == CDDS_ITEMPOSTPAINT)
+	{
+		*pResult = CDRF_NOTIFYITEMDRAW;
+	/*	HDITEM hditem;
 		TCHAR buffer[MAX_PATH] = { 0 };
 		SecureZeroMemory(&hditem, sizeof(HDITEM));
 		hditem.mask = HDI_TEXT;
 		hditem.pszText = buffer;
 		hditem.cchTextMax = MAX_PATH;
 		GetItem(pNMCD->dwItemSpec, &hditem);
+		CRect rect(0, 0, 0, 0);
+		GetClientRect(&rect);
 		CDC* pDC = CDC::FromHandle(pNMCD->hdc);
-		pDC->SetTextColor(RGB(255, 255, 255));
+		pDC->FillSolidRect(&rect, RGB(64, 86, 141));
+
+	
 		pDC->SetBkColor(RGB(64, 86, 141));
+		pDC->SetTextColor(RGB(255, 255, 255));
+
 		CString str(buffer);
-		pDC->DrawText(str, CRect(pNMCD->rc), DT_VCENTER | DT_LEFT);
-		*pResult = CDRF_SKIPDEFAULT;
-	}*/
+		pDC->DrawText(str, CRect(pNMCD->rc), DT_VCENTER | DT_LEFT);*/
+	}
+}
+
+
+void CHeaderCtrlCustom::OnHdnItemchanging(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	LPNMHEADER phdr = reinterpret_cast<LPNMHEADER>(pNMHDR);
+	// TODO: Add your control notification handler code here
+	*pResult = 0;
+
+	if ((phdr->pitem->mask & HDI_WIDTH) != 0)
+	{
+		if(phdr->iItem == 0)
+			phdr->pitem->cxy = 30;
+	}
+}
+
+
+void CListCtrlCustom::OnHdnItemchanging(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	LPNMHEADER phdr = reinterpret_cast<LPNMHEADER>(pNMHDR);
+	// TODO: Add your control notification handler code here
+	*pResult = 0;
+	if ((phdr->pitem->mask & HDI_WIDTH) != 0)
+	{
+		if (phdr->iItem == 0)
+			phdr->pitem->cxy = 30;
+	}
 }

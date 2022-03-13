@@ -1106,14 +1106,12 @@ void CCheckOpenPortsDlg::ProcessLANListener(const char* ipAddress, const char* h
 					int nRow = IsInTheList(cs);
 					if (nRow != -1)
 					{
-						//m_ctrlLANConnected.LockWindowUpdate();
 						m_ctrlLANConnected.DeleteItem(nRow);
-						//m_ctrlLANConnected.UnlockWindowUpdate();
 						for (int j = nRow; j < m_ctrlLANConnected.GetItemCount(); j++)
 						{
 							m_ctrlLANConnected.SetItemText(j, 0, to_wstring(j + 1).c_str());
 						}
-
+						
 						m_fnptrDeletePacketListenerEx(m_mConnected[it->first]->m_hPacketListenerDownload);
 						m_fnptrDeletePacketListenerEx(m_mConnected[it->first]->m_hPacketListenerUpload);
 
@@ -1126,6 +1124,7 @@ void CCheckOpenPortsDlg::ProcessLANListener(const char* ipAddress, const char* h
 					}
 					it++;
 				}
+				m_ctrlLANConnected.RedrawWindow();
 				
 			}
 			

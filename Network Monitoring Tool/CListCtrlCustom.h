@@ -22,6 +22,7 @@ public:
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnNMCustomdraw(NMHDR* pNMHDR, LRESULT* pResult);
+    afx_msg void OnHdnItemchanging(NMHDR* pNMHDR, LRESULT* pResult);
 };
 
 class CListCtrlCustom :
@@ -57,5 +58,6 @@ public:
     virtual void DrawItem(LPDRAWITEMSTRUCT /*lpDrawItemStruct*/);
     afx_msg void OnMeasureItem(int nIDCtl, LPMEASUREITEMSTRUCT lpMeasureItemStruct);
     void OnInitialize();
+    afx_msg void OnHdnItemchanging(NMHDR* pNMHDR, LRESULT* pResult);
 };
 
