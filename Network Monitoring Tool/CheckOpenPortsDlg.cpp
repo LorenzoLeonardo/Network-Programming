@@ -79,8 +79,10 @@ CCheckOpenPortsDlg::CCheckOpenPortsDlg(CWnd* pParent /*=nullptr*/)
 	m_hThreadOpenPortListener = NULL;
 	m_hThreadNICListener = NULL;
 	m_bOnCloseWasCalled = false;
+
 	m_hBrushBackGround = CreateSolidBrush(RGB(93, 107, 153));
 	m_hBrushEditArea = CreateSolidBrush(RGB(255, 255, 255));
+
 	m_pmodeless = NULL;
 	m_pfnPtrSNMPGet = NULL;
 	m_pfnPtrEndSNMP = NULL;
@@ -198,7 +200,7 @@ int CCheckOpenPortsDlg::OnCreate(LPCREATESTRUCT lpCreateStruct)
 void CCheckOpenPortsDlg::UpdateClock()
 {
 	CClientDC cdc(this);
-	m_customClock.DrawClock(&cdc,450, 50);
+	m_customClock.DrawClock(&cdc,420, 60);
 }
 unsigned __stdcall  CCheckOpenPortsDlg::ClockThread(void* parg)
 {
@@ -269,12 +271,12 @@ bool CCheckOpenPortsDlg::InitGUIControls()
 	DWORD value = 0;
 	DWORD BufferSize = 4;
 
-	::SetWindowTheme(GetDlgItem(IDC_STATIC_ROUTER_INFO)->GetSafeHwnd(), _T(""), _T(""));//To change text Color of Group Box
-	::SetWindowTheme(GetDlgItem(IDC_STATIC_ADAPTER_INFO)->GetSafeHwnd(), _T(""), _T(""));
-	::SetWindowTheme(GetDlgItem(IDC_STATIC_OPEN_PORTS)->GetSafeHwnd(), _T(""), _T(""));
-	::SetWindowTheme(GetDlgItem(IDC_CHECK_DEBUG)->GetSafeHwnd(), _T(""), _T(""));
-	::SetWindowTheme(GetDlgItem(IDC_CHECK_INTERNET_ONLY)->GetSafeHwnd(), _T(""), _T(""));
-	::SetWindowTheme(GetDlgItem(IDC_STATIC_NET_MON)->GetSafeHwnd(), _T(""), _T(""));
+	::SetWindowTheme(GetDlgItem(IDC_STATIC_ROUTER_INFO)->GetSafeHwnd(), NULL, _T(""));//To change text Color of Group Box
+	::SetWindowTheme(GetDlgItem(IDC_STATIC_ADAPTER_INFO)->GetSafeHwnd(), NULL, _T(""));
+	::SetWindowTheme(GetDlgItem(IDC_STATIC_OPEN_PORTS)->GetSafeHwnd(), NULL, _T(""));
+	::SetWindowTheme(GetDlgItem(IDC_CHECK_DEBUG)->GetSafeHwnd(), NULL, _T(""));
+	::SetWindowTheme(GetDlgItem(IDC_CHECK_INTERNET_ONLY)->GetSafeHwnd(), NULL, _T(""));
+	::SetWindowTheme(GetDlgItem(IDC_STATIC_NET_MON)->GetSafeHwnd(), NULL, _T(""));
 
 	m_ctrlLANConnected.SetExtendedStyle(LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 	m_ctrlLANConnected.OnInitialize();
@@ -396,7 +398,7 @@ HBRUSH CCheckOpenPortsDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 			{
 				pDC->SetTextColor(RGB(0, 0, 0));
 				pDC->SetBkColor(RGB(255, 255, 255));
-				return m_hBrushEditArea;
+				return (HBRUSH)GetStockObject(WHITE_BRUSH);//m_hBrushEditArea;
 			}
 			
 			else
@@ -415,7 +417,7 @@ HBRUSH CCheckOpenPortsDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 				pDC->SetTextColor(RGB(255, 255, 255));
 				pDC->SetBkColor(RGB(93, 107, 153));
 				pDC->SetBkMode(TRANSPARENT);
-				return m_hBrushBackGround;
+				return (HBRUSH)GetStockObject(WHITE_BRUSH);//m_hBrushBackGround;
 			}
 			break;
 		}
@@ -427,7 +429,7 @@ HBRUSH CCheckOpenPortsDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 		case CTLCOLOR_EDIT:
 		{
 			pDC->SetBkColor(RGB(255, 255, 255));
-			return m_hBrushEditArea;
+			return (HBRUSH)GetStockObject(WHITE_BRUSH);//m_hBrushEditArea;
 		}
 		default:
 			return CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
@@ -925,7 +927,7 @@ int CCheckOpenPortsDlg::IsInTheList(CString csIPAddress)
 void CCheckOpenPortsDlg::UpdateDeviceConnected()
 {
 	CString csConn;
-	csConn.Format(_T("Device Connected: %d"), m_ctrlLANConnected.GetItemCount());
+	csConn.Format(_T("No. Device Connected: %d"), m_ctrlLANConnected.GetItemCount());
 	m_ctrlStaticNumDevice.SetWindowTextW(csConn);
 }
 

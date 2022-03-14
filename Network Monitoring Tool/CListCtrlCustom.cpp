@@ -17,8 +17,8 @@ CHeaderCtrlCustom:: ~CHeaderCtrlCustom()
 
 CListCtrlCustom::CListCtrlCustom()
 {
-	m_colRow1 = RGB(250, 250, 250);
-	m_colRow2 = RGB(204, 213, 240);//RGB(0, 255, 255);
+	m_colRow2 = RGB(255, 255, 255);
+	m_colRow1 = RGB(204, 213, 240);//RGB(0, 255, 255);
 	m_nColumnHeight = 0;
 	m_rect = { 0,0,0,0 };
 }
@@ -234,6 +234,7 @@ void CListCtrlCustom::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 			if (csString.Compare(m_csIP) == 0)
 			{
 				pDC->FillSolidRect(&lpDrawItemStruct->rcItem, RGB(255, 255, 0));
+				pDC->SetTextColor(RGB(0, 0, 0));
 			}
 			else
 			{
@@ -241,8 +242,10 @@ void CListCtrlCustom::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 					pDC->FillSolidRect(&lpDrawItemStruct->rcItem, m_colRow1);// GetSysColor(COLOR_WINDOW));
 				else
 					pDC->FillSolidRect(&lpDrawItemStruct->rcItem, m_colRow2);
+				pDC->SetTextColor(RGB(80, 80, 80));
 			}
-			pDC->SetTextColor(GetSysColor(COLOR_WINDOWTEXT));
+			//pDC->SetTextColor(GetSysColor(COLOR_WINDOWTEXT));
+			
 		}
 
 		pDC->SelectObject(GetStockObject(DEFAULT_GUI_FONT));
@@ -250,6 +253,7 @@ void CListCtrlCustom::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 		UINT		uFormat = DT_END_ELLIPSIS| DT_PATH_ELLIPSIS | DT_WORD_ELLIPSIS | DT_MODIFYSTRING;
 
 		//lpDrawItemStruct->rcItem.top = 2;
+		
 		::DrawText(lpDrawItemStruct->hDC, lpBuffer, (int)_tcslen(lpBuffer),
 			&rectText, uFormat);
 
@@ -318,15 +322,19 @@ void CHeaderCtrlCustom::OnNMCustomdraw(NMHDR* pNMHDR, LRESULT* pResult)
 	else if (pNMCD->dwDrawStage == CDDS_ITEMPOSTPAINT)
 	{
 		*pResult = CDRF_NOTIFYITEMDRAW;
-	/*	HDITEM hditem;
+		HDITEM hditem;
 		TCHAR buffer[MAX_PATH] = { 0 };
 		SecureZeroMemory(&hditem, sizeof(HDITEM));
 		hditem.mask = HDI_TEXT;
 		hditem.pszText = buffer;
 		hditem.cchTextMax = MAX_PATH;
 		GetItem(pNMCD->dwItemSpec, &hditem);
-		CRect rect(0, 0, 0, 0);
-		GetClientRect(&rect);
+		RECT rect;
+		rect = pNMCD->rc;
+		//rect.right--;
+		rect.left+=1;
+		rect.top++;
+		//rect.bottom-=2;
 		CDC* pDC = CDC::FromHandle(pNMCD->hdc);
 		pDC->FillSolidRect(&rect, RGB(64, 86, 141));
 
@@ -335,7 +343,26 @@ void CHeaderCtrlCustom::OnNMCustomdraw(NMHDR* pNMHDR, LRESULT* pResult)
 		pDC->SetTextColor(RGB(255, 255, 255));
 
 		CString str(buffer);
-		pDC->DrawText(str, CRect(pNMCD->rc), DT_VCENTER | DT_LEFT);*/
+
+		LOGFONT logFont;
+		CFont boldFont;
+		CFont* pOldFont = NULL;
+		CFont* pFont = pDC->SelectObject(CFont::FromHandle((HFONT)GetStockObject(DEFAULT_GUI_FONT)));
+		if (pFont)
+		{
+			pFont->GetLogFont(&logFont);
+			logFont.lfWeight = FW_NORMAL;//or FW_BOLD or FW_BLACK or other...
+			boldFont.CreateFontIndirect(&logFont);
+			pOldFont = pDC->SelectObject(&boldFont);
+		}
+		// draw your text
+
+		rect.left += 4;
+		rect.top += 4;
+		pDC->DrawText(str, CRect(rect), DT_VCENTER | DT_LEFT);
+		if (pOldFont)
+			pDC->SelectObject(pOldFont);
+		boldFont.DeleteObject();
 	}
 }
 
