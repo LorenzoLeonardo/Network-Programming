@@ -337,7 +337,6 @@ void CHeaderCtrlCustom::OnNMCustomdraw(NMHDR* pNMHDR, LRESULT* pResult)
 		//rect.bottom-=2;
 		CDC* pDC = CDC::FromHandle(pNMCD->hdc);
 		pDC->FillSolidRect(&rect, RGB(64, 86, 141));
-
 	
 		pDC->SetBkColor(RGB(64, 86, 141));
 		pDC->SetTextColor(RGB(255, 255, 255));
