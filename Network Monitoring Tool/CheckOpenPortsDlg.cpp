@@ -396,7 +396,7 @@ HBRUSH CCheckOpenPortsDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 
 			if (id == IDC_EDIT_AREA || id == IDC_EDIT_PACKET_REPORT || id == IDC_EDIT_SPEED_DOWN || id == IDC_EDIT_SPEED_UP || id == IDC_EDIT_ADAPTER_INFO)
 			{
-				pDC->SetTextColor(RGB(0, 0, 0));
+				pDC->SetTextColor(RGB(80, 80, 80));
 				pDC->SetBkColor(RGB(255, 255, 255));
 				return (HBRUSH)GetStockObject(WHITE_BRUSH);//m_hBrushEditArea;
 			}
@@ -1579,9 +1579,14 @@ void CCheckOpenPortsDlg::OnMove(int x, int y)
 
 	if (m_pmodeless)
 	{
-		RECT  rectParent;
-		GetClientRect(&rectParent);
-		m_pmodeless->MoveWindow(x + rectParent.right, y-32, m_rectModeless.right, m_rectModeless.bottom+3);
+		//RECT  rectParent;
+		//GetClientRect(&rectParent);
+		//m_pmodeless->MoveWindow(x + rectParent.right, y-32, m_rectModeless.right, m_rectModeless.bottom+3);
+		RECT thisRect;
+		GetDlgItem(IDC_LIST_LAN)->GetWindowRect(&thisRect);
+		m_pmodeless->MoveWindow(thisRect.left, thisRect.top, thisRect.right - thisRect.left, thisRect.bottom - thisRect.top);
+
+		
 		m_pmodeless->SetForegroundWindow();
 		// TODO: Add your message handler code here
 	}
@@ -2022,8 +2027,9 @@ void CCheckOpenPortsDlg::OnNcLButtonDown(UINT nHitTest, CPoint point)
 {
 	// TODO: Add your message handler code here and/or call default
 	if (m_pmodeless)
-		m_pmodeless->SetFocus();
+		m_pmodeless->SetForegroundWindow();
 	CDialogEx::OnNcLButtonDown(nHitTest, point);
+
 }
 
 
@@ -2031,8 +2037,9 @@ void CCheckOpenPortsDlg::OnNcLButtonUp(UINT nHitTest, CPoint point)
 {
 	// TODO: Add your message handler code here and/or call default
 	if (m_pmodeless)
-		m_pmodeless->SetFocus();
+		m_pmodeless->SetForegroundWindow();
 	CDialogEx::OnNcLButtonUp(nHitTest, point);
+
 }
 
 

@@ -126,9 +126,11 @@ BOOL CPacketInfoDlg::OnInitDialog()
 	CDialogEx::OnInitDialog();
 	m_bIsCanceled = false;
 	RECT rect, thisRect;
-	m_pParent->GetWindowRect(&rect);
-	GetClientRect(&thisRect);
-	MoveWindow(rect.right-8,rect.top, thisRect.right, thisRect.bottom);
+	((CCheckOpenPortsDlg*)m_pParent)->GetWindowRect(&rect);
+
+	((CCheckOpenPortsDlg*)m_pParent)->GetDlgItem(IDC_LIST_LAN)->GetWindowRect(&thisRect);
+	//GetClientRect(&thisRect);
+	MoveWindow(thisRect.left, thisRect.top, thisRect.right - thisRect.left, thisRect.bottom- thisRect.top);
 
 	//::SetWindowTheme(GetDlgItem(IDC_CHECK_IGMP)->GetSafeHwnd(), _T(""), _T(""));
 	//::SetWindowTheme(GetDlgItem(IDC_CHECK_ICMP)->GetSafeHwnd(), _T(""), _T(""));

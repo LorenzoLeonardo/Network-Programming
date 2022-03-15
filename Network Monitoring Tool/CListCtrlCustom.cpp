@@ -18,7 +18,7 @@ CHeaderCtrlCustom:: ~CHeaderCtrlCustom()
 CListCtrlCustom::CListCtrlCustom()
 {
 	m_colRow2 = RGB(255, 255, 255);
-	m_colRow1 = RGB(204, 213, 240);//RGB(0, 255, 255);
+	m_colRow1 = RGB(232, 232, 236);//RGB(0, 255, 255);
 	m_nColumnHeight = 0;
 	m_rect = { 0,0,0,0 };
 }
@@ -100,6 +100,7 @@ void CListCtrlCustom::OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult)
 		{
 			*pResult = CDRF_NOTIFYITEMDRAW;
 			CDC* pDC = CDC::FromHandle(lplvcd->nmcd.hdc);
+			//pDC->SetBkColor(RGB(0, 0, 0));
 			RECT rect = m_rect;
 			rect.top -= 2;
 			rect.bottom = m_nColumnHeight;
