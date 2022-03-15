@@ -2,6 +2,7 @@
 struct enz_packet_info
 {
     CString csSite;
+    CString csTimeVisited;
     int nPort;
     int nProtocol;
 };

@@ -1853,29 +1853,28 @@ bool CCheckOpenPortsDlg::ProcessPacketListenerUploadEx(unsigned char* buffer, in
 			if (iphdr->ucIPProtocol == TCP_PROTOCOL)
 			{
 				tcpheader = (TCP_HDR*)(buffer + iphdrlen);
-
 				USHORT uDestPort = ntohs(tcpheader->usDestPort);
 				std::pair< CString, struct enz_packet_info> mpair;
 				mpair.first = destIP;
 				mpair.second.csSite = destIP;
 				mpair.second.nPort = uDestPort;
 				mpair.second.nProtocol = TCP_PROTOCOL;
+				mpair.second.csTimeVisited = CCustomClock::GetDateTime();
 				m_mSiteVisited[sourceIP].insert(m_mSiteVisited[sourceIP].begin(), mpair);
 			}
 			else if (iphdr->ucIPProtocol == UDP_PROTOCOL)
 			{
 				udpheader = (UDP_HDR*)(buffer + iphdrlen);
-
 				USHORT uDestPort = ntohs(udpheader->usDestPort);
 				std::pair< CString, struct enz_packet_info> mpair;
 				mpair.first = destIP;
 				mpair.second.csSite = destIP;
 				mpair.second.nPort = uDestPort;
 				mpair.second.nProtocol = UDP_PROTOCOL;
-				m_mSiteVisited[sourceIP].insert(m_mSiteVisited[sourceIP].begin(), mpair);
+				mpair.second.csTimeVisited = CCustomClock::GetDateTime();
+				m_mSiteVisited[sourceIP].insert(m_mSiteVisited[sourceIP].begin(), mpair); 
 			}
 		}
-		
 		pDevice->m_ulDataSizeUpload += nSize;
 	}
 

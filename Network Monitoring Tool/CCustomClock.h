@@ -32,6 +32,7 @@ public:
 	{
 		*rect = m_rectClock;
 	}
+	static CString GetDateTime();
 protected:
 	CFont			m_cfont;
 	CFont			m_cFontAMPM;

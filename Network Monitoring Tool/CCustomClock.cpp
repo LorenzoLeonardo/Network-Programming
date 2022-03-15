@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "CCustomClock.h"
 
+CCustomClock* pCCustomClock;
 CCustomClock::CCustomClock()
 {
 	m_csFontStyle = _T("Microsoft Sans Serif");
@@ -8,6 +9,7 @@ CCustomClock::CCustomClock()
 	m_nFontWeight = FW_NORMAL;
 	m_textColor = RGB(0, 0, 0);
 	m_textBKColor = RGB(255, 255, 255);
+	pCCustomClock = this;
 }
 CCustomClock::~CCustomClock()
 {
@@ -70,8 +72,28 @@ void CCustomClock::DestroyClock()
 	m_cFontAMPM.DeleteObject();
 	m_cFontDate.DeleteObject();
 }
+CString CCustomClock::GetDateTime()
+{
+	SYSTEMTIME sysTime;
+	WORD wHour = 0;
+	CString csDateTime;
 
+	GetLocalTime(&sysTime);
+	wHour = sysTime.wHour;
+	if (sysTime.wHour == 0)
+		wHour = 12;
+	else if (sysTime.wHour > 12)
+		wHour = sysTime.wHour - 12;
 
+	csDateTime.Format(_T("%s %02d, %04d "), pCCustomClock->GetMonthName(sysTime.wMonth).GetBuffer(), sysTime.wDay, sysTime.wYear);
+
+	if (sysTime.wHour >= 12)
+		csDateTime.AppendFormat(_T("%d:%02d:%02d PM"), wHour, sysTime.wMinute, sysTime.wSecond);
+	else
+		csDateTime.AppendFormat(_T("%d:%02d:%02d AM"), wHour, sysTime.wMinute, sysTime.wSecond);
+
+	return csDateTime;
+}
 void CCustomClock::DrawClock(CClientDC* dcSrc, int x, int y)
 {
 	SYSTEMTIME sysTime;
