@@ -48,6 +48,7 @@ public:
 protected:
 	DECLARE_MESSAGE_MAP()
 
+	afx_msg LRESULT OnSiteVisited(WPARAM wParam, LPARAM lParam);
 };
 
 CAboutDlg::CAboutDlg() : CDialogEx(IDD_ABOUTBOX)
@@ -61,6 +62,7 @@ void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 
 BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
 
+	ON_MESSAGE(WM_SITE_VISITED, &CAboutDlg::OnSiteVisited)
 END_MESSAGE_MAP()
 
 
@@ -754,7 +756,7 @@ void CCheckOpenPortsDlg::OnNMDblclkListLan(NMHDR* pNMHDR, LRESULT* pResult)
 	if (pNMItemActivate->iItem >= 0)
 	{
 
-		OnBnClickedButtonStopPacket();
+	//	OnBnClickedButtonStopPacket();
 
 		CSaveDeviceInfoDlg saveDlg;
 		CString csIP = m_ctrlLANConnected.GetItemText(pNMItemActivate->iItem, COL_IPADDRESS);
@@ -771,7 +773,7 @@ void CCheckOpenPortsDlg::OnNMDblclkListLan(NMHDR* pNMHDR, LRESULT* pResult)
 		saveDlg.SetInformation(csIP,
 			m_ctrlLANConnected.GetItemText(pNMItemActivate->iItem, COL_MACADDRESS),
 			m_ctrlLANConnected.GetItemText(pNMItemActivate->iItem, COL_DEVICENAME));
-
+		saveDlg.SetSiteVisited(&m_mSiteVisited);
 		INT_PTR nPtr = saveDlg.DoModal();
 		if (nPtr == IDOK)
 		{
@@ -781,7 +783,7 @@ void CCheckOpenPortsDlg::OnNMDblclkListLan(NMHDR* pNMHDR, LRESULT* pResult)
 				m_ctrlLANConnected.SetItemText(pNMItemActivate->iItem, COL_DEVICENAME, saveDlg.GetDeviceName());
 			}
 		}
-		OnBnClickedButtonStartPacket();
+	//	OnBnClickedButtonStartPacket();
 	}
 }
 
@@ -1813,9 +1815,9 @@ bool CCheckOpenPortsDlg::ProcessPacketListenerDownloadEx(unsigned char* buffer, 
 		DWORD dwBeginIP = 0;
 		DWORD dwEndIP = 0;
 
-		inet_pton(AF_INET, m_vAdapterInfo[m_ctrlComboAdapterList.GetCurSel()].AdapterInfo.IpAddressList.IpMask.String, &dwMask);
+		inet_pton(AF_INET, m_vAdapterInfo[m_nCurrentNICSelect].AdapterInfo.IpAddressList.IpMask.String, &dwMask);
 		dwMask = ntohl(dwMask);
-		inet_pton(AF_INET, m_vAdapterInfo[m_ctrlComboAdapterList.GetCurSel()].AdapterInfo.IpAddressList.IpAddress.String, &dwBeginIP);
+		inet_pton(AF_INET, m_vAdapterInfo[m_nCurrentNICSelect].AdapterInfo.IpAddressList.IpAddress.String, &dwBeginIP);
 		dwBeginIP = dwMask & ntohl(dwBeginIP);
 		dwEndIP = (0xFFFFFFFF - dwMask) + dwBeginIP;
 
@@ -1863,16 +1865,18 @@ bool CCheckOpenPortsDlg::ProcessPacketListenerUploadEx(unsigned char* buffer, in
 	destIP = CA2W(sztemp);
 	inet_ntop(AF_INET, (const void*)&iphdr->unSrcaddress, sztemp, sizeof(sztemp));
 	sourceIP = CA2W(sztemp);
+	
 
+	
 	if (IsInternetOnly())
 	{
 		DWORD dwMask = 0;
 		DWORD dwBeginIP = 0;
 		DWORD dwEndIP = 0;
 
-		inet_pton(AF_INET, m_vAdapterInfo[m_ctrlComboAdapterList.GetCurSel()].AdapterInfo.IpAddressList.IpMask.String, &dwMask);
+		inet_pton(AF_INET, m_vAdapterInfo[m_nCurrentNICSelect].AdapterInfo.IpAddressList.IpMask.String, &dwMask);
 		dwMask = ntohl(dwMask);
-		inet_pton(AF_INET, m_vAdapterInfo[m_ctrlComboAdapterList.GetCurSel()].AdapterInfo.IpAddressList.IpAddress.String, &dwBeginIP);
+		inet_pton(AF_INET, m_vAdapterInfo[m_nCurrentNICSelect].AdapterInfo.IpAddressList.IpAddress.String, &dwBeginIP);
 		dwBeginIP = dwMask & ntohl(dwBeginIP);
 		dwEndIP = (0xFFFFFFFF - dwMask) + dwBeginIP;
 
@@ -1882,7 +1886,36 @@ bool CCheckOpenPortsDlg::ProcessPacketListenerUploadEx(unsigned char* buffer, in
 
 	ULONGLONG timeCurrent = GetTickCount64();
 	if (pDevice->m_szIPAddress == sourceIP)
+	{
+		if (iphdr->ucIPProtocol == TCP_PROTOCOL)
+		{
+			DWORD dwMask = 0;
+			DWORD dwBeginIP = 0;
+			DWORD dwEndIP = 0;
+
+			inet_pton(AF_INET, m_vAdapterInfo[m_nCurrentNICSelect].AdapterInfo.IpAddressList.IpMask.String, &dwMask);
+			dwMask = ntohl(dwMask);
+			inet_pton(AF_INET, m_vAdapterInfo[m_nCurrentNICSelect].AdapterInfo.IpAddressList.IpAddress.String, &dwBeginIP);
+			dwBeginIP = dwMask & ntohl(dwBeginIP);
+			dwEndIP = (0xFFFFFFFF - dwMask) + dwBeginIP;
+
+			if (!(((ntohl(iphdr->unDestaddress) > dwBeginIP) && (ntohl(iphdr->unDestaddress) < dwEndIP)) && ((ntohl(iphdr->unSrcaddress) > dwBeginIP) && (ntohl(iphdr->unSrcaddress) < dwEndIP))))
+			{
+				tcpheader = (TCP_HDR*)(buffer + iphdrlen);
+			
+				USHORT uDestPort = ntohs(tcpheader->usDestPort);
+
+				if (uDestPort == 8802 || uDestPort == 8801 || uDestPort == 8080 || uDestPort == 80 || uDestPort == 443)
+				{
+					std::pair< CString, CString> mpair;
+					mpair.first = destIP;
+					mpair.second = destIP;
+					m_mSiteVisited[sourceIP].insert(m_mSiteVisited[sourceIP].begin(), mpair);
+				}
+			}
+		}
 		pDevice->m_ulDataSizeUpload += nSize;
+	}
 
 	if ((timeCurrent - pDevice->m_ullUploadStartTime) >= POLLING_TIME)
 	{
@@ -2108,4 +2141,10 @@ void CCheckOpenPortsDlg::OnMouseLeave()
 	if (m_pmodeless)
 		m_pmodeless->SetFocus();
 	CDialogEx::OnMouseLeave();
+}
+
+
+afx_msg LRESULT CAboutDlg::OnSiteVisited(WPARAM wParam, LPARAM lParam)
+{
+	return 0;
 }

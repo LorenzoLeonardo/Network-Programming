@@ -4,7 +4,7 @@
 
 CHeaderCtrlCustom::CHeaderCtrlCustom()
 {
-
+	
 	
 }
 CHeaderCtrlCustom:: ~CHeaderCtrlCustom()
@@ -21,6 +21,7 @@ CListCtrlCustom::CListCtrlCustom()
 	m_colRow1 = RGB(232, 232, 236);//RGB(0, 255, 255);
 	m_nColumnHeight = 0;
 	m_rect = { 0,0,0,0 };
+	m_csIP = _T("NULL");
 }
 
 CListCtrlCustom::~CListCtrlCustom()
@@ -154,7 +155,17 @@ int CListCtrlCustom::InsertItem(_In_ UINT nMask, _In_ int nItem, _In_z_ LPCTSTR 
 
 	return CListCtrl::InsertItem(nMask, nItem, lpszItem, nState, nStateMask, nImage, lParam);
 }
-
+int CListCtrlCustom::InsertColumn(_In_ int nCol, _In_ const LVCOLUMN* pColumn)
+{
+	
+	return  CListCtrl::InsertColumn(nCol, pColumn);
+}
+int CListCtrlCustom::InsertColumn(_In_ int nCol, _In_z_ LPCTSTR lpszColumnHeading,
+	_In_ int nFormat, _In_ int nWidth, _In_ int nSubItem)
+{
+	m_vFormat.push_back({ nWidth ,nFormat });
+	return  CListCtrl::InsertColumn(nCol, lpszColumnHeading, nFormat, nWidth, nSubItem);
+}
 BOOL CListCtrlCustom::DeleteItem(_In_ int nItem)
 {
 	LockWindowUpdate();
@@ -375,6 +386,7 @@ void CHeaderCtrlCustom::OnHdnItemchanging(NMHDR* pNMHDR, LRESULT* pResult)
 
 	if ((phdr->pitem->mask & HDI_WIDTH) != 0)
 	{
+		
 		if(phdr->iItem == 0)
 			phdr->pitem->cxy = 30;
 	}
@@ -388,7 +400,7 @@ void CListCtrlCustom::OnHdnItemchanging(NMHDR* pNMHDR, LRESULT* pResult)
 	*pResult = 0;
 	if ((phdr->pitem->mask & HDI_WIDTH) != 0)
 	{
-		if (phdr->iItem == 0)
-			phdr->pitem->cxy = 30;
+		if ((m_vFormat[phdr->iItem].nFormat & LVCFMT_FIXED_WIDTH) == LVCFMT_FIXED_WIDTH)
+			phdr->pitem->cxy = m_vFormat[phdr->iItem].nColWidth;
 	}
 }

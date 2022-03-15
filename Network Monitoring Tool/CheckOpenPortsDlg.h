@@ -244,6 +244,8 @@ protected:
 	map<ULONG, int> m_mMonitorDeviceCurrent;
 	map<ULONG, int> m_mMonitorDeviceBefore;
 
+	map<CString, map<CString, CString>> m_mSiteVisited;
+
 	vector<CNetworkInterfaceInfo> m_vAdapterInfo;
 
 	ULONG   m_ulIPFilter;

@@ -5,9 +5,14 @@
 #include "CCustomClock.h"
 #include "CDeviceConnected.h"
 #include "../EnzTCP/EnzTCP.h"
+#include "CListCtrlCustom.h"
 // CSaveDeviceInfoDlg dialog
 #include <mutex>
+#include <map>
+#include <string>
+#define WM_SITE_VISITED WM_USER + 100
 
+using namespace std;
 typedef bool (*FNCallbackPacketListenerEx)(unsigned char* buffer, int nSize, void* pObject);
 typedef HANDLE(*FNPTRCreatePacketListenerEx)(FNCallbackPacketListenerEx, void*);
 typedef bool (*FNPTRStartPacketListenerEx)(HANDLE);
@@ -33,6 +38,8 @@ public:
 	CSaveDeviceInfoDlg(CWnd* pParent = nullptr);   // standard constructor
 	virtual ~CSaveDeviceInfoDlg();
 
+	static unsigned _stdcall SiteVisitedThread(void* args);
+	void SiteVisitedThread();
 // Dialog Data
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_DIALOG_DEVICE_INFO };
@@ -51,8 +58,11 @@ protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 	bool SaveDeviceName();
 	DECLARE_MESSAGE_MAP()
-
-protected:
+	CString GetHostName(CString ip);
+	int IsInTheList(CString csIPAddress);
+	HANDLE m_hThreadStop;
+	HANDLE m_hThreadWait;
+	HANDLE m_hThread;
 	CSpeedObj m_speedObj;
 
 	CEdit m_ctrlEditDevicename;
@@ -75,5 +85,17 @@ public:
 	afx_msg void OnClose();
 	CButton m_ctrlStaticArea;
 	afx_msg void OnBnClickedCancel();
+	void SetSiteVisited(map<CString,map<CString, CString>>* mSiteVisited)
+	{
+		m_pmSiteVisited = mSiteVisited;
+	}
+protected:
+	CEdit m_ctrlEditSiteVisited;
+	map < CString, map<CString, CString>> *m_pmSiteVisited;
+//	afx_msg LRESULT OnSiteVisit(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnSiteVisited(WPARAM wParam, LPARAM lParam);
+	CListCtrlCustom m_ctrlListVisited;
+public:
+	virtual BOOL DestroyWindow();
 };
 
