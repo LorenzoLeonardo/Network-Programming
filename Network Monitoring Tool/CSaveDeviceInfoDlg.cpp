@@ -87,20 +87,27 @@ void CSaveDeviceInfoDlg::SiteVisitedThread()
 	{
 		dwRet = WaitForSingleObject(m_hThreadStop, 0);
 		
-		map<CString, CString>::iterator it = (*m_pmSiteVisited)[m_csIPAddress].begin();
+		map<CString, struct enz_packet_info>::iterator it = (*m_pmSiteVisited)[m_csIPAddress].begin();
 		while ((it != (*m_pmSiteVisited)[m_csIPAddress].end()) && (dwRet != WAIT_OBJECT_0))
 		{
-			csText = GetHostName(it->first);
-			if ((csText != it->first) && (IsInTheList(csText) == -1))
+			if (it->second.csSite == it->first)
 			{
-				dwRet = WaitForSingleObject(m_hThreadStop, 0);
-				if (WAIT_OBJECT_0 == dwRet)
-					break;
-
-				m_ctrlListVisited.InsertItem(LVIF_TEXT | LVIF_STATE, nRow, to_wstring(nRow + 1).c_str(), 0, 0, 0, 0);
-				m_ctrlListVisited.SetItemText(nRow, 1, it->first);
-				m_ctrlListVisited.SetItemText(nRow, 2, csText);
-				nRow++;
+				it->second.csSite = csText = GetHostName(it->first);
+				if ((csText != it->first) && (IsInTheList(csText) == -1))
+				{
+					dwRet = WaitForSingleObject(m_hThreadStop, 0);
+					if (WAIT_OBJECT_0 == dwRet)
+						break;
+					nRow = m_ctrlListVisited.GetItemCount();
+					m_ctrlListVisited.InsertItem(LVIF_TEXT | LVIF_STATE, nRow, to_wstring(nRow + 1).c_str(), 0, 0, 0, 0);
+					if(it->second.nProtocol == TCP_PROTOCOL)
+						m_ctrlListVisited.SetItemText(nRow, 1, _T("TCP"));
+					else if(it->second.nProtocol == UDP_PROTOCOL)
+						m_ctrlListVisited.SetItemText(nRow, 1, _T("UDP"));
+					m_ctrlListVisited.SetItemText(nRow, 2, it->first);
+					m_ctrlListVisited.SetItemText(nRow, 3, to_wstring(it->second.nPort).c_str());
+					m_ctrlListVisited.SetItemText(nRow, 4, csText);
+				}
 			}
 			it++;
 		}
@@ -115,7 +122,7 @@ BOOL CSaveDeviceInfoDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 
-	LPCTSTR lpcRecHeader[] = { _T("No."), _T("IP Address"), _T("Site")};
+	LPCTSTR lpcRecHeader[] = { _T("No."),_T("Protocol"), _T("IP Address"), _T("Port"), _T("Site")};
 	DWORD value = 0;
 	DWORD BufferSize = 4;
 
@@ -125,8 +132,10 @@ BOOL CSaveDeviceInfoDlg::OnInitDialog()
 	m_ctrlListVisited.SetExtendedStyle(LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 	m_ctrlListVisited.OnInitialize();
 	m_ctrlListVisited.InsertColumn(0, lpcRecHeader[0], LVCFMT_FIXED_WIDTH, 30);
-	m_ctrlListVisited.InsertColumn(1, lpcRecHeader[1], LVCFMT_LEFT, 100);
-	m_ctrlListVisited.InsertColumn(2, lpcRecHeader[2], LVCFMT_LEFT, 500);
+	m_ctrlListVisited.InsertColumn(1, lpcRecHeader[1], LVCFMT_LEFT, 50);
+	m_ctrlListVisited.InsertColumn(2, lpcRecHeader[2], LVCFMT_LEFT, 100);
+	m_ctrlListVisited.InsertColumn(3, lpcRecHeader[3], LVCFMT_LEFT, 50);
+	m_ctrlListVisited.InsertColumn(4, lpcRecHeader[4], LVCFMT_LEFT, 500);
 	// TODO:  Add extra initialization here
 
 	m_ctrlEditDevicename.SetWindowText(m_csDeviceName);
@@ -140,6 +149,25 @@ BOOL CSaveDeviceInfoDlg::OnInitDialog()
 	m_speedObj.m_ullUploadSize = 0;
 	m_speedObj.m_ullTimeStarted = GetTickCount64();
 	
+	int nRow = m_ctrlListVisited.GetItemCount();
+	map<CString, struct enz_packet_info>::iterator it = (*m_pmSiteVisited)[m_csIPAddress].begin();
+	while ((it != (*m_pmSiteVisited)[m_csIPAddress].end()))
+	{
+		if (it->second.csSite != it->first)
+		{
+			m_ctrlListVisited.InsertItem(LVIF_TEXT | LVIF_STATE, nRow, to_wstring(nRow + 1).c_str(), 0, 0, 0, 0);
+			if (it->second.nProtocol == TCP_PROTOCOL)
+				m_ctrlListVisited.SetItemText(nRow, 1, _T("TCP"));
+			else if (it->second.nProtocol == UDP_PROTOCOL)
+				m_ctrlListVisited.SetItemText(nRow, 1, _T("UDP"));
+			m_ctrlListVisited.SetItemText(nRow, 2, it->first);
+			m_ctrlListVisited.SetItemText(nRow, 3, to_wstring(it->second.nPort).c_str());
+			m_ctrlListVisited.SetItemText(nRow, 4, it->second.csSite);
+			nRow = m_ctrlListVisited.GetItemCount();
+		}
+		it++;
+	}
+
 	m_hThreadStop = CreateEvent(NULL, TRUE, FALSE, NULL);
 	m_hThreadWait = CreateEvent(NULL, TRUE, FALSE, NULL);
 	m_hThread = (HANDLE)_beginthreadex(NULL, 0, SiteVisitedThread, this, 0, NULL);
@@ -227,16 +255,6 @@ void CSaveDeviceInfoDlg::DisplaySpeed(unsigned char* buffer, int nSize, void* pO
 		this->SetWindowText(csTitle);
 		cText.DrawCustomText(&cdc, 30, nRow, csTitle);
 		pDevice->m_ullTimeStarted = GetTickCount64();
-
-		CString csText;
-		map<CString, CString> mSite = (*m_pmSiteVisited)[m_csIPAddress];
-		map<CString, CString>::iterator it = mSite.begin();
-		while (it != mSite.end())
-		{
-			csText.AppendFormat(_T("%s : %s\r\n"), it->second, GetHostName(it->first));
-			it++;
-		}
-		
 	}
 }
 void CSaveDeviceInfoDlg::OnPaint()

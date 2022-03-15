@@ -63,6 +63,7 @@ typedef void (*FNPTRSetNICAdapterToUse)(const char* szAdapterName, ULONG ipAddre
 template <typename Map>
 inline bool key_compare(Map const& lhs, Map const& rhs);
 
+
 class CNetworkInterfaceInfo
 {
 public:
@@ -244,7 +245,7 @@ protected:
 	map<ULONG, int> m_mMonitorDeviceCurrent;
 	map<ULONG, int> m_mMonitorDeviceBefore;
 
-	map<CString, map<CString, CString>> m_mSiteVisited;
+	map<CString, map<CString, struct enz_packet_info>> m_mSiteVisited;
 
 	vector<CNetworkInterfaceInfo> m_vAdapterInfo;
 

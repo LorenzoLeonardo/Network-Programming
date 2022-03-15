@@ -1,5 +1,10 @@
 #pragma once
-
+struct enz_packet_info
+{
+    CString csSite;
+    int nPort;
+    int nProtocol;
+};
 class CDeviceConnected
 {
 public:

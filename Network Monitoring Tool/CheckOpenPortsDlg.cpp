@@ -1866,8 +1866,6 @@ bool CCheckOpenPortsDlg::ProcessPacketListenerUploadEx(unsigned char* buffer, in
 	inet_ntop(AF_INET, (const void*)&iphdr->unSrcaddress, sztemp, sizeof(sztemp));
 	sourceIP = CA2W(sztemp);
 	
-
-	
 	if (IsInternetOnly())
 	{
 		DWORD dwMask = 0;
@@ -1887,33 +1885,44 @@ bool CCheckOpenPortsDlg::ProcessPacketListenerUploadEx(unsigned char* buffer, in
 	ULONGLONG timeCurrent = GetTickCount64();
 	if (pDevice->m_szIPAddress == sourceIP)
 	{
-		if (iphdr->ucIPProtocol == TCP_PROTOCOL)
+		DWORD dwMask = 0;
+		DWORD dwBeginIP = 0;
+		DWORD dwEndIP = 0;
+
+		inet_pton(AF_INET, m_vAdapterInfo[m_nCurrentNICSelect].AdapterInfo.IpAddressList.IpMask.String, &dwMask);
+		dwMask = ntohl(dwMask);
+		inet_pton(AF_INET, m_vAdapterInfo[m_nCurrentNICSelect].AdapterInfo.IpAddressList.IpAddress.String, &dwBeginIP);
+		dwBeginIP = dwMask & ntohl(dwBeginIP);
+		dwEndIP = (0xFFFFFFFF - dwMask) + dwBeginIP;
+
+		if (!(((ntohl(iphdr->unDestaddress) > dwBeginIP) && (ntohl(iphdr->unDestaddress) < dwEndIP)) && ((ntohl(iphdr->unSrcaddress) > dwBeginIP) && (ntohl(iphdr->unSrcaddress) < dwEndIP))))
 		{
-			DWORD dwMask = 0;
-			DWORD dwBeginIP = 0;
-			DWORD dwEndIP = 0;
-
-			inet_pton(AF_INET, m_vAdapterInfo[m_nCurrentNICSelect].AdapterInfo.IpAddressList.IpMask.String, &dwMask);
-			dwMask = ntohl(dwMask);
-			inet_pton(AF_INET, m_vAdapterInfo[m_nCurrentNICSelect].AdapterInfo.IpAddressList.IpAddress.String, &dwBeginIP);
-			dwBeginIP = dwMask & ntohl(dwBeginIP);
-			dwEndIP = (0xFFFFFFFF - dwMask) + dwBeginIP;
-
-			if (!(((ntohl(iphdr->unDestaddress) > dwBeginIP) && (ntohl(iphdr->unDestaddress) < dwEndIP)) && ((ntohl(iphdr->unSrcaddress) > dwBeginIP) && (ntohl(iphdr->unSrcaddress) < dwEndIP))))
+			if (iphdr->ucIPProtocol == TCP_PROTOCOL)
 			{
 				tcpheader = (TCP_HDR*)(buffer + iphdrlen);
-			
-				USHORT uDestPort = ntohs(tcpheader->usDestPort);
 
-				if (uDestPort == 8802 || uDestPort == 8801 || uDestPort == 8080 || uDestPort == 80 || uDestPort == 443)
-				{
-					std::pair< CString, CString> mpair;
-					mpair.first = destIP;
-					mpair.second = destIP;
-					m_mSiteVisited[sourceIP].insert(m_mSiteVisited[sourceIP].begin(), mpair);
-				}
+				USHORT uDestPort = ntohs(tcpheader->usDestPort);
+				std::pair< CString, struct enz_packet_info> mpair;
+				mpair.first = destIP;
+				mpair.second.csSite = destIP;
+				mpair.second.nPort = uDestPort;
+				mpair.second.nProtocol = TCP_PROTOCOL;
+				m_mSiteVisited[sourceIP].insert(m_mSiteVisited[sourceIP].begin(), mpair);
+			}
+			else if (iphdr->ucIPProtocol == UDP_PROTOCOL)
+			{
+				udpheader = (UDP_HDR*)(buffer + iphdrlen);
+
+				USHORT uDestPort = ntohs(udpheader->usDestPort);
+				std::pair< CString, struct enz_packet_info> mpair;
+				mpair.first = destIP;
+				mpair.second.csSite = destIP;
+				mpair.second.nPort = uDestPort;
+				mpair.second.nProtocol = UDP_PROTOCOL;
+				m_mSiteVisited[sourceIP].insert(m_mSiteVisited[sourceIP].begin(), mpair);
 			}
 		}
+		
 		pDevice->m_ulDataSizeUpload += nSize;
 	}
 

@@ -12,6 +12,7 @@
 #include <string>
 #define WM_SITE_VISITED WM_USER + 100
 
+
 using namespace std;
 typedef bool (*FNCallbackPacketListenerEx)(unsigned char* buffer, int nSize, void* pObject);
 typedef HANDLE(*FNPTRCreatePacketListenerEx)(FNCallbackPacketListenerEx, void*);
@@ -86,13 +87,14 @@ public:
 	afx_msg void OnClose();
 	CButton m_ctrlStaticArea;
 	afx_msg void OnBnClickedCancel();
-	void SetSiteVisited(map<CString,map<CString, CString>>* mSiteVisited)
+
+	void SetSiteVisited(map<CString,map<CString, struct enz_packet_info>>* mSiteVisited)
 	{
 		m_pmSiteVisited = mSiteVisited;
 	}
 protected:
 
-	map < CString, map<CString, CString>> *m_pmSiteVisited;
+	map < CString, map<CString, struct enz_packet_info>> *m_pmSiteVisited;
 //	afx_msg LRESULT OnSiteVisit(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnSiteVisited(WPARAM wParam, LPARAM lParam);
 	CListCtrlCustom m_ctrlListVisited;
