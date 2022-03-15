@@ -72,6 +72,7 @@ protected:
 	CString m_csMacAddress;
 	CString m_csDeviceName;
 	HANDLE m_hPacketListener;
+	HBRUSH m_hBrushBackGround;
 public:
 	afx_msg void OnBnClickedOk();
 	void DisplaySpeed(unsigned char* buffer, int nSize, void* pObject);
@@ -90,12 +91,14 @@ public:
 		m_pmSiteVisited = mSiteVisited;
 	}
 protected:
-	CEdit m_ctrlEditSiteVisited;
+
 	map < CString, map<CString, CString>> *m_pmSiteVisited;
 //	afx_msg LRESULT OnSiteVisit(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnSiteVisited(WPARAM wParam, LPARAM lParam);
 	CListCtrlCustom m_ctrlListVisited;
 public:
 	virtual BOOL DestroyWindow();
+	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+	afx_msg void OnLvnItemchangedListVisited(NMHDR* pNMHDR, LRESULT* pResult);
 };
 

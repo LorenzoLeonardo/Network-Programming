@@ -15,7 +15,7 @@ IMPLEMENT_DYNAMIC(CSaveDeviceInfoDlg, CDialogEx)
 CSaveDeviceInfoDlg::CSaveDeviceInfoDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_DIALOG_DEVICE_INFO, pParent)
 {
-
+	m_hBrushBackGround = CreateSolidBrush(RGB(93, 107, 153));
 }
 
 CSaveDeviceInfoDlg::~CSaveDeviceInfoDlg()
@@ -23,6 +23,7 @@ CSaveDeviceInfoDlg::~CSaveDeviceInfoDlg()
 //	m_fnptrDeletePacketListenerEx(m_hPacketListener);
 	CloseHandle(m_hThreadStop);
 	CloseHandle(m_hThread);
+	DeleteObject(m_hBrushBackGround);
 }
 
 void CSaveDeviceInfoDlg::DoDataExchange(CDataExchange* pDX)
@@ -32,7 +33,6 @@ void CSaveDeviceInfoDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT_MAC, m_ctrlEditMACAddress);
 	DDX_Control(pDX, IDC_IPADDRESS_IPINFO, m_ctrlEditIPAddress);
 	DDX_Control(pDX, IDC_STATIC_DEVAREA, m_ctrlStaticArea);
-	DDX_Control(pDX, IDC_EDIT_SITE_VISIT, m_ctrlEditSiteVisited);
 	DDX_Control(pDX, IDC_LIST_VISITED, m_ctrlListVisited);
 }
 
@@ -45,6 +45,8 @@ BEGIN_MESSAGE_MAP(CSaveDeviceInfoDlg, CDialogEx)
 	
 //	ON_REGISTERED_MESSAGE(WM_SITE_VISIT, &CSaveDeviceInfoDlg::OnSiteVisit)
 ON_MESSAGE(WM_SITE_VISITED, &CSaveDeviceInfoDlg::OnSiteVisited)
+ON_WM_CTLCOLOR()
+ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST_VISITED, &CSaveDeviceInfoDlg::OnLvnItemchangedListVisited)
 END_MESSAGE_MAP()
 
 
@@ -88,33 +90,25 @@ void CSaveDeviceInfoDlg::SiteVisitedThread()
 		map<CString, CString>::iterator it = (*m_pmSiteVisited)[m_csIPAddress].begin();
 		while ((it != (*m_pmSiteVisited)[m_csIPAddress].end()) && (dwRet != WAIT_OBJECT_0))
 		{
-			if (IsInTheList(csText = GetHostName(it->first)) == -1)
+			csText = GetHostName(it->first);
+			if ((csText != it->first) && (IsInTheList(csText) == -1))
 			{
 				dwRet = WaitForSingleObject(m_hThreadStop, 0);
-					if (WAIT_OBJECT_0 == dwRet)
-						break;
+				if (WAIT_OBJECT_0 == dwRet)
+					break;
 
-					m_ctrlListVisited.InsertItem(LVIF_TEXT | LVIF_STATE, nRow, to_wstring(nRow + 1).c_str(), 0, 0, 0, 0);
-	
-					m_ctrlListVisited.SetItemText(nRow, 1, it->first);
-		
-					m_ctrlListVisited.SetItemText(nRow, 2, csText);
+				m_ctrlListVisited.InsertItem(LVIF_TEXT | LVIF_STATE, nRow, to_wstring(nRow + 1).c_str(), 0, 0, 0, 0);
+				m_ctrlListVisited.SetItemText(nRow, 1, it->first);
+				m_ctrlListVisited.SetItemText(nRow, 2, csText);
 				nRow++;
 			}
 			it++;
 		}
-		//if (m_ctrlEditSiteVisited.m_hWnd)
-		//	m_ctrlEditSiteVisited.SetWindowText(csText);
-	
 	} while (dwRet != WAIT_OBJECT_0);
-
 }
-
 
 afx_msg LRESULT CSaveDeviceInfoDlg::OnSiteVisited(WPARAM wParam, LPARAM lParam)
 {
-	
-	
 	return 0;
 }
 BOOL CSaveDeviceInfoDlg::OnInitDialog()
@@ -125,18 +119,14 @@ BOOL CSaveDeviceInfoDlg::OnInitDialog()
 	DWORD value = 0;
 	DWORD BufferSize = 4;
 
-	::SetWindowTheme(GetDlgItem(IDC_STATIC_ROUTER_INFO)->GetSafeHwnd(), NULL, _T(""));//To change text Color of Group Box
-	::SetWindowTheme(GetDlgItem(IDC_STATIC_ADAPTER_INFO)->GetSafeHwnd(), NULL, _T(""));
-	::SetWindowTheme(GetDlgItem(IDC_STATIC_OPEN_PORTS)->GetSafeHwnd(), NULL, _T(""));
-	::SetWindowTheme(GetDlgItem(IDC_CHECK_DEBUG)->GetSafeHwnd(), NULL, _T(""));
-	::SetWindowTheme(GetDlgItem(IDC_CHECK_INTERNET_ONLY)->GetSafeHwnd(), NULL, _T(""));
-	::SetWindowTheme(GetDlgItem(IDC_STATIC_NET_MON)->GetSafeHwnd(), NULL, _T(""));
-
+	::SetWindowTheme(GetDlgItem(IDC_STATIC_DEV_INFO)->GetSafeHwnd(), NULL, _T(""));
+	::SetWindowTheme(GetDlgItem(IDC_STATIC_VISITED)->GetSafeHwnd(), NULL, _T(""));
+	
 	m_ctrlListVisited.SetExtendedStyle(LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 	m_ctrlListVisited.OnInitialize();
 	m_ctrlListVisited.InsertColumn(0, lpcRecHeader[0], LVCFMT_FIXED_WIDTH, 30);
 	m_ctrlListVisited.InsertColumn(1, lpcRecHeader[1], LVCFMT_LEFT, 100);
-	m_ctrlListVisited.InsertColumn(2, lpcRecHeader[2], LVCFMT_LEFT, 400);
+	m_ctrlListVisited.InsertColumn(2, lpcRecHeader[2], LVCFMT_LEFT, 500);
 	// TODO:  Add extra initialization here
 
 	m_ctrlEditDevicename.SetWindowText(m_csDeviceName);
@@ -246,7 +236,7 @@ void CSaveDeviceInfoDlg::DisplaySpeed(unsigned char* buffer, int nSize, void* pO
 			csText.AppendFormat(_T("%s : %s\r\n"), it->second, GetHostName(it->first));
 			it++;
 		}
-		m_ctrlEditSiteVisited.SetWindowText(csText);
+		
 	}
 }
 void CSaveDeviceInfoDlg::OnPaint()
@@ -350,4 +340,48 @@ BOOL CSaveDeviceInfoDlg::DestroyWindow()
 	//WaitForSingleObject(m_hThreadWait, INFINITE);
 
 	return CDialogEx::DestroyWindow();
+}
+
+
+HBRUSH CSaveDeviceInfoDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+{
+	HBRUSH hbr = CDialogEx::OnCtlColor(pDC, pWnd, nCtlColor);
+
+	// TODO:  Change any attributes of the DC here
+	switch (nCtlColor)
+	{
+		case CTLCOLOR_DLG:
+		{
+			pDC->SetBkColor(RGB(64, 86, 141));
+			return m_hBrushBackGround;
+		}
+		case CTLCOLOR_STATIC:
+		{
+			int id = pWnd->GetDlgCtrlID();
+
+			if (id == IDC_EDIT_MAC )
+			{
+				pDC->SetTextColor(RGB(80, 80, 80));
+				pDC->SetBkColor(RGB(255, 255, 255));
+				return (HBRUSH)GetStockObject(WHITE_BRUSH);//m_hBrushEditArea;
+			}
+			else
+			{
+				pDC->SetTextColor(RGB(255, 255, 255));
+				pDC->SetBkColor(RGB(204, 213, 240));
+				pDC->SetBkMode(TRANSPARENT);
+				return m_hBrushBackGround;
+			}
+		}
+	}
+	// TODO:  Return a different brush if the default is not desired
+	return hbr;
+}
+
+
+void CSaveDeviceInfoDlg::OnLvnItemchangedListVisited(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
+	// TODO: Add your control notification handler code here
+	*pResult = 0;
 }
