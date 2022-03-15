@@ -200,63 +200,7 @@ CString CSaveDeviceInfoDlg::GetHostName(CString ip)
 	freeaddrinfo(addrs);
 	return csHostName;
 }
-void CSaveDeviceInfoDlg::DisplaySpeed(unsigned char* buffer, int nSize, void* pObj)
-{
-	CSpeedObj* pDevice = (CSpeedObj*)pObj;
-	CClientDC cdc(this);
-	CString csFormat;
-	CString csTitle = _T("");
-	CCustomText cText(14, FW_BOLD);
-	cText.SetTextColor(RGB(0, 0, 0));
-	int nRow = 220;
-	CString sourceIP, destIP;
-	int iphdrlen = 0;
-	IPV4_HDR* iphdr;
 
-	char sztemp[32];
-
-	memset(sztemp, 0, sizeof(sztemp));
-	iphdr = (IPV4_HDR*)buffer;
-	iphdrlen = iphdr->ucIPHeaderLen * 4;
-	inet_ntop(AF_INET, (const void*)&iphdr->unDestaddress, sztemp, sizeof(sztemp));
-	destIP = CA2W(sztemp);
-	inet_ntop(AF_INET, (const void*)&iphdr->unSrcaddress, sztemp, sizeof(sztemp));
-	sourceIP = CA2W(sztemp);
-
-	ULONGLONG timeCurrent = GetTickCount64();
-	if (m_csIPAddress == sourceIP)
-		pDevice->m_ullUploadSize += nSize;
-	else if(m_csIPAddress == destIP)
-		pDevice->m_ullDownloadSize += nSize;
-
-	if ((timeCurrent - pDevice->m_ullTimeStarted) >= POLLING_TIME)
-	{
-		pDevice->m_lfUploadSpeed = ((double)pDevice->m_ullUploadSize / (double)(timeCurrent - pDevice->m_ullTimeStarted)) * 8;
-		pDevice->m_ullUploadSize = 0;
-
-		pDevice->m_lfDownloadSpeed = ((double)pDevice->m_ullDownloadSize / (double)(timeCurrent - pDevice->m_ullTimeStarted)) * 8;
-		pDevice->m_ullDownloadSize = 0;
-			
-		m_ctrlStaticArea.RedrawWindow();
-		if (pDevice->m_lfUploadSpeed < 1000)
-			csFormat.Format(_T("%.2lf Kbps"), pDevice->m_lfUploadSpeed);
-		else
-			csFormat.Format(_T("%.2lf Mbps"), pDevice->m_lfUploadSpeed / 1000);
-
-		csTitle = csTitle + _T(" ↑") + csFormat +_T("    ");
-		if (pDevice->m_lfDownloadSpeed < 1000)
-			csFormat.Format(_T("%.2lf Kbps"), pDevice->m_lfDownloadSpeed);
-		else
-			csFormat.Format(_T("%.2lf Mbps"), pDevice->m_lfDownloadSpeed / 1000);
-		cText.SetTextBKColor(GetSysColor(COLOR_3DFACE));
-		cText.SetTextColor(RGB(0, 0, 0));
-		
-		csTitle = csTitle + _T("↓") + csFormat;
-		this->SetWindowText(csTitle);
-		cText.DrawCustomText(&cdc, 30, nRow, csTitle);
-		pDevice->m_ullTimeStarted = GetTickCount64();
-	}
-}
 void CSaveDeviceInfoDlg::OnPaint()
 {
 	CPaintDC dc(this); // device context for painting
@@ -402,4 +346,64 @@ void CSaveDeviceInfoDlg::OnLvnItemchangedListVisited(NMHDR* pNMHDR, LRESULT* pRe
 	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
 	// TODO: Add your control notification handler code here
 	*pResult = 0;
+}
+
+
+
+void CSaveDeviceInfoDlg::DisplaySpeed(unsigned char* buffer, int nSize, void* pObj)
+{
+	CSpeedObj* pDevice = (CSpeedObj*)pObj;
+	CClientDC cdc(this);
+	CString csFormat;
+	CString csTitle = _T("");
+	CCustomText cText(14, FW_BOLD);
+	cText.SetTextColor(RGB(0, 0, 0));
+	int nRow = 220;
+	CString sourceIP, destIP;
+	int iphdrlen = 0;
+	IPV4_HDR* iphdr;
+
+	char sztemp[32];
+
+	memset(sztemp, 0, sizeof(sztemp));
+	iphdr = (IPV4_HDR*)buffer;
+	iphdrlen = iphdr->ucIPHeaderLen * 4;
+	inet_ntop(AF_INET, (const void*)&iphdr->unDestaddress, sztemp, sizeof(sztemp));
+	destIP = CA2W(sztemp);
+	inet_ntop(AF_INET, (const void*)&iphdr->unSrcaddress, sztemp, sizeof(sztemp));
+	sourceIP = CA2W(sztemp);
+
+	ULONGLONG timeCurrent = GetTickCount64();
+	if (m_csIPAddress == sourceIP)
+		pDevice->m_ullUploadSize += nSize;
+	else if (m_csIPAddress == destIP)
+		pDevice->m_ullDownloadSize += nSize;
+
+	if ((timeCurrent - pDevice->m_ullTimeStarted) >= POLLING_TIME)
+	{
+		pDevice->m_lfUploadSpeed = ((double)pDevice->m_ullUploadSize / (double)(timeCurrent - pDevice->m_ullTimeStarted)) * 8;
+		pDevice->m_ullUploadSize = 0;
+
+		pDevice->m_lfDownloadSpeed = ((double)pDevice->m_ullDownloadSize / (double)(timeCurrent - pDevice->m_ullTimeStarted)) * 8;
+		pDevice->m_ullDownloadSize = 0;
+
+		m_ctrlStaticArea.RedrawWindow();
+		if (pDevice->m_lfUploadSpeed < 1000)
+			csFormat.Format(_T("%.2lf Kbps"), pDevice->m_lfUploadSpeed);
+		else
+			csFormat.Format(_T("%.2lf Mbps"), pDevice->m_lfUploadSpeed / 1000);
+
+		csTitle = csTitle + _T(" ↑") + csFormat + _T("    ");
+		if (pDevice->m_lfDownloadSpeed < 1000)
+			csFormat.Format(_T("%.2lf Kbps"), pDevice->m_lfDownloadSpeed);
+		else
+			csFormat.Format(_T("%.2lf Mbps"), pDevice->m_lfDownloadSpeed / 1000);
+		cText.SetTextBKColor(GetSysColor(COLOR_3DFACE));
+		cText.SetTextColor(RGB(0, 0, 0));
+
+		csTitle = csTitle + _T("↓") + csFormat;
+		this->SetWindowText(csTitle);
+		cText.DrawCustomText(&cdc, 30, nRow, csTitle);
+		pDevice->m_ullTimeStarted = GetTickCount64();
+	}
 }

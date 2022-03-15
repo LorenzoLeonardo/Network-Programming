@@ -132,7 +132,6 @@ void CCheckOpenPortsDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_PROGRESS_STATUS, m_ctrlProgressStatus);
 	DDX_Control(pDX, IDC_BUTTON_PORT, m_ctrlBtnCheckOpenPorts);
 	DDX_Control(pDX, IDC_LIST_LAN, m_ctrlLANConnected);
-	//DDX_Control(pDX, IDC_EDIT_POLLINGTIME, m_ctrlEditPollingTime);
 	DDX_Control(pDX, IDC_BUTTON_LISTEN_LAN, m_ctrlBtnListen);
 	DDX_Control(pDX, IDC_BUTTON_STOP_LAN, m_ctrlBtnStopListening);
 	DDX_Control(pDX, IDC_STATIC_UPTIME, m_ctrlStaticRouterUpTime);
@@ -1528,52 +1527,6 @@ void CCheckOpenPortsDlg::OnMouseMove(UINT nFlags, CPoint point)
 	CDialogEx::OnMouseMove(nFlags, point);
 }
 
-
-//void CCheckOpenPortsDlg::OnLButtonDown(UINT nFlags, CPoint point)
-//{
-//	// TODO: Add your message handler code here and/or call default
-//	RECT rect, rectDlg, translatedRect;
-//	this->GetWindowRect(&rectDlg);
-//	m_ctrlStaticLogo.GetWindowRect(&rect);
-//	m_ctrlStaticLogo.GetClientRect(&translatedRect);
-//
-//	translatedRect.left = rect.left - rectDlg.left - 10;
-//	translatedRect.top = rect.top - rectDlg.top - 30;
-//	translatedRect.right = rect.right - rectDlg.left - 10;
-//	translatedRect.bottom = rect.bottom - rectDlg.top - 30;
-//
-//	if ((translatedRect.left <= (point.x)) && ((point.x) <= translatedRect.right) &&
-//		((translatedRect.top) <= point.y) && (point.y <= (translatedRect.bottom)))
-//	{
-//		ShellExecute(NULL, _T("open"), _T("https://m.me/Lorenzo.Leonardo.92"), NULL, NULL, SW_SHOWNORMAL);
-//	}
-//
-//	this->GetWindowRect(&rectDlg);
-//	m_ctrlStaticRouterImage.GetWindowRect(&rect);
-//	m_ctrlStaticRouterImage.GetClientRect(&translatedRect);
-//
-//	translatedRect.left = rect.left - rectDlg.left - 10;
-//	translatedRect.top = rect.top - rectDlg.top - 30;
-//	translatedRect.right = rect.right - rectDlg.left - 10;
-//	translatedRect.bottom = rect.bottom - rectDlg.top - 30;
-//	if((translatedRect.left <= (point.x)) && ((point.x) <= translatedRect.right) &&
-//		((translatedRect.top) <= point.y) && (point.y <= (translatedRect.bottom)))
-//	{
-//		CString csLink;
-//		char szDefaultGateway[32];
-//		memset(szDefaultGateway, 0, sizeof(szDefaultGateway));
-//
-//		m_pfnPtrGetDefaultGatewayEx(m_vAdapterInfo[m_nCurrentNICSelect].AdapterInfo.AdapterName, szDefaultGateway, sizeof(szDefaultGateway));
-//		csLink = _T("http://");
-//		csLink.AppendFormat(_T("%s"), CA2W(szDefaultGateway).m_szBuffer);
-//		ShellExecute(NULL, _T("open"), csLink, NULL, NULL, SW_SHOWNORMAL);
-//	}
-//	if (m_pmodeless)
-//		m_pmodeless->SetForegroundWindow();
-//	CDialogEx::OnLButtonDown(nFlags, point);
-//}
-
-
 void CCheckOpenPortsDlg::OnMove(int x, int y)
 {
 	CDialogEx::OnMove(x, y);
@@ -1940,41 +1893,6 @@ bool CCheckOpenPortsDlg::ProcessPacketListenerUploadEx(unsigned char* buffer, in
 	}
 	return true;
 }
-//void CCheckOpenPortsDlg::OnSetFocus(CWnd* pOldWnd)
-//{
-//	if (m_pmodeless)
-//		m_pmodeless->SetForegroundWindow();
-//	CDialogEx::OnSetFocus(pOldWnd);
-//	// TODO: Add your message handler code here
-//}
-
-
-//void CCheckOpenPortsDlg::OnNcLButtonUp(UINT nHitTest, CPoint point)
-//{
-//	// TODO: Add your message handler code here and/or call default
-//	if (m_pmodeless)
-//		m_pmodeless->SetForegroundWindow();
-//	CDialogEx::OnNcLButtonUp(nHitTest, point);
-//}
-
-
-//void CCheckOpenPortsDlg::OnNcLButtonDown(UINT nHitTest, CPoint point)
-//{
-//	// TODO: Add your message handler code here and/or call default
-//	if (m_pmodeless)
-//		m_pmodeless->SetForegroundWindow();
-//	CDialogEx::OnNcLButtonDown(nHitTest, point);
-//}
-
-
-//void CCheckOpenPortsDlg::OnLButtonUp(UINT nFlags, CPoint point)
-//{
-//	// TODO: Add your message handler code here and/or call default
-//	if(m_pmodeless)
-//		m_pmodeless->SetForegroundWindow();
-//	CDialogEx::OnLButtonUp(nFlags, point);
-//}
-
 
 void CCheckOpenPortsDlg::OnMoving(UINT fwSide, LPRECT pRect)
 {
