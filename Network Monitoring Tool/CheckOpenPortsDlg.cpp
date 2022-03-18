@@ -2046,8 +2046,39 @@ void CCheckOpenPortsDlg::OnLButtonUp(UINT nFlags, CPoint point)
 void CCheckOpenPortsDlg::OnLButtonDown(UINT nFlags, CPoint point)
 {
 	// TODO: Add your message handler code here and/or call default
+	RECT rect, rectDlg, translatedRect;
+	this->GetWindowRect(&rectDlg);
+	m_ctrlStaticLogo.GetWindowRect(&rect);
+	m_ctrlStaticLogo.GetClientRect(&translatedRect);
+	translatedRect.left = rect.left - rectDlg.left - 10;
+	translatedRect.top = rect.top - rectDlg.top - 30;
+	translatedRect.right = rect.right - rectDlg.left - 10;
+	translatedRect.bottom = rect.bottom - rectDlg.top - 30;
+	if ((translatedRect.left <= (point.x)) && ((point.x) <= translatedRect.right) &&
+		((translatedRect.top) <= point.y) && (point.y <= (translatedRect.bottom)))
+	{
+		ShellExecute(NULL, _T("open"), _T("https://m.me/Lorenzo.Leonardo.92"), NULL, NULL, SW_SHOWNORMAL);
+	}
+	this->GetWindowRect(&rectDlg);
+	m_ctrlStaticRouterImage.GetWindowRect(&rect);
+	m_ctrlStaticRouterImage.GetClientRect(&translatedRect);
+	translatedRect.left = rect.left - rectDlg.left - 10;
+	translatedRect.top = rect.top - rectDlg.top - 30;
+	translatedRect.right = rect.right - rectDlg.left - 10;
+	translatedRect.bottom = rect.bottom - rectDlg.top - 30;
+	if ((translatedRect.left <= (point.x)) && ((point.x) <= translatedRect.right) &&
+		((translatedRect.top) <= point.y) && (point.y <= (translatedRect.bottom)))
+	{
+		CString csLink;
+		char szDefaultGateway[32];
+		memset(szDefaultGateway, 0, sizeof(szDefaultGateway));
+		m_pfnPtrGetDefaultGatewayEx(m_vAdapterInfo[m_ctrlComboAdapterList.GetCurSel()].AdapterInfo.AdapterName, szDefaultGateway, sizeof(szDefaultGateway));
+		csLink = _T("http://");
+		csLink.AppendFormat(_T("%s"), CA2W(szDefaultGateway).m_szBuffer);
+		ShellExecute(NULL, _T("open"), csLink, NULL, NULL, SW_SHOWNORMAL);
+	}
 	if (m_pmodeless)
-		m_pmodeless->SetFocus();
+		m_pmodeless->SetForegroundWindow();
 	CDialogEx::OnLButtonDown(nFlags, point);
 }
 
