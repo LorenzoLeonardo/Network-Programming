@@ -27,10 +27,10 @@ int CICMP::InitializeLocalIPAndHostname(const char* szIP)
     hints.ai_socktype = SOCK_RAW;
     hints.ai_protocol = IPPROTO_ICMP;
     hints.ai_flags = AI_ALL;
-    char szLocalHost[] = "localhost";
+
     inet_pton(AF_INET, szIP, &ulNICIP);
 
-    iResult = getaddrinfo(szLocalHost, NULL, &hints, &result);
+    iResult = getaddrinfo(szIP, NULL, &hints, &result);
     if (iResult != 0)
         return iResult;
     

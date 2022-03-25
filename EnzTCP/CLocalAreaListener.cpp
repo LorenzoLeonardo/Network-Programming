@@ -239,6 +239,7 @@ unsigned _stdcall CLocalAreaListener::MainThreadEx(void* args)
 
 	ulIP = ulStartingIP;
 	DWORD dwRetSingleObject = 0;
+	
 	do
 	{
 		pCLocalAreaListener->m_fnptrCallbackLocalAreaListener("start", NULL, NULL, false);
