@@ -32,7 +32,7 @@ public :
 	bool StartListeningEx(ULONG ulNICIP);
 	void StopListening();
 	void StopListeningEx();
-	void WaitListeningEx();
+	void WaitListeningEx(HANDLE);
 	bool IsStopped()
 	{
 		return m_bIsStopped;

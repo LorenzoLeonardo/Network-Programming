@@ -42,7 +42,7 @@ void CPacketListener::CleanupHandles()
 	if (m_hThread != NULL)
 	{
 		SetEvent(m_hStopThread);
-		WaitForSingleObject(m_hWaitThread, INFINITE);
+		WaitListeningEx(m_hWaitThread);
 		CloseHandle(m_hStopThread);
 		CloseHandle(m_hWaitThread);
 		CloseHandle(m_hThread);
@@ -266,7 +266,12 @@ void CPacketListener::StopListeningEx()
 	}
 }
 
-void CPacketListener::WaitListeningEx()
+void CPacketListener::WaitListeningEx(HANDLE hHandle)
 {
-	WaitForSingleObject(m_hWaitThread, INFINITE);
+	while (::MsgWaitForMultipleObjects(1, &hHandle, FALSE, INFINITE,
+		QS_SENDMESSAGE) == WAIT_OBJECT_0 + 1)
+	{
+		MSG message;
+		::PeekMessage(&message, 0, 0, 0, PM_NOREMOVE);
+	}
 }

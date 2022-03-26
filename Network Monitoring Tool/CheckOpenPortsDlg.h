@@ -52,7 +52,6 @@ typedef bool (*FNEnumNetworkAdapters)(FNCallbackAdapterList);
 typedef HANDLE(*FNPTRCreatePacketListenerEx)(FNCallbackPacketListenerEx, void*);
 typedef bool (*FNPTRStartPacketListenerEx)(HANDLE);
 typedef void (*FNPTRStopPacketListenerEx)(HANDLE);
-typedef void (*FNPTRWaitPacketListenerEx)(HANDLE);
 typedef void (*FNPTRDeletePacketListenerEx)(HANDLE &);
 typedef HANDLE (*FNPTRCreateLocalAreaListenerEx)();
 typedef	bool (*FNPTRStartLocalAreaListenerEx)(HANDLE, const char* ipAddress, const char* subNetMask, FNCallbackLocalAreaListener fnpPtr, int nPollingTimeMS);
@@ -91,7 +90,6 @@ public:
 	FNPTRCreatePacketListenerEx m_fnptrCreatePacketListenerEx;
 	FNPTRStartPacketListenerEx m_fnptrStartPacketListenerEx;
 	FNPTRStopPacketListenerEx m_fnptrStopPacketListenerEx;
-	FNPTRWaitPacketListenerEx m_fnptrWaitPacketListenerEx;
 	FNPTRDeletePacketListenerEx m_fnptrDeletePacketListenerEx;
 	FNPTRCreateLocalAreaListenerEx m_fnptrCreateLocalAreaListenerEx;
 	FNPTRStartLocalAreaListenerEx m_fnptrStartLocalAreaListenerEx;

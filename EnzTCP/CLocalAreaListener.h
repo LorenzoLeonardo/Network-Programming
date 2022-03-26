@@ -58,6 +58,7 @@ public:
 	static unsigned _stdcall StopThread(void* args);
 	bool StartEx(const char* szStartingIPAddress, const char* subNetMask, FNCallbackLocalAreaListener pFncPtr, int nPollingTimeMS);
 	void StopEx();
+	void WaitListeningEx(HANDLE hHandle);
 private:
 
 	map<thread*, int> m_mapThreads;

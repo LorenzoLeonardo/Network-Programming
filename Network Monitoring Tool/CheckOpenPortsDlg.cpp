@@ -251,7 +251,6 @@ bool CCheckOpenPortsDlg::InitDLL()
 		m_fnptrCreatePacketListenerEx = (FNPTRCreatePacketListenerEx)GetProcAddress(m_hDLLhandle, "CreatePacketListenerEx");
 		m_fnptrStartPacketListenerEx = (FNPTRStartPacketListenerEx)GetProcAddress(m_hDLLhandle, "StartPacketListenerEx");
 		m_fnptrStopPacketListenerEx = (FNPTRStopPacketListenerEx)GetProcAddress(m_hDLLhandle, "StopPacketListenerEx");
-		m_fnptrWaitPacketListenerEx = (FNPTRWaitPacketListenerEx)GetProcAddress(m_hDLLhandle, "WaitPacketListenerEx");
 		m_fnptrDeletePacketListenerEx = (FNPTRDeletePacketListenerEx)GetProcAddress(m_hDLLhandle, "DeletePacketListenerEx");
 		m_fnptrCreateLocalAreaListenerEx = (FNPTRCreateLocalAreaListenerEx)GetProcAddress(m_hDLLhandle, "CreateLocalAreaListenerEx");
 		m_fnptrStartLocalAreaListenerEx = (FNPTRStartLocalAreaListenerEx)GetProcAddress(m_hDLLhandle, "StartLocalAreaListenerEx");
@@ -1204,7 +1203,7 @@ void CCheckOpenPortsDlg::CallBackEnumAdapters(void* args)
 	}
 	if (!bFound)
 	{
-		if (pAdapterInfo->IpAddressList.Context)
+		if (pAdapterInfo->IpAddressList.Context && pAdapterInfo->GatewayList.Context)
 		{
 			CNetworkInterfaceInfo nicInfo;
 			nicInfo.AdapterInfo = *pAdapterInfo;

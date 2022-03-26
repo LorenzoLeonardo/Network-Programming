@@ -288,7 +288,7 @@ unsigned _stdcall CLocalAreaListener::StopThread(void* args)
 {
 	CLocalAreaListener* pCLocalAreaListener = (CLocalAreaListener*)args;
 	SetEvent(pCLocalAreaListener->m_hStopThread);
-	WaitForSingleObject(pCLocalAreaListener->m_hWaitThread, INFINITE);
+	pCLocalAreaListener->WaitListeningEx(pCLocalAreaListener->m_hWaitThread);
 
 	return 0;
 }
@@ -303,8 +303,8 @@ bool CLocalAreaListener::StartEx(const char* szStartingIPAddress, const char* su
 	{
 		WaitForSingleObject(m_hStopThread, INFINITE);
 		WaitForSingleObject(m_hWaitThread, INFINITE);
-		WaitForSingleObject(m_hMainThread, INFINITE);
-		WaitForSingleObject(m_hMainStopThread, INFINITE);
+		WaitListeningEx(m_hMainThread);
+		WaitListeningEx(m_hMainStopThread);
 		CloseHandle(m_hStopThread);
 		CloseHandle(m_hWaitThread);
 		CloseHandle(m_hMainThread);
@@ -336,4 +336,14 @@ void CLocalAreaListener::StopEx()
 {
 	if (m_hMainThread)
 		m_hMainStopThread = (HANDLE)_beginthreadex(NULL, 0, StopThread, this, 0, NULL);
+}
+
+void CLocalAreaListener::WaitListeningEx(HANDLE hHandle)
+{
+	while (::MsgWaitForMultipleObjects(1, &hHandle, FALSE, INFINITE,
+		QS_SENDMESSAGE) == WAIT_OBJECT_0 + 1)
+	{
+		MSG message;
+		::PeekMessage(&message, 0, 0, 0, PM_NOREMOVE);
+	}
 }
