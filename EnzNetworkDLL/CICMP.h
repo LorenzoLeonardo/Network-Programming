@@ -1,6 +1,6 @@
 #pragma once
 
-#include "EnzTCP.h"
+#include "EnzNetworkDLL.h"
 #include <iostream>
 #include <winsock2.h>
 #include <iphlpapi.h>

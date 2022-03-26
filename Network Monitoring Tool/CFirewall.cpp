@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "CFirewall.h"
-#include "../EnzTCP/DebugLog.h"
+#include "../EnzNetworkDLL/DebugLog.h"
 
 CFirewall::CFirewall()
 {

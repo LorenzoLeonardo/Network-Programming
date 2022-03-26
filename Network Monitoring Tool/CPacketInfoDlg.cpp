@@ -5,7 +5,7 @@
 #include "afxdialogex.h"
 #include "CPacketInfoDlg.h"
 #include "CheckOpenPortsDlg.h"
-#include "../EnzTCP/DebugLog.h"
+#include "../EnzNetworkDLL/DebugLog.h"
 // CPacketInfoDlg dialog
 
 IMPLEMENT_DYNAMIC(CPacketInfoDlg, CDialogEx)

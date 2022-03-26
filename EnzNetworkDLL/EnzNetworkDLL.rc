@@ -70,9 +70,9 @@ BEGIN
             VALUE "CompanyName", "Enzo Tech Computer Solutions"
             VALUE "FileDescription", "Enzo Tech Computer Solutions Library for TCP, ICMP, SNMP, UDP"
             VALUE "FileVersion", "1.0.0.1"
-            VALUE "InternalName", "EnzTCP.dll"
+            VALUE "InternalName", "EnzNetworkDLL.dll"
             VALUE "LegalCopyright", "Copyright (C) 2022"
-            VALUE "OriginalFilename", "EnzTCP.dll"
+            VALUE "OriginalFilename", "EnzNetworkDLL.dll"
             VALUE "ProductName", "Enzo Tech Computer Solutions Library"
             VALUE "ProductVersion", "1.0.0.1"
         END

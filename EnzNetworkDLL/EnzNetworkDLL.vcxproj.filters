@@ -21,7 +21,7 @@
     <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="EnzTCP.h">
+    <ClInclude Include="EnzNetworkDLL.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CSocket.h">
@@ -71,7 +71,7 @@
     <ClCompile Include="CTCPListener.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="EnzTCP.cpp">
+    <ClCompile Include="EnzNetworkDLL.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="COpenPortListener.cpp">
@@ -94,7 +94,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="EnzTCP.rc">
+    <ResourceCompile Include="EnzNetworkDLL.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>

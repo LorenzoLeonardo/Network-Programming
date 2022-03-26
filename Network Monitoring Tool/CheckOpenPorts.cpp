@@ -7,7 +7,7 @@
 #include "CheckOpenPorts.h"
 #include "CheckOpenPortsDlg.h"
 #include <tlhelp32.h>
-#include "..\EnzTCP\DebugLog.h"
+#include "..\EnzNetworkDLL\DebugLog.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

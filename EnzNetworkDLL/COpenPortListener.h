@@ -1,5 +1,5 @@
 #pragma once
-#include "EnzTCP.h"
+#include "EnzNetworkDLL.h"
 #include <string>
 #include <map>
 #include <thread>

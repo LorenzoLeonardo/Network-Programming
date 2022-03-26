@@ -22,8 +22,9 @@
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{702858ac-6210-495b-9f93-d7bb1abf3785}</ProjectGuid>
-    <RootNamespace>EnzTCP</RootNamespace>
+    <RootNamespace>EnzNetworkDLL</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>EnzNetworkDLL</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -163,7 +164,7 @@
     <ClInclude Include="CSocketServer.h" />
     <ClInclude Include="CTCPListener.h" />
     <ClInclude Include="DebugLog.h" />
-    <ClInclude Include="EnzTCP.h" />
+    <ClInclude Include="EnzNetworkDLL.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="resource.h" />
@@ -178,7 +179,7 @@
     <ClCompile Include="CSocketClient.cpp" />
     <ClCompile Include="CSocketServer.cpp" />
     <ClCompile Include="CTCPListener.cpp" />
-    <ClCompile Include="EnzTCP.cpp" />
+    <ClCompile Include="EnzNetworkDLL.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -187,7 +188,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="EnzTCP.rc" />
+    <ResourceCompile Include="EnzNetworkDLL.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

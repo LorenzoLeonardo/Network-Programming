@@ -13,7 +13,7 @@
 #include <process.h>
 #include <mutex>
 #include <vector>
-#include "../EnzTCP/EnzTCP.h"
+#include "../EnzNetworkDLL/EnzNetworkDLL.h"
 #include <map>
 #include <cmath>
 #include "CListCtrlCustom.h"

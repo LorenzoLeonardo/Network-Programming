@@ -8,7 +8,7 @@
 #include "CheckOpenPortsDlg.h"
 #include "afxdialogex.h"
 #include "CSaveDeviceInfoDlg.h"
-#include "../EnzTCP/DebugLog.h"
+#include "../EnzNetworkDLL/DebugLog.h"
 
 CCheckOpenPortsDlg* g_pCCheckOpenPortsDlg;
 mutex mtx_enumPorts;
@@ -235,7 +235,7 @@ void CCheckOpenPortsDlg::InitAdapterUI()
 }
 bool CCheckOpenPortsDlg::InitDLL()
 {
-	m_hDLLhandle = LoadLibrary(_T("EnzTCP.dll"));
+	m_hDLLhandle = LoadLibrary(_T("EnzNetworkDLL.dll"));
 	if (m_hDLLhandle)
 	{
 		m_pfnPtrEnumOpenPorts = (LPEnumOpenPorts)GetProcAddress(m_hDLLhandle, "EnumOpenPorts");

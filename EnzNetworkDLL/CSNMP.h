@@ -1,5 +1,5 @@
 #pragma once
-#include "EnzTCP.h"
+#include "EnzNetworkDLL.h"
 #include <vector>
 #include <string>
 #include <stdio.h>

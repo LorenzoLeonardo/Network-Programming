@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "EnzTCP.h"
+#include "EnzNetworkDLL.h"
 #include "CTCPListener.h"
 #include "COpenPortListener.h"
 #include "CSocketClient.h"
