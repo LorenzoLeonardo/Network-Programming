@@ -59,11 +59,6 @@ CLocalAreaListener::~CLocalAreaListener() {
 		m_hMainThread = nullptr;
 		m_hMainStopThread = nullptr;
 	}
-
-	if (m_threadMain != nullptr) {
-		delete m_threadMain;
-		m_threadMain = nullptr;
-	}
 }
 map<std::unique_ptr<thread>, int>* CLocalAreaListener::GetThreads() {
 	return &m_mapThreads;
@@ -146,11 +141,8 @@ void CLocalAreaListener::Start() {
 	if (!IsMainThreadStarted()) {
 		m_bHasStarted = true;
 		g_pCLocalAreaListener = this;
-		if (m_threadMain != nullptr) {
-			delete m_threadMain;
-			m_threadMain = nullptr;
-		}
-		m_threadMain = new thread(MainThread, this);
+
+		m_threadMain = std::make_unique<thread>(MainThread, this);
 		m_threadMain->join();
 	}
 }

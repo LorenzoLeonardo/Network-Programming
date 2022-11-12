@@ -57,7 +57,7 @@ public:
 private:
 	map<std::unique_ptr<thread>, int> m_mapThreads;
 	map<HANDLE, int> m_mapThreadsEx;
-	thread* m_threadMain;
+	std::unique_ptr<thread> m_threadMain;
 	string m_szStartingIP;
 	string m_szSubnetMask;
 	bool m_bHasStarted;

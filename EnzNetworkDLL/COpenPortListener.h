@@ -21,8 +21,8 @@ public:
 	void StartSearchingOpenPorts();
 	void StopSearchingOpenPorts();
 	string GetIPAddress();
-	map<thread*, int>* GetThreads();
-	thread* GetThreadMonitoring();
+	map<std::shared_ptr<thread>, int>* GetThreads();
+	std::shared_ptr<thread> GetThreadMonitoring();
 	bool IsPortOpen(string ipAddress, string port, int* pLastError);
 	int GetNumPorts();
 	bool IsStopped() {
@@ -32,8 +32,8 @@ public:
 private:
 	string m_ipAddressTarget;
 	int m_nNumPorts;
-	map<thread*, int> m_mapThreads;
-	thread* m_tMonitor;
+	map<std::shared_ptr<thread>, int> m_mapThreads;
+	std::shared_ptr<thread> m_tMonitor;
 	int m_nPort;
 	bool m_bStopSearchingOpenPorts;
 };

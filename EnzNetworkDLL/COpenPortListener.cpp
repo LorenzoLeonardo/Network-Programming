@@ -26,10 +26,6 @@ COpenPortListener::COpenPortListener(string ipTargetIPAddress, int nNumberOfPort
 	m_tMonitor = NULL;
 }
 COpenPortListener::~COpenPortListener() {
-	if (m_tMonitor != NULL) {
-		delete m_tMonitor;
-		m_tMonitor = NULL;
-	}
 }
 int COpenPortListener::GetNumPorts() {
 	return m_nNumPorts;
@@ -37,10 +33,10 @@ int COpenPortListener::GetNumPorts() {
 string COpenPortListener::GetIPAddress() {
 	return m_ipAddressTarget;
 }
-map<thread*, int>* COpenPortListener::GetThreads() {
+map<std::shared_ptr<thread>, int>* COpenPortListener::GetThreads() {
 	return &m_mapThreads;
 }
-thread* COpenPortListener::GetThreadMonitoring() {
+std::shared_ptr<thread> COpenPortListener::GetThreadMonitoring() {
 	return m_tMonitor;
 }
 void ThreadMultiFunc(LPVOID pParam) {
@@ -66,20 +62,17 @@ void ThreadMonitorThreads(LPVOID pParam) {
 		for (; (i <= pCCheckOpenPorts->GetNumPorts()) && (i % (1000 * (j + 1))) && !pCCheckOpenPorts->IsStopped(); i++) {
 			THREADMON_t* ptmon = new THREADMON_t;
 			ptmon->sPort = to_string(i);
-			(*pCCheckOpenPorts->GetThreads())[new thread(ThreadMultiFunc, ptmon)] = i;
+			(*pCCheckOpenPorts->GetThreads())[std::make_unique<thread>(ThreadMultiFunc, ptmon)] = i;
 		}
 		// map<thread*, int>* PDlg = (map<thread*, int>*)pParam;
-		map<thread*, int>::iterator it = pCCheckOpenPorts->GetThreads()->begin();
+		map<std::shared_ptr<thread>, int>::iterator it = pCCheckOpenPorts->GetThreads()->begin();
 
 		while (it != pCCheckOpenPorts->GetThreads()->end()) {
 			it->first->join();
 			it++;
 		}
 		it = pCCheckOpenPorts->GetThreads()->begin();
-		while (it != pCCheckOpenPorts->GetThreads()->end()) {
-			delete it->first;
-			it++;
-		}
+
 		pCCheckOpenPorts->GetThreads()->clear();
 	}
 	g_objPtrCCheckOpenPorts->m_pfnFindOpenPort((char*)"DONE", 0, true, 0);
@@ -100,7 +93,7 @@ bool COpenPortListener::IsPortOpen(string ipAddress, string port, int* pLastErro
 void COpenPortListener::StartSearchingOpenPorts() {
 	if (m_tMonitor == NULL) {
 		m_bStopSearchingOpenPorts = false;
-		m_tMonitor = new thread(ThreadMonitorThreads, this);
+		m_tMonitor = std::make_unique<thread>(ThreadMonitorThreads, this);
 		m_tMonitor->join();
 	}
 }
