@@ -195,7 +195,6 @@ smiVALUE CSNMP::Get(const char* szOID, DWORD &dwLastError)
 void CSNMP::GetSessionMessage()
 {
     MSG     uMsg;
-    BOOL    fOk = FALSE;
 
     // get the next message for this session
     while (GetMessage(&uMsg, m_pSession->hWnd, 0, 0))
@@ -210,8 +209,6 @@ void CSNMP::GetSessionMessage()
         }
         else
         {
-            // success
-            fOk = TRUE;
             break;
         }
     }
@@ -222,7 +219,7 @@ bool CSNMP::ProcessVarBind(PSNMP_SESSION pSession)
     // if we hit the end of tree, break.
     int                  oidCount;
     int                  i = 1;
-    LPSTR                string = NULL;
+
 
 
     oidCount = SnmpCountVbl(pSession->hVbl);
@@ -279,7 +276,7 @@ bool CSNMP::ProcessVarBind(PSNMP_SESSION pSession)
         printf("SNMP_SYNTAX_ENDOFMIBVIEW\n");
         break;
     default:
-        printf("default\n");
+		printf("default: %d\n", oidCount);
         break;
     }
     return true;

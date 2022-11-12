@@ -150,7 +150,7 @@ bool CICMP::CheckDeviceEx(string ipAddress, string& hostname, string& sMacAddres
     const char* lpdest = ipAddress.c_str();
     char* icmp_data = NULL, * recvbuf = NULL;
     struct sockaddr_in dest, from;
-    int iResult = 0, timeoutsend = PING_TIMEOUT, timeoutrecv = PING_TIMEOUT, fromlen = sizeof(from), datasize = 0;
+    int iResult = 0, fromlen = sizeof(from), datasize = 0;
     struct hostent* hp = NULL;
     USHORT usSequenceNumber = atoi(ipAddress.substr(ipAddress.rfind('.', ipAddress.size()) + 1, ipAddress.size()).c_str());
     bool bRet = false;

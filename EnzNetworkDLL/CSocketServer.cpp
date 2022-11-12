@@ -28,7 +28,7 @@ bool CSocketServer::Initialize(string port)
         throw nError;
     }
     //cout << "WSAStartup() = SUCCESS.\r\n";
-    struct addrinfo* result = NULL, * ptr = NULL, hints;
+    struct addrinfo* result = NULL, hints;
 
     ZeroMemory(&hints, sizeof(hints));
     hints.ai_family = AF_INET;
@@ -75,15 +75,13 @@ bool CSocketServer::Initialize(string port)
 CSocket* CSocketServer::Accept()
 {
     struct sockaddr client_addr;
-    int nError = 0;
     int nSize = sizeof(client_addr);
     CSocket* pSocket = NULL;
 
     memset(&client_addr, 0, sizeof(client_addr));
     SOCKET ClientSocket = accept(m_ListenSocket, (struct sockaddr*)&client_addr,&nSize);
     if (ClientSocket == INVALID_SOCKET) {
-        nError = WSAGetLastError();
-      //  closesocket(m_ListenSocket);
+        WSAGetLastError();
         return NULL;
     }
     else

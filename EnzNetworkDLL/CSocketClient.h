@@ -9,7 +9,7 @@ class CSocketClient : CSocket
 public:
 	CSocketClient();
 	CSocketClient(string ipServer);
-	~CSocketClient();
+	virtual ~CSocketClient();
 	CSocketClient(string ipServer, string sPort);
 	bool ConnectToServer(string ipServer, string, int *pLastError);
 	bool ConnectToServer(int* pLastError);

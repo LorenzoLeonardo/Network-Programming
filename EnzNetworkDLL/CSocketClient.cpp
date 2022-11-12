@@ -94,7 +94,6 @@ bool CSocketClient::ConnectToServer(int* pLastError)
 bool CSocketClient::ConnectToServer(string ipServer, string sPort, int *pLastError)
 {
 	int iResult;
-	SOCKET ConnectSocket = INVALID_SOCKET;
 	*pLastError = 0;
 
 	struct addrinfo* result = NULL,

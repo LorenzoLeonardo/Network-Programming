@@ -48,8 +48,8 @@ void CSocket::SetHostname()
     char hostname[NI_MAXHOST];
     char servInfo[NI_MAXSERV];
 
-    ULONG PhysAddrLen = 6;
-    struct addrinfo* result = NULL, * ptr = NULL, hints;
+
+    struct addrinfo* result = NULL, hints;
     int iResult = 0;
 
     ZeroMemory(&hints, sizeof(hints));
@@ -62,9 +62,9 @@ void CSocket::SetHostname()
     if (iResult == 0)
     {
         memset(hostname, 0, sizeof(hostname));
-        int status = getnameinfo(result->ai_addr, (socklen_t)result->ai_addrlen, hostname, NI_MAXHOST, servInfo, NI_MAXSERV, 0);
+        getnameinfo(result->ai_addr, (socklen_t)result->ai_addrlen, hostname, NI_MAXHOST, servInfo, NI_MAXSERV, 0);
         freeaddrinfo(result);
-        iResult = getaddrinfo(hostname, NULL, &hints, &result);
+        getaddrinfo(hostname, NULL, &hints, &result);
         m_hostname = hostname;
     }
 }
@@ -79,8 +79,7 @@ bool CSocket::GetDefaultGateway(char* szDefaultIPAddress)
     char hostname[NI_MAXHOST];
     char servInfo[NI_MAXSERV];
 
-    ULONG PhysAddrLen = 6;
-    addrinfo* result = NULL, * ptr = NULL, hints;
+    addrinfo* result = NULL, hints;
     int iResult = 0;
 
     ZeroMemory(&hints, sizeof(hints));
@@ -93,9 +92,9 @@ bool CSocket::GetDefaultGateway(char* szDefaultIPAddress)
     if (iResult == 0)
     {
         memset(hostname, 0, sizeof(hostname));
-        int status = getnameinfo(result->ai_addr, (socklen_t)result->ai_addrlen, hostname, NI_MAXHOST, servInfo, NI_MAXSERV, 0);
+        getnameinfo(result->ai_addr, (socklen_t)result->ai_addrlen, hostname, NI_MAXHOST, servInfo, NI_MAXSERV, 0);
         freeaddrinfo(result);
-        iResult = getaddrinfo(hostname, NULL, &hints, &result);
+        getaddrinfo(hostname, NULL, &hints, &result);
         pDefaultGateway = (IPAddr*)(result->ai_addr->sa_data + 2);
         char szIPAddress[32];
         memset(szIPAddress, 0, sizeof(szIPAddress));

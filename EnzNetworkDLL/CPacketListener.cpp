@@ -133,7 +133,7 @@ bool CPacketListener::StartListening()
 		return false;
 	}
 
-	struct addrinfo* result = NULL, * ptr = NULL, hints;
+	struct addrinfo* result = NULL, hints;
 
 	ZeroMemory(&hints, sizeof(hints));
 	hints.ai_family = AF_INET;
@@ -166,12 +166,8 @@ bool CPacketListener::StartListening()
 		closesocket(m_socket);
 		return false;
 	}
-	if (m_threadListening != NULL)
-	{
-		delete m_threadListening;
-		m_threadListening = NULL;
-	}
-	m_threadListening = new thread(PollingThread, this);
+
+	m_threadListening = std::make_shared<thread>(PollingThread, this);
 	freeaddrinfo(result);
 	m_threadListening->join();
 	return true;

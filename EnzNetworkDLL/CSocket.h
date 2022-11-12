@@ -19,7 +19,7 @@ protected:
 public:
 	CSocket();
 	CSocket(SOCKET s);
-	~CSocket();
+	virtual ~CSocket();
 	SOCKET  GetSocket();
 	void  SetClientAddr(struct sockaddr addr);
 	const char* GetIP();

@@ -9,7 +9,7 @@ class CPacketListener
 {
 private:
 	bool m_bIsStopped;
-	thread* m_threadListening;
+	std::shared_ptr<thread> m_threadListening;
 	SOCKET m_socket;
 	void* m_pObject;
 	HANDLE m_hThread;
@@ -41,7 +41,7 @@ public :
 	{
 		return m_socket;
 	}
-	thread* GetThread()
+	std::shared_ptr<thread> GetThread()
 	{
 		return m_threadListening;
 	}
