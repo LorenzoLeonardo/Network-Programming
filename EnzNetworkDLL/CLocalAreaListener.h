@@ -79,4 +79,8 @@ class CLANObject
 public:
 	CLocalAreaListener* m_pCLocalAreaListener;
 	string ipAddress;
+
+	CLANObject() {
+		m_pCLocalAreaListener = nullptr;
+	}
 };

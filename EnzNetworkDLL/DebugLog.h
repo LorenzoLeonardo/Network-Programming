@@ -11,9 +11,8 @@ inline string getCurrentDateTime(string s)
 {
     time_t now = time(0);
     struct tm  tstruct;
-    char  buf[80];
+	char buf[80] = {};
 
-    memset(buf, 0, sizeof(buf));
     localtime_s(&tstruct ,&now);
     if (s == "now")
         strftime(buf, sizeof(buf)-1, "%Y-%m-%d %X", &tstruct);
@@ -33,7 +32,7 @@ inline void DEBUG_LOG(string logMsg, ...)
         g_mutxLog.lock();
         static char loc_buf[64];
         char* temp = loc_buf;
-        int len;
+        size_t len = 0;
         va_list arg;
         va_list copy;
         va_start(arg, logMsg);

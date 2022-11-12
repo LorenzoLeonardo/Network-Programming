@@ -9,6 +9,7 @@ bool      CSNMP::m_bSnmpSuccess = true;
 CSNMP::CSNMP()
 {
     m_pSession = NULL;
+	memset(&m_smiCommunity, 0, sizeof(m_smiCommunity));
 }
 CSNMP::~CSNMP()
 {

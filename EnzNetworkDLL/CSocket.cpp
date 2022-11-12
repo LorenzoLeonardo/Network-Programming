@@ -129,8 +129,7 @@ bool CSocket::GetDefaultGateway(const char* szAdapterName ,char* pDefaultGateway
 
     if (GetAdaptersInfo(pAdapterInfo, &ulOutBufLen) == ERROR_BUFFER_OVERFLOW)
     {
-        free(pAdapterInfo);
-        pAdapterInfo = (PIP_ADAPTER_INFO)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, ulOutBufLen);
+		pAdapterInfo = (PIP_ADAPTER_INFO)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, ulOutBufLen);
     }
     if (GetAdaptersInfo(pAdapterInfo, &ulOutBufLen) == NO_ERROR)
     {

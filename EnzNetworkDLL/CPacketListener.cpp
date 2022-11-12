@@ -9,6 +9,7 @@ CPacketListener::CPacketListener(FNCallbackPacketListener fnPtr)
 	m_socket = INVALID_SOCKET;
 	m_threadListening = NULL;
 	m_fnCallbackDisplay = fnPtr;
+	m_fnCallbackDisplayEx = nullptr;
 	m_hThread = NULL;
 	m_hStopThread = NULL;
 	m_hWaitThread = NULL;
@@ -24,6 +25,7 @@ CPacketListener::CPacketListener(FNCallbackPacketListenerEx fnPtr, void* pObject
 	m_socket = INVALID_SOCKET;
 	m_threadListening = NULL;
 	m_fnCallbackDisplayEx = fnPtr;
+	m_fnCallbackDisplay = nullptr;
 	m_hThread = NULL;
 	m_hStopThread = NULL;
 	m_hWaitThread = NULL;
