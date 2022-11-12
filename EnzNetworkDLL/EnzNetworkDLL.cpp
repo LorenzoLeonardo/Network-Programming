@@ -14,8 +14,8 @@ static std::unique_ptr<CLocalAreaListener> g_pLocalAreaListener = nullptr;
 static std::unique_ptr<CPacketListener> g_pPacketListener = nullptr;
 static std::unique_ptr<CSNMP> g_SNMP = nullptr;
 static std::unique_ptr<CICMP> g_pICMP = nullptr;
-static char g_szAdapterName[MAX_ADAPTER_NAME_LENGTH + 4];
-static char g_szAdapterIP[32];
+static char g_szAdapterName[MAX_ADAPTER_NAME_LENGTH + 4] = {};
+static char g_szAdapterIP[32] = {};
 static ULONG g_ulAdapterIP;
 
 extern "C" BOOL APIENTRY DllMain(HMODULE hModule,
@@ -25,8 +25,6 @@ extern "C" BOOL APIENTRY DllMain(HMODULE hModule,
 	case DLL_PROCESS_ATTACH:
 		DisableThreadLibraryCalls(hModule);
 		DEBUG_LOG("EnzTCP Library is Loaded.");
-		memset(g_szAdapterName, 0, sizeof(char) * (MAX_ADAPTER_NAME_LENGTH + 4));
-		memset(g_szAdapterIP, 0, sizeof(g_szAdapterIP));
 		g_ulAdapterIP = 0;
 		break;
 	case DLL_PROCESS_DETACH:

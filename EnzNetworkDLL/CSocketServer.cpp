@@ -24,7 +24,7 @@ bool CSocketServer::Initialize(string port) {
 		throw nError;
 	}
 	// cout << "WSAStartup() = SUCCESS.\r\n";
-	struct addrinfo *result = NULL, hints;
+	struct addrinfo *result = nullptr, hints;
 
 	ZeroMemory(&hints, sizeof(hints));
 	hints.ai_family = AF_INET;
@@ -33,7 +33,7 @@ bool CSocketServer::Initialize(string port) {
 	hints.ai_flags = AI_PASSIVE;
 
 	// Resolve the local address and port to be used by the server
-	iResult = getaddrinfo(NULL, m_serverPort.c_str(), &hints, &result);
+	iResult = getaddrinfo(nullptr, m_serverPort.c_str(), &hints, &result);
 	if (iResult != 0) {
 		nError = WSAGetLastError();
 		WSACleanup();
@@ -71,13 +71,13 @@ bool CSocketServer::Initialize(string port) {
 CSocket* CSocketServer::Accept() {
 	struct sockaddr client_addr;
 	int nSize = sizeof(client_addr);
-	CSocket* pSocket = NULL;
+	CSocket* pSocket = nullptr;
 
 	memset(&client_addr, 0, sizeof(client_addr));
 	SOCKET ClientSocket = accept(m_ListenSocket, (struct sockaddr*)&client_addr, &nSize);
 	if (ClientSocket == INVALID_SOCKET) {
 		WSAGetLastError();
-		return NULL;
+		return nullptr;
 	}
 	else {
 		pSocket = new CSocket(ClientSocket);

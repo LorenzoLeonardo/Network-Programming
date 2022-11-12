@@ -7,7 +7,7 @@ smiVALUE CSNMP::m_nvalue;
 bool CSNMP::m_fDone = true;
 bool CSNMP::m_bSnmpSuccess = true;
 CSNMP::CSNMP() {
-	m_pSession = NULL;
+	m_pSession = nullptr;
 	memset(&m_smiCommunity, 0, sizeof(m_smiCommunity));
 }
 CSNMP::~CSNMP() {
@@ -29,7 +29,7 @@ bool CSNMP::InitSNMP(const char* szAgentIPAddress, const char* szCommunity, int 
 
 	m_pSession = (PSNMP_SESSION)SnmpUtilMemAlloc(sizeof(SNMP_SESSION));
 
-	if (m_pSession == NULL)
+	if (m_pSession == nullptr)
 		return false;
 
 	if (!CreateNotificationWindow(m_pSession))
@@ -40,7 +40,7 @@ bool CSNMP::InitSNMP(const char* szAgentIPAddress, const char* szCommunity, int 
 	if (SNMPAPI_FAILURE == m_pSession->hSnmpSession) {
 		dwLastError = SnmpGetLastError(m_pSession->hSnmpSession);
 		SnmpUtilMemFree(m_pSession);
-		m_pSession = NULL;
+		m_pSession = nullptr;
 		WSACleanup();
 		DEBUG_LOG("CSNMP::InitSNMP(): SNMPAPI_FAILURE == m_pSession->hSnmpSession");
 		return false;
@@ -51,7 +51,7 @@ bool CSNMP::InitSNMP(const char* szAgentIPAddress, const char* szCommunity, int 
 	if (SNMPAPI_FAILURE == m_pSession->hAgentEntity) {
 		dwLastError = SnmpGetLastError(m_pSession->hSnmpSession);
 		SnmpUtilMemFree(m_pSession);
-		m_pSession = NULL;
+		m_pSession = nullptr;
 		WSACleanup();
 		DEBUG_LOG("CSNMP::InitSNMP(): SNMPAPI_FAILURE == m_pSession->hAgentEntity");
 		return false;
@@ -65,7 +65,7 @@ bool CSNMP::InitSNMP(const char* szAgentIPAddress, const char* szCommunity, int 
 	if (SNMPAPI_FAILURE == m_pSession->hManagerEntity) {
 		dwLastError = SnmpGetLastError(m_pSession->hSnmpSession);
 		SnmpUtilMemFree(m_pSession);
-		m_pSession = NULL;
+		m_pSession = nullptr;
 		WSACleanup();
 		DEBUG_LOG("CSNMP::InitSNMP(): SNMPAPI_FAILURE == m_pSession->hManagerEntity");
 		return false;
@@ -84,7 +84,7 @@ bool CSNMP::InitSNMP(const char* szAgentIPAddress, const char* szCommunity, int 
 	if (SNMPAPI_FAILURE == m_pSession->hViewContext) {
 		dwLastError = SnmpGetLastError(m_pSession->hSnmpSession);
 		SnmpUtilMemFree(m_pSession);
-		m_pSession = NULL;
+		m_pSession = nullptr;
 		WSACleanup();
 		DEBUG_LOG("CSNMP::Get(): SNMPAPI_FAILURE == m_pSession->hViewContext");
 		return false;
@@ -93,9 +93,9 @@ bool CSNMP::InitSNMP(const char* szAgentIPAddress, const char* szCommunity, int 
 	return true;
 }
 void CSNMP::EndSNMP() {
-	if (m_pSession != NULL) {
+	if (m_pSession != nullptr) {
 		SnmpUtilMemFree(m_pSession);
-		m_pSession = NULL;
+		m_pSession = nullptr;
 	}
 	WSACleanup();
 }
@@ -103,14 +103,14 @@ void CSNMP::EndSNMP() {
 smiVALUE CSNMP::Get(const char* szOID, DWORD& dwLastError) {
 	memset(&m_nvalue, 0, sizeof(m_nvalue));
 
-	if (m_pSession == NULL)
+	if (m_pSession == nullptr)
 		return m_nvalue;
 
 	m_pSession->nPduType = SNMP_PDU_GET; // Get
 
 	smiOID oid;
 	SnmpStrToOid(szOID, &oid);
-	m_pSession->hVbl = SnmpCreateVbl(m_pSession->hSnmpSession, &oid, NULL);
+	m_pSession->hVbl = SnmpCreateVbl(m_pSession->hSnmpSession, &oid, nullptr);
 
 	if (SNMPAPI_FAILURE == m_pSession->hVbl) {
 		m_bSnmpSuccess = false;
@@ -355,7 +355,7 @@ LRESULT CALLBACK CSNMP::NotificationWndProc(HWND hWnd, UINT uMsg, WPARAM wParam,
 		pSession = (PSNMP_SESSION)GetWindowLongPtr(hWnd, 0);
 
 		// validate session ptr
-		if (pSession == NULL)
+		if (pSession == nullptr)
 			return (LRESULT)0;
 
 		// process notification message
@@ -377,23 +377,22 @@ bool CSNMP::CreateNotificationWindow(PSNMP_SESSION pSession) {
 	BOOL fOk;
 	WNDCLASSA wc;
 
-	if (pSession == NULL) {
+	if (pSession == nullptr) {
 		return FALSE;
 	}
-	char szClassName[256];
+	char szClassName[256] = {};
 
-	memset(szClassName, 0, sizeof(szClassName));
 	HINSTANCE hInstance = GetModuleHandle(NULL);
 	sprintf_s(szClassName, sizeof(szClassName), "%s%I64u", "SNMPUTIL NOTIFICATION CLASS", (ULONG_PTR)hInstance);
 
 	// initialize notification window class
 	wc.lpfnWndProc = (WNDPROC)NotificationWndProc;
 	wc.lpszClassName = szClassName;
-	wc.lpszMenuName = NULL;
+	wc.lpszMenuName = nullptr;
 	wc.hInstance = hInstance;
-	wc.hIcon = NULL;
-	wc.hCursor = NULL;
-	wc.hbrBackground = NULL;
+	wc.hIcon = nullptr;
+	wc.hCursor = nullptr;
+	wc.hbrBackground = nullptr;
 	wc.cbWndExtra = sizeof(PSNMP_SESSION);
 	wc.cbClsExtra = 0;
 	wc.style = 0; // register class
@@ -405,20 +404,20 @@ bool CSNMP::CreateNotificationWindow(PSNMP_SESSION pSession) {
 	// create notification window
 	pSession->hWnd = CreateWindowA(
 		szClassName,
-		"SNMP Util Class",	   // pointer to window name
-		WS_OVERLAPPEDWINDOW,   // window style
-		0,					   // horizontal position of window
-		0,					   // vertical position of window
-		0,					   // window width
-		0,					   // window height
-		NULL,				   // handle to parent or owner window
-		NULL,				   // handle to menu or child-window identifier
-		GetModuleHandle(NULL), // handle to application instance
-		NULL				   // pointer to window-creation data
+		"SNMP Util Class",		  // pointer to window name
+		WS_OVERLAPPEDWINDOW,	  // window style
+		0,						  // horizontal position of window
+		0,						  // vertical position of window
+		0,						  // window width
+		0,						  // window height
+		nullptr,				  // handle to parent or owner window
+		nullptr,				  // handle to menu or child-window identifier
+		GetModuleHandle(nullptr), // handle to application instance
+		nullptr					  // pointer to window-creation data
 	);
 
 	// validate window handle
-	if (pSession->hWnd != NULL) {
+	if (pSession->hWnd != nullptr) {
 		// store pointer to session in window
 		SetWindowLongPtr(pSession->hWnd, 0, (INT_PTR)pSession);
 

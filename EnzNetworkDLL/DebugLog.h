@@ -27,7 +27,7 @@ inline void DEBUG_LOG(string logMsg, ...) {
 	RegGetValueA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Enzo Network Monitoring Tool", "DebugLog", /*RRF_RT_ANY*/ RRF_RT_DWORD, NULL, (PVOID)&value, &BufferSize);
 	if (value) {
 		g_mutxLog.lock();
-		static char loc_buf[64];
+		static char loc_buf[64] = {};
 		char* temp = loc_buf;
 		size_t len = 0;
 		va_list arg;
@@ -63,9 +63,8 @@ inline void DEBUG_LOG(string logMsg, ...) {
 inline wstring getCurrentDateTime(wstring s) {
 	time_t now = time(0);
 	struct tm tstruct;
-	wchar_t buf[80];
+	wchar_t buf[80] = {};
 
-	memset(buf, 0, sizeof(buf));
 	localtime_s(&tstruct, &now);
 	if (s == L"now")
 		wcsftime(buf, sizeof(buf) - 1, L"%Y-%m-%d %X", &tstruct);
@@ -73,24 +72,6 @@ inline wstring getCurrentDateTime(wstring s) {
 		wcsftime(buf, sizeof(buf) - 1, L"%Y-%m-%d", &tstruct);
 	return wstring(buf);
 };
-/*inline void DEBUG_LOG(wstring logMsg) {
-
-
-	DWORD value = 0;
-	DWORD BufferSize = 4;
-
-	RegGetValueW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Enzo Network Monitoring Tool", L"DebugLog", RRF_RT_DWORD, NULL, (PVOID)&value, &BufferSize);
-	if (value)
-	{
-		g_mutxLog.lock();
-		wstring filePath = getCurrentDateTime(L"date") + L".txt";
-		wstring now = getCurrentDateTime(L"now");
-		wofstream  ofs(filePath.c_str(), std::ios_base::out | std::ios_base::app);
-		ofs << now << L'\t' << logMsg << L'\n';
-		ofs.close();
-		g_mutxLog.unlock();
-	}
-}*/
 
 inline void DEBUG_LOG(wstring logMsg, ...) {
 	DWORD value = 0;
@@ -99,7 +80,7 @@ inline void DEBUG_LOG(wstring logMsg, ...) {
 	RegGetValueW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Enzo Network Monitoring Tool", L"DebugLog", /*RRF_RT_ANY*/ RRF_RT_DWORD, NULL, (PVOID)&value, &BufferSize);
 	if (value) {
 		g_mutxLog.lock();
-		static wchar_t loc_buf[64];
+		static wchar_t loc_buf[64] = {};
 		wchar_t* temp = loc_buf;
 		int len;
 		va_list arg;

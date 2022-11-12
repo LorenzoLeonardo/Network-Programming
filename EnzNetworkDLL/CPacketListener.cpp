@@ -4,14 +4,14 @@
 
 CPacketListener::CPacketListener(FNCallbackPacketListener fnPtr) {
 	m_bIsStopped = true;
-	m_pObject = NULL;
+	m_pObject = nullptr;
 	m_socket = INVALID_SOCKET;
-	m_threadListening = NULL;
+	m_threadListening = nullptr;
 	m_fnCallbackDisplay = fnPtr;
 	m_fnCallbackDisplayEx = nullptr;
-	m_hThread = NULL;
-	m_hStopThread = NULL;
-	m_hWaitThread = NULL;
+	m_hThread = nullptr;
+	m_hStopThread = nullptr;
+	m_hWaitThread = nullptr;
 	WSADATA wsa;
 	if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
 		throw INVALID_SOCKET;
@@ -20,12 +20,12 @@ CPacketListener::CPacketListener(FNCallbackPacketListenerEx fnPtr, void* pObject
 	m_bIsStopped = true;
 	m_pObject = pObject;
 	m_socket = INVALID_SOCKET;
-	m_threadListening = NULL;
+	m_threadListening = nullptr;
 	m_fnCallbackDisplayEx = fnPtr;
 	m_fnCallbackDisplay = nullptr;
-	m_hThread = NULL;
-	m_hStopThread = NULL;
-	m_hWaitThread = NULL;
+	m_hThread = nullptr;
+	m_hStopThread = nullptr;
+	m_hWaitThread = nullptr;
 	WSADATA wsa;
 	if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
 		throw INVALID_SOCKET;
@@ -35,15 +35,15 @@ CPacketListener::~CPacketListener() {
 	WSACleanup();
 }
 void CPacketListener::CleanupHandles() {
-	if (m_hThread != NULL) {
+	if (m_hThread != nullptr) {
 		SetEvent(m_hStopThread);
 		WaitListeningEx(m_hWaitThread);
 		CloseHandle(m_hStopThread);
 		CloseHandle(m_hWaitThread);
 		CloseHandle(m_hThread);
-		m_hStopThread = NULL;
-		m_hWaitThread = NULL;
-		m_hThread = NULL;
+		m_hStopThread = nullptr;
+		m_hWaitThread = nullptr;
+		m_hThread = nullptr;
 	}
 }
 void CPacketListener::PollingThread(void* args) {
@@ -51,22 +51,22 @@ void CPacketListener::PollingThread(void* args) {
 	CPacketListener* pListener = (CPacketListener*)args;
 	int nBytes = 0;
 	char* pBuffer = (char*)malloc(MAX_PACKET_SIZE);
-	unsigned char* upBuffer = NULL;
+	unsigned char* upBuffer = nullptr;
 
-	if (pBuffer == NULL) {
+	if (pBuffer == nullptr) {
 		DEBUG_LOG("CPacketListener: Out of Memory.");
 		DEBUG_LOG("CPacketListener: Thread Ended.");
 		return;
 	}
 	do {
-		nBytes = recvfrom(pListener->GetSocket(), pBuffer, MAX_PACKET_SIZE, 0, NULL, 0);
+		nBytes = recvfrom(pListener->GetSocket(), pBuffer, MAX_PACKET_SIZE, 0, nullptr, 0);
 		upBuffer = reinterpret_cast<unsigned char*>(pBuffer);
 		pListener->m_fnCallbackDisplay(upBuffer, nBytes);
 		memset(upBuffer, 0, MAX_PACKET_SIZE);
 	} while ((nBytes > 0) && !pListener->IsStopped());
 
 	free(pBuffer);
-	pBuffer = NULL;
+	pBuffer = nullptr;
 	closesocket(pListener->GetSocket());
 	DEBUG_LOG("CPacketListener: Thread Ended.");
 	return;
@@ -80,20 +80,20 @@ unsigned _stdcall CPacketListener::PollingThreadEx(void* args) {
 	unsigned char* pBuffer = (unsigned char*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, MAX_PACKET_SIZE);
 
 
-	if (pBuffer == NULL) {
+	if (pBuffer == nullptr) {
 		SetEvent(pListener->m_hWaitThread);
 		DEBUG_LOG("CPacketListener: Out of Memory." + to_string(GetCurrentThreadId()));
 		DEBUG_LOG("CPacketListener: PollingThreadEx (" + to_string(GetCurrentThreadId()) + ") Thread Ended.");
 		return 0;
 	}
 	do {
-		nBytes = recvfrom(pListener->GetSocket(), (char*)pBuffer, MAX_PACKET_SIZE, 0, NULL, 0);
+		nBytes = recvfrom(pListener->GetSocket(), (char*)pBuffer, MAX_PACKET_SIZE, 0, nullptr, 0);
 
 		pListener->m_fnCallbackDisplayEx(pBuffer, nBytes, pListener->m_pObject);
 	} while ((nBytes > 0) && (WaitForSingleObject(pListener->m_hStopThread, 0) != WAIT_OBJECT_0));
 
 	HeapFree(GetProcessHeap(), 0, pBuffer);
-	pBuffer = NULL;
+	pBuffer = nullptr;
 	DEBUG_LOG("CPacketListener: PollingThreadEx (" + to_string(GetCurrentThreadId()) + ") Thread Ended.");
 	SetEvent(pListener->m_hWaitThread);
 
@@ -102,13 +102,9 @@ unsigned _stdcall CPacketListener::PollingThreadEx(void* args) {
 
 bool CPacketListener::StartListening() {
 	int iResult = 0;
-	char szHostname[100];
-
-	memset(szHostname, 0, sizeof(szHostname));
+	char szHostname[100] = {};
 
 	m_bIsStopped = false;
-
-
 	m_socket = socket(AF_INET, SOCK_RAW, IPPROTO_IP);
 	if (m_socket == INVALID_SOCKET)
 		return false;
@@ -118,7 +114,7 @@ bool CPacketListener::StartListening() {
 		return false;
 	}
 
-	struct addrinfo *result = NULL, hints;
+	struct addrinfo *result = nullptr, hints;
 
 	ZeroMemory(&hints, sizeof(hints));
 	hints.ai_family = AF_INET;
@@ -126,9 +122,9 @@ bool CPacketListener::StartListening() {
 	hints.ai_protocol = IPPROTO_IP;
 	hints.ai_flags = AI_NUMERICSERV;
 
-	iResult = getaddrinfo(szHostname, NULL, &hints, &result);
+	iResult = getaddrinfo(szHostname, nullptr, &hints, &result);
 
-	if (iResult != NULL) {
+	if (iResult != ERROR_SUCCESS) {
 		closesocket(m_socket);
 		return false;
 	}
@@ -157,12 +153,10 @@ bool CPacketListener::StartListening() {
 
 bool CPacketListener::StartListeningEx(ULONG ulNICIP) {
 	int iResult = 0;
-	char szHostname[100];
+	char szHostname[100] = {};
 	int nInput = 1;
 	ULONG ulIP;
-	memset(szHostname, 0, sizeof(szHostname));
 
-	// m_bIsStopped = false;
 	m_socket = INVALID_SOCKET;
 	m_socket = socket(AF_INET, SOCK_RAW, IPPROTO_IP);
 	if (m_socket == INVALID_SOCKET)
@@ -170,11 +164,11 @@ bool CPacketListener::StartListeningEx(ULONG ulNICIP) {
 
 	if (gethostname(szHostname, sizeof(szHostname)) == SOCKET_ERROR) {
 		closesocket(m_socket);
-		m_socket = NULL;
+		m_socket = INVALID_SOCKET;
 		return false;
 	}
 
-	struct addrinfo *result = NULL, *ptr = NULL, hints;
+	struct addrinfo *result = nullptr, *ptr = nullptr, hints;
 
 	ZeroMemory(&hints, sizeof(hints));
 	hints.ai_family = AF_INET;
@@ -182,16 +176,16 @@ bool CPacketListener::StartListeningEx(ULONG ulNICIP) {
 	hints.ai_protocol = IPPROTO_IP;
 	hints.ai_flags = AI_NUMERICSERV;
 
-	iResult = getaddrinfo(szHostname, NULL, &hints, &result);
+	iResult = getaddrinfo(szHostname, nullptr, &hints, &result);
 
-	if (iResult != NULL) {
+	if (iResult != ERROR_SUCCESS) {
 		closesocket(m_socket);
 		m_socket = INVALID_SOCKET;
 		return false;
 	}
 
 	ptr = result;
-	while (ptr != NULL) {
+	while (ptr != nullptr) {
 		memcpy(&ulIP, (ptr->ai_addr->sa_data + 2), sizeof(ulIP));
 		if (ulIP == ulNICIP) {
 			result = ptr;
@@ -215,9 +209,9 @@ bool CPacketListener::StartListeningEx(ULONG ulNICIP) {
 		return false;
 	}
 	CleanupHandles();
-	m_hStopThread = CreateEvent(NULL, TRUE, FALSE, NULL);
-	m_hWaitThread = CreateEvent(NULL, TRUE, FALSE, NULL);
-	m_hThread = (HANDLE)_beginthreadex(NULL, 0, PollingThreadEx, this, 0, NULL);
+	m_hStopThread = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+	m_hWaitThread = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+	m_hThread = (HANDLE)_beginthreadex(nullptr, 0, PollingThreadEx, this, 0, nullptr);
 	freeaddrinfo(result);
 	return true;
 }

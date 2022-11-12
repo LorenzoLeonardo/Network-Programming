@@ -99,8 +99,7 @@ void CLocalAreaListener::MainThread(void* args) {
 
 	pCLocalAreaListener->SetMainThreadHasStarted(TRUE);
 
-	char szIP[32];
-	memset(szIP, 0, sizeof(szIP));
+	char szIP[32] = {};
 
 	ulIP = ulStartingIP;
 
@@ -191,8 +190,7 @@ unsigned _stdcall CLocalAreaListener::MainThreadEx(void* args) {
 	ulMask = htonl(ulMask);
 	ulStartingIP = ulIP & ulMask;  // get the starting address
 	ulLimit = 0xFFFFFFFF - ulMask; // get the max limit of IPAddress that can be search within the subnet.
-	char szIP[32];
-	memset(szIP, 0, sizeof(szIP));
+	char szIP[32] = {};
 
 	ulIP = ulStartingIP;
 	DWORD dwRetSingleObject = 0;

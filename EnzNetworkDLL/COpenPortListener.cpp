@@ -2,28 +2,28 @@
 #include "COpenPortListener.h"
 #include "CSocketClient.h"
 #include "DebugLog.h"
-COpenPortListener* g_objPtrCCheckOpenPorts = NULL;
+COpenPortListener* g_objPtrCCheckOpenPorts = nullptr;
 COpenPortListener::COpenPortListener() {
-	m_pfnFindOpenPort = NULL;
+	m_pfnFindOpenPort = nullptr;
 	m_nNumPorts = 0;
 	m_ipAddressTarget = "";
 	g_objPtrCCheckOpenPorts = this;
-	m_tMonitor = NULL;
+	m_tMonitor = nullptr;
 }
 COpenPortListener::COpenPortListener(string ipTargetIPAddress, int nPort) {
-	m_pfnFindOpenPort = NULL;
+	m_pfnFindOpenPort = nullptr;
 	m_nNumPorts = 0;
 	m_nPort = nPort;
 	m_ipAddressTarget = ipTargetIPAddress;
 	g_objPtrCCheckOpenPorts = this;
-	m_tMonitor = NULL;
+	m_tMonitor = nullptr;
 }
 COpenPortListener::COpenPortListener(string ipTargetIPAddress, int nNumberOfPorts, FNCallbackFindOpenPort pfnPtr) {
 	m_pfnFindOpenPort = pfnPtr;
 	m_nNumPorts = nNumberOfPorts;
 	m_ipAddressTarget = ipTargetIPAddress;
 	g_objPtrCCheckOpenPorts = this;
-	m_tMonitor = NULL;
+	m_tMonitor = nullptr;
 }
 COpenPortListener::~COpenPortListener() {
 }
@@ -91,7 +91,7 @@ bool COpenPortListener::IsPortOpen(string ipAddress, string port, int* pLastErro
 }
 
 void COpenPortListener::StartSearchingOpenPorts() {
-	if (m_tMonitor == NULL) {
+	if (m_tMonitor == nullptr) {
 		m_bStopSearchingOpenPorts = false;
 		m_tMonitor = std::make_unique<thread>(ThreadMonitorThreads, this);
 		m_tMonitor->join();

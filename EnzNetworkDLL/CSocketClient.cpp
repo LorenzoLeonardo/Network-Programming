@@ -33,14 +33,14 @@ CSocketClient::CSocketClient(string ipServer, string sPort) {
 CSocketClient::~CSocketClient() {
 	if (m_socket != INVALID_SOCKET) {
 		closesocket(m_socket);
-		m_socket = NULL;
+		m_socket = INVALID_SOCKET;
 	}
 	WSACleanup();
 }
 bool CSocketClient::ConnectToServer(int* pLastError) {
 	int iResult;
-	struct addrinfo *result = NULL,
-					*ptr = NULL,
+	struct addrinfo *result = nullptr,
+					*ptr = nullptr,
 					hints;
 
 	ZeroMemory(&hints, sizeof(hints));
@@ -87,8 +87,8 @@ bool CSocketClient::ConnectToServer(string ipServer, string sPort, int* pLastErr
 	int iResult;
 	*pLastError = 0;
 
-	struct addrinfo *result = NULL,
-					*ptr = NULL,
+	struct addrinfo *result = nullptr,
+					*ptr = nullptr,
 					hints;
 
 	ZeroMemory(&hints, sizeof(hints));

@@ -11,14 +11,12 @@ CICMP::~CICMP() {
 	WSACleanup();
 }
 int CICMP::InitializeLocalIPAndHostname(const char* szIP) {
-	struct addrinfo *result = NULL, *ptr = NULL, hints;
+	struct addrinfo *result = nullptr, *ptr = nullptr, hints;
 	int iResult = 0;
-	char hostname[NI_MAXHOST];
-	char ipAddress[INET_ADDRSTRLEN];
+	char hostname[NI_MAXHOST] = {};
+	char ipAddress[INET_ADDRSTRLEN] = {};
 	ULONG ulIP, ulNICIP;
 
-	memset(hostname, 0, sizeof(hostname));
-	memset(ipAddress, 0, sizeof(ipAddress));
 	ZeroMemory(&hints, sizeof(hints));
 	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_RAW;
@@ -27,25 +25,25 @@ int CICMP::InitializeLocalIPAndHostname(const char* szIP) {
 
 	inet_pton(AF_INET, szIP, &ulNICIP);
 
-	iResult = getaddrinfo(szIP, NULL, &hints, &result);
+	iResult = getaddrinfo(szIP, nullptr, &hints, &result);
 	if (iResult != 0)
 		return iResult;
 
-	iResult = getnameinfo(result->ai_addr, (socklen_t)result->ai_addrlen, hostname, NI_MAXHOST, NULL, 0, 0);
+	iResult = getnameinfo(result->ai_addr, (socklen_t)result->ai_addrlen, hostname, NI_MAXHOST, nullptr, 0, 0);
 	if (iResult != 0) {
 		freeaddrinfo(result);
-		result = NULL;
+		result = nullptr;
 		return iResult;
 	}
 	freeaddrinfo(result);
-	result = NULL;
+	result = nullptr;
 	m_HostName = hostname;
-	iResult = getaddrinfo(hostname, NULL, &hints, &result);
+	iResult = getaddrinfo(hostname, nullptr, &hints, &result);
 	if (iResult != 0)
 		return iResult;
 
 	ptr = result;
-	while (ptr != NULL) {
+	while (ptr != nullptr) {
 		memcpy(&ulIP, (ptr->ai_addr->sa_data + 2), sizeof(ulIP));
 		if (ulIP == ulNICIP) {
 			result = ptr;
@@ -56,13 +54,13 @@ int CICMP::InitializeLocalIPAndHostname(const char* szIP) {
 	inet_ntop(AF_INET, (const void*)(result->ai_addr->sa_data + 2), ipAddress, sizeof(ipAddress));
 	m_HostIP = ipAddress;
 	freeaddrinfo(result);
-	result = NULL;
+	result = nullptr;
 	return iResult;
 }
 string CICMP::GetHostName(string ipAddress) {
 	struct sockaddr_in sa;
 	struct sockaddr_in saGNI;
-	char hostname[NI_MAXHOST];
+	char hostname[NI_MAXHOST] = {};
 	u_short port = 27015;
 	DWORD dwRetval = 0;
 
@@ -74,7 +72,7 @@ string CICMP::GetHostName(string ipAddress) {
 	dwRetval = getnameinfo((struct sockaddr*)&saGNI,
 		sizeof(struct sockaddr),
 		hostname,
-		NI_MAXHOST, NULL, 0, 0);
+		NI_MAXHOST, nullptr, 0, 0);
 	if (dwRetval != 0)
 		return "";
 
@@ -97,15 +95,15 @@ bool CICMP::Ping(HANDLE hIcmpFile, string sSrc, string sDest, IPAddr& dest, UCHA
 	ICMP_ECHO_REPLY* icmpReply;
 	char sData[32] = "Data Send";
 
-	PVOID pDataReply = NULL;
+	PVOID pDataReply = nullptr;
 
 	pDataReply = malloc(dwReplySize);
-	if (pDataReply != NULL) {
+	if (pDataReply != nullptr) {
 		memset(pDataReply, 0, dwReplySize);
 		inet_pton(AF_INET, sSrc.c_str(), &src);
 		inet_pton(AF_INET, sDest.c_str(), &dest);
 
-		int iReplies = IcmpSendEcho2Ex(hIcmpFile, NULL, NULL, NULL, src, dest, (VOID*)sData, (short)strlen(sData), &icmpOptions, pDataReply, dwReplySize, ucTTL);
+		int iReplies = IcmpSendEcho2Ex(hIcmpFile, nullptr, nullptr, nullptr, src, dest, (VOID*)sData, (short)strlen(sData), &icmpOptions, pDataReply, dwReplySize, ucTTL);
 
 		icmpReply = (ICMP_ECHO_REPLY*)pDataReply;
 		if (iReplies != 0) {
@@ -135,10 +133,10 @@ bool CICMP::Ping(HANDLE hIcmpFile, string sSrc, string sDest, IPAddr& dest, UCHA
 bool CICMP::CheckDeviceEx(string ipAddress, string& hostname, string& sMacAddress) {
 	SOCKET sockRaw;
 	const char* lpdest = ipAddress.c_str();
-	char *icmp_data = NULL, *recvbuf = NULL;
+	char *icmp_data = nullptr, *recvbuf = nullptr;
 	struct sockaddr_in dest, from;
 	int iResult = 0, fromlen = sizeof(from), datasize = 0;
-	struct hostent* hp = NULL;
+	struct hostent* hp = nullptr;
 	USHORT usSequenceNumber = atoi(ipAddress.substr(ipAddress.rfind('.', ipAddress.size()) + 1, ipAddress.size()).c_str());
 	bool bRet = false;
 
@@ -165,18 +163,10 @@ bool CICMP::CheckDeviceEx(string ipAddress, string& hostname, string& sMacAddres
 		goto CLEANPUP;
 	}
 
-	// iResult = setsockopt(sockRaw, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeoutsend, sizeof(timeoutsend));
-	// if (iResult == SOCKET_ERROR)
-	//     goto CLEANPUP;
-
-	// iResult = setsockopt(sockRaw, SOL_SOCKET, SO_SNDTIMEO, (char*)&timeoutrecv, sizeof(timeoutrecv));
-	// if (iResult == SOCKET_ERROR)
-	//    goto CLEANPUP;
-
 	memset(&dest, 0, sizeof(dest));
 	dest.sin_family = AF_INET;
 	if ((dest.sin_addr.s_addr = inet_addr(lpdest)) == INADDR_NONE) {
-		if ((hp = gethostbyname(lpdest)) != NULL) {
+		if ((hp = gethostbyname(lpdest)) != nullptr) {
 			memcpy(&(dest.sin_addr), hp->h_addr, hp->h_length);
 			dest.sin_family = hp->h_addrtype;
 		}
@@ -216,16 +206,16 @@ bool CICMP::CheckDeviceEx(string ipAddress, string& hostname, string& sMacAddres
 			if (dwRetVal == NO_ERROR) {
 				bPhysAddr = (BYTE*)&MacAddr;
 				if (PhysAddrLen) {
-					char szMac[32];
-					memset(szMac, 0, sizeof(szMac));
+
+
 					for (int i = 0; i < 6; i++) {
 						if (i < 5) {
-							memset(szMac, 0, sizeof(szMac));
+							char szMac[32] = {};
 							sprintf_s(szMac, sizeof(szMac), "%02X-", bPhysAddr[i]);
 							sMacAddress += szMac;
 						}
 						else {
-							memset(szMac, 0, sizeof(szMac));
+							char szMac[32] = {};
 							sprintf_s(szMac, sizeof(szMac), "%02X", bPhysAddr[i]);
 							sMacAddress += szMac;
 						}
@@ -234,7 +224,7 @@ bool CICMP::CheckDeviceEx(string ipAddress, string& hostname, string& sMacAddres
 				bRet = true;
 			}
 			else {
-				char szIP[32];
+				char szIP[32] = {};
 				inet_ntop(AF_INET, &from.sin_addr.S_un.S_addr, szIP, sizeof(szIP));
 				string sIP(szIP);
 				DEBUG_LOG("CICMP::CheckDeviceEx(): SendARP -> Error. " + sIP);
@@ -242,7 +232,7 @@ bool CICMP::CheckDeviceEx(string ipAddress, string& hostname, string& sMacAddres
 			}
 		}
 		else {
-			char szIP[32];
+			char szIP[32] = {};
 			inet_ntop(AF_INET, &from.sin_addr.S_un.S_addr, szIP, sizeof(szIP));
 			string sIP(szIP);
 			DEBUG_LOG("CICMP::CheckDeviceEx(): DecodeICMPHeader() - false " + sIP);
@@ -255,8 +245,8 @@ CLEANPUP:
 		closesocket(sockRaw);
 	free(recvbuf);
 	free(icmp_data);
-	recvbuf = NULL;
-	icmp_data = NULL;
+	recvbuf = nullptr;
+	icmp_data = nullptr;
 
 	return bRet;
 }
@@ -277,7 +267,7 @@ bool CICMP::CheckDevice(string ipAddress, string& hostname, string& sMacAddress)
 		return bRet;
 
 
-	ULONG MacAddr[2];
+	ULONG MacAddr[2] = {};
 	ULONG PhysAddrLen = 6;
 	IPAddr ipSource;
 	LPBYTE bPhysAddr;
@@ -289,16 +279,14 @@ bool CICMP::CheckDevice(string ipAddress, string& hostname, string& sMacAddress)
 	if (dwRetVal == NO_ERROR) {
 		bPhysAddr = (BYTE*)&MacAddr;
 		if (PhysAddrLen) {
-			char szMac[32];
-			memset(szMac, 0, sizeof(szMac));
 			for (int i = 0; i < 6; i++) {
 				if (i < 5) {
-					memset(szMac, 0, sizeof(szMac));
+					char szMac[32] = {};
 					sprintf_s(szMac, sizeof(szMac), "%02X-", bPhysAddr[i]);
 					sMacAddress += szMac;
 				}
 				else {
-					memset(szMac, 0, sizeof(szMac));
+					char szMac[32] = {};
 					sprintf_s(szMac, sizeof(szMac), "%02X", bPhysAddr[i]);
 					sMacAddress += szMac;
 				}
@@ -307,7 +295,7 @@ bool CICMP::CheckDevice(string ipAddress, string& hostname, string& sMacAddress)
 		bRet = true;
 	}
 	else if (dwRetVal == ERROR_BAD_NET_NAME) {
-		char szIP[32];
+		char szIP[32] = {};
 		inet_ntop(AF_INET, &ipDest, szIP, sizeof(szIP));
 		string sIP(szIP);
 		// if (Ping(IcmpCreateFile(), m_HostIP, sIP, ipDest, (UCHAR)POLLING_TIME))
@@ -325,7 +313,7 @@ bool CICMP::CheckDevice(string ipAddress, string& hostname, string& sMacAddress)
 bool CICMP::CheckDevice(string ipAddress, string& hostname, string& sMacAddress, DWORD* pError) {
 	unsigned long ipDest = INADDR_NONE;
 	DWORD dwRetVal = 0;
-	ULONG MacAddr[2];
+	ULONG MacAddr[2] = {};
 	ULONG PhysAddrLen = 6;
 	IPAddr ipSource;
 	LPBYTE bPhysAddr;
@@ -359,16 +347,14 @@ bool CICMP::CheckDevice(string ipAddress, string& hostname, string& sMacAddress,
 	if (dwRetVal == NO_ERROR) {
 		bPhysAddr = (BYTE*)&MacAddr;
 		if (PhysAddrLen) {
-			char szMac[32];
-			memset(szMac, 0, sizeof(szMac));
 			for (int i = 0; i < 6; i++) {
 				if (i < 5) {
-					memset(szMac, 0, sizeof(szMac));
+					char szMac[32] = {};
 					sprintf_s(szMac, sizeof(szMac), "%02X-", bPhysAddr[i]);
 					sMacAddress += szMac;
 				}
 				else {
-					memset(szMac, 0, sizeof(szMac));
+					char szMac[32] = {};
 					sprintf_s(szMac, sizeof(szMac), "%02X", bPhysAddr[i]);
 					sMacAddress += szMac;
 				}
@@ -377,7 +363,7 @@ bool CICMP::CheckDevice(string ipAddress, string& hostname, string& sMacAddress,
 		bRet = true;
 	}
 	else if (dwRetVal == ERROR_BAD_NET_NAME) {
-		char szIP[32];
+		char szIP[32] = {};
 		inet_ntop(AF_INET, &ipDest, szIP, sizeof(szIP));
 		string sIP(szIP);
 		// if (Ping(IcmpCreateFile(), m_HostIP, sIP, ipDest, (UCHAR)POLLING_TIME))
@@ -398,8 +384,8 @@ bool CICMP::CheckDevice(string ipAddress, string& hostname, string& sMacAddress,
 	return bRet;
 }
 void CICMP::FillICMPData(char* icmp_data, int datasize) {
-	ICMP_HDR* icmp_hdr = NULL;
-	char* datapart = NULL;
+	ICMP_HDR* icmp_hdr = nullptr;
+	char* datapart = nullptr;
 
 	icmp_hdr = (ICMP_HDR*)icmp_data;
 	icmp_hdr->byType = ICMP_ECHO;
@@ -429,8 +415,8 @@ USHORT CICMP::CheckSum(USHORT* buffer, int size) {
 }
 
 bool CICMP::DecodeICMPHeader(USHORT usSeq, char* buf, int bytes, struct sockaddr_in* from) {
-	IPV4_HDR* iphdr = NULL;
-	ICMP_HDR* icmphdr = NULL;
+	IPV4_HDR* iphdr = nullptr;
+	ICMP_HDR* icmphdr = nullptr;
 	unsigned short iphdrlen;
 
 	iphdr = (IPV4_HDR*)buf;
