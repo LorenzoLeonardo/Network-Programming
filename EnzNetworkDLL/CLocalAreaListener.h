@@ -28,7 +28,7 @@ public:
 	void Stop();
 	string GetStartingIPAddress();
 	bool CheckIPDeviceConnected(string ipAddress, string& hostName, string& macAddress);
-	map<thread*, int>* GetThreads();
+	map<unique_ptr<thread>, int>* GetThreads();
 	bool HasNotStopped()
 	{
 		return m_bHasStarted;
@@ -61,7 +61,7 @@ public:
 	void WaitListeningEx(HANDLE hHandle);
 private:
 
-	map<thread*, int> m_mapThreads;
+	map<std::unique_ptr<thread>, int> m_mapThreads;
 	map<HANDLE, int> m_mapThreadsEx;
 	thread* m_threadMain;
 	string  m_szStartingIP;
@@ -69,7 +69,7 @@ private:
 	bool	m_bHasStarted;
 	int		m_nPollingTimeMS;
 	bool    m_bMainThreadStarted;
-	CICMP*	m_objICMP;
+	std::unique_ptr<CICMP>	m_objICMP;
 
 
 };

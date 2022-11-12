@@ -7,12 +7,13 @@
 #include "CSNMP.h"
 #include "CPacketListener.h"
 #include "DebugLog.h"
+#include <memory>
 
-static COpenPortListener* g_pOpenPorts = NULL;
-static CLocalAreaListener* g_pLocalAreaListener = NULL;
-static CPacketListener* g_pPacketListener = NULL;
-static CSNMP*   g_SNMP = NULL;
-static CICMP* g_pICMP = NULL;
+static std::unique_ptr<COpenPortListener> g_pOpenPorts = nullptr;
+static std::unique_ptr<CLocalAreaListener> g_pLocalAreaListener = nullptr;
+static std::unique_ptr<CPacketListener> g_pPacketListener = nullptr;
+static std::unique_ptr<CSNMP> g_SNMP = nullptr;
+static std::unique_ptr<CICMP> g_pICMP = nullptr;
 static char g_szAdapterName[MAX_ADAPTER_NAME_LENGTH + 4];
 static char g_szAdapterIP[32];
 static ULONG g_ulAdapterIP;
@@ -32,31 +33,6 @@ extern "C" BOOL APIENTRY DllMain(HMODULE hModule,
         g_ulAdapterIP = 0;
         break;
     case DLL_PROCESS_DETACH:
-        if(g_pOpenPorts != NULL)
-        {
-            delete g_pOpenPorts;
-            g_pOpenPorts = NULL;
-        }
-        if (g_pLocalAreaListener != NULL)
-        {
-             delete g_pLocalAreaListener;
-            g_pLocalAreaListener = NULL;
-        }
-        if (g_pPacketListener != NULL)
-        {
-            delete g_pPacketListener;
-            g_pPacketListener = NULL;
-        }
-        if (g_SNMP != NULL)
-        {
-            delete g_SNMP;
-            g_SNMP = NULL;
-        }
-        if (g_pICMP != NULL)
-        {
-            delete g_pICMP;
-            g_pICMP = NULL;
-        }
         _CrtDumpMemoryLeaks();
         DEBUG_LOG("EnzTCP Library is Unloaded.");
         break;
@@ -66,8 +42,10 @@ extern "C" BOOL APIENTRY DllMain(HMODULE hModule,
 
 HANDLE ENZTCPLIBRARY_API OpenServer(const char* sport, FNCallbackNewConnection pfnPtr)
 {
-    CTCPListener* Ptr = new CTCPListener(sport, pfnPtr);
-    return (HANDLE)Ptr;
+	std::shared_ptr<CTCPListener>
+		Ptr = std::make_shared<CTCPListener>(sport, pfnPtr);
+
+    return (HANDLE)Ptr.get();
 }
 
 void ENZTCPLIBRARY_API RunServer(HANDLE hHandle)
@@ -80,14 +58,14 @@ void ENZTCPLIBRARY_API CloseClientConnection(HANDLE hHandle)
 {
     CSocket* clientSocket = (CSocket*)hHandle;
 
-    if (clientSocket != NULL)
+    if (clientSocket != nullptr)
         delete clientSocket;
 }
 void ENZTCPLIBRARY_API CloseServer(HANDLE hHandle)
 {
     CTCPListener* listener = (CTCPListener*)hHandle;
 
-    if (listener != NULL)
+    if (listener != nullptr)
     {
         listener->Stop();
         delete listener;
@@ -97,57 +75,46 @@ void ENZTCPLIBRARY_API CloseServer(HANDLE hHandle)
 
 HANDLE ENZTCPLIBRARY_API ConnectToServer(const char* ipAddress, const char* portNum, int* pnlastError)
 {
-    CSocketClient* pSocket = NULL;
+    std::shared_ptr<CSocketClient> pSocket = nullptr;
+
     try
     {
-        pSocket = new CSocketClient(ipAddress, portNum);
+		pSocket = std::make_shared<CSocketClient>(ipAddress, portNum);
         int nLastError = 0;
-        if (pSocket == NULL)
+        if (pSocket == nullptr)
             throw (HANDLE)SOCKET_ERROR;
 
         if (pSocket->ConnectToServer(&nLastError))
-            return (HANDLE)pSocket;
+            return (HANDLE)pSocket.get();
         else
         {
             pSocket->DisconnectFromServer();
-            delete pSocket;
-            pSocket = NULL;
             throw (HANDLE)SOCKET_ERROR;
         }
     }
     catch (HANDLE nError)
     {
         DEBUG_LOG("ConnectToServer(): Exception (" + to_string((ULONG_PTR)nError) + ")");
-        if (pSocket)
-        {
-            delete pSocket;
-            pSocket = NULL;
-        }
         return nError;
     }
 }
 
 void ENZTCPLIBRARY_API DisconnectFromServer(HANDLE hHandle)
 {
-    if (hHandle != NULL && hHandle != (HANDLE)SOCKET_ERROR)
+    if (hHandle != nullptr && hHandle != (HANDLE)SOCKET_ERROR)
     {
         CSocketClient* pSocket = (CSocketClient*)hHandle;
         delete pSocket;
-        pSocket = NULL;
+        pSocket = nullptr;
     }
 }
 
 void ENZTCPLIBRARY_API EnumOpenPorts(char* ipAddress, int nNumPorts, FNCallbackFindOpenPort pfnPtr)
 {
-    if(g_pOpenPorts != NULL)
-    {
-        delete g_pOpenPorts;
-        g_pOpenPorts = NULL;
-    }
     string sAddress(ipAddress);
 
-    g_pOpenPorts = new COpenPortListener(sAddress, nNumPorts, pfnPtr);
-    if (g_pOpenPorts == NULL)
+    g_pOpenPorts = std::make_unique<COpenPortListener>(sAddress, nNumPorts, pfnPtr);
+    if (g_pOpenPorts == nullptr)
         return;
     g_pOpenPorts->StartSearchingOpenPorts();
     return;
@@ -155,7 +122,7 @@ void ENZTCPLIBRARY_API EnumOpenPorts(char* ipAddress, int nNumPorts, FNCallbackF
 
 void ENZTCPLIBRARY_API StopSearchingOpenPorts()
 {
-    if (g_pOpenPorts != NULL)
+    if (g_pOpenPorts != nullptr)
         g_pOpenPorts->StopSearchingOpenPorts();
     return;
 }
@@ -180,23 +147,17 @@ bool ENZTCPLIBRARY_API StartLocalAreaListening(const char* ipAddress, const char
 {
     try
     {
-        if (g_pLocalAreaListener != NULL)
-        {
-            delete g_pLocalAreaListener;
-            g_pLocalAreaListener = NULL;
-        }
-        g_pLocalAreaListener = new CLocalAreaListener(ipAddress, subNetMask, fnpPtr, nPollingTimeMS);
-        if (g_pLocalAreaListener == NULL)
+        g_pLocalAreaListener = std::make_unique<CLocalAreaListener>(ipAddress, subNetMask, fnpPtr, nPollingTimeMS);
+        if (g_pLocalAreaListener == nullptr)
             return false;
         g_pLocalAreaListener->Start();
     }
     catch (int nError)
     {
         DEBUG_LOG("StartLocalAreaListening(): Exception (" + to_string(nError) + ")");
-        if (g_pLocalAreaListener != NULL)
+        if (g_pLocalAreaListener != nullptr)
         {
-            delete g_pLocalAreaListener;
-            g_pLocalAreaListener = NULL;
+            g_pLocalAreaListener = nullptr;
         }
         return nError == 0;
     }
@@ -204,7 +165,7 @@ bool ENZTCPLIBRARY_API StartLocalAreaListening(const char* ipAddress, const char
 }
 void ENZTCPLIBRARY_API StopLocalAreaListening()
 {
-    if (g_pLocalAreaListener != NULL)
+    if (g_pLocalAreaListener != nullptr)
     {
         g_pLocalAreaListener->Stop();
     }
@@ -212,13 +173,8 @@ void ENZTCPLIBRARY_API StopLocalAreaListening()
 
 bool ENZTCPLIBRARY_API StartSNMP(const char* szAgentIPAddress, const char* szCommunity, int nVersion, DWORD& dwLastError)
 {
-    if (g_SNMP != NULL)
-    {
-        delete g_SNMP;
-        g_SNMP = NULL;
-    }
-    g_SNMP = new CSNMP();
-    if (g_SNMP == NULL)
+    g_SNMP = std::make_unique<CSNMP>();
+    if (g_SNMP == nullptr)
     {
         dwLastError = ERROR_NOT_ENOUGH_MEMORY;
         DEBUG_LOG("StartSNMP(): Exception (" + to_string(dwLastError) + ")");
@@ -231,7 +187,7 @@ smiVALUE ENZTCPLIBRARY_API SNMPGet(const char* szOID, DWORD& dwLastError)
     smiVALUE value;
     memset(&value, 0, sizeof(value));
 
-    if (g_SNMP == NULL)
+    if (g_SNMP == nullptr)
     {
         return value;
     }
@@ -239,11 +195,10 @@ smiVALUE ENZTCPLIBRARY_API SNMPGet(const char* szOID, DWORD& dwLastError)
 }
 void ENZTCPLIBRARY_API EndSNMP()
 {
-    if (g_SNMP != NULL)
+    if (g_SNMP != nullptr)
     {
         g_SNMP->EndSNMP();
-        delete g_SNMP;
-        g_SNMP = NULL;
+        g_SNMP = nullptr;
     }
 }
 
@@ -261,21 +216,20 @@ bool ENZTCPLIBRARY_API GetDefaultGatewayEx(const char* szAdapterName, char* szDe
 
 bool ENZTCPLIBRARY_API StartPacketListener(FNCallbackPacketListener fnpPtr)
 {
-    if (g_pPacketListener == NULL)
+    if (g_pPacketListener == nullptr)
     {
         try
         {
-            g_pPacketListener = new CPacketListener(fnpPtr);
-            if (g_pPacketListener == NULL)
+            g_pPacketListener = std::make_unique<CPacketListener>(fnpPtr);
+            if (g_pPacketListener == nullptr)
                 return false;
         }
         catch (int nError)
         {
             DEBUG_LOG("StartPacketListener(): Exception (" + to_string(nError) + ")");
-            if (g_pPacketListener != NULL)
+            if (g_pPacketListener != nullptr)
             {
-                delete g_pPacketListener;
-                g_pPacketListener = NULL;
+                g_pPacketListener = nullptr;
             }
             return !(nError==INVALID_SOCKET);
         }
@@ -287,7 +241,7 @@ bool ENZTCPLIBRARY_API StartPacketListener(FNCallbackPacketListener fnpPtr)
 }
 void ENZTCPLIBRARY_API StopPacketListener()
 {
-    if (g_pPacketListener != NULL)
+    if (g_pPacketListener != nullptr)
     {
         g_pPacketListener->StopListening();
     }
@@ -298,12 +252,12 @@ bool ENZTCPLIBRARY_API GetNetworkDeviceStatus(const char* ipAddress, char* hostn
     string shostName, smacAddress;
     bool bRet = false;
 
-    if (g_pICMP == NULL)
+    if (g_pICMP == nullptr)
     {
         try
         {
-            g_pICMP = new CICMP();
-            if (g_pICMP == NULL)
+			g_pICMP = std::make_unique<CICMP>();
+            if (g_pICMP == nullptr)
             {
                 *pError = ERROR_NOT_ENOUGH_MEMORY;
                 throw *pError;
@@ -330,8 +284,7 @@ bool ENZTCPLIBRARY_API GetNetworkDeviceStatus(const char* ipAddress, char* hostn
             DEBUG_LOG("GetNetworkDeviceStatus(): Exception (" + to_string(nError) + ")");
             if (g_pICMP)
             {
-                delete g_pICMP;
-                g_pICMP = NULL;
+                g_pICMP = nullptr;
             }
             return bRet;
         }
@@ -358,7 +311,7 @@ bool ENZTCPLIBRARY_API GetNetworkDeviceStatus(const char* ipAddress, char* hostn
 
 bool ENZTCPLIBRARY_API EnumNetworkAdapters(FNCallbackAdapterList pFunc)
 {
-    PIP_ADAPTER_INFO pAdapterInfo = NULL, pAdapter = NULL;
+    PIP_ADAPTER_INFO pAdapterInfo = nullptr, pAdapter = nullptr;
     ULONG ulOutBufLen = 0;
     bool bRet = false;
 
@@ -389,14 +342,14 @@ bool ENZTCPLIBRARY_API EnumNetworkAdapters(FNCallbackAdapterList pFunc)
     if (pAdapterInfo)
     {
         HeapFree(GetProcessHeap(), 0, pAdapterInfo);
-        pAdapterInfo = NULL;
+        pAdapterInfo = nullptr;
     }
     return bRet;
 }
 
 HANDLE ENZTCPLIBRARY_API CreatePacketListenerEx(FNCallbackPacketListenerEx fnpPtr, void* pObject)
 {
-    CPacketListener* pPacketListener = NULL;
+    CPacketListener* pPacketListener = nullptr;
     try
     {
         pPacketListener = new CPacketListener(fnpPtr, pObject);
@@ -408,7 +361,7 @@ HANDLE ENZTCPLIBRARY_API CreatePacketListenerEx(FNCallbackPacketListenerEx fnpPt
         if (pPacketListener)
         {
             delete pPacketListener;
-            pPacketListener = NULL;
+            pPacketListener = nullptr;
         }
         return pPacketListener;
     }
@@ -438,13 +391,13 @@ void ENZTCPLIBRARY_API DeletePacketListenerEx(HANDLE &hHandle)
     if (pPacketListener)
     {
         delete pPacketListener;
-        pPacketListener = NULL;
+        pPacketListener = nullptr;
     }
 }
 
 HANDLE ENZTCPLIBRARY_API CreateLocalAreaListenerEx()
 {
-    CLocalAreaListener* pLanListener = NULL;
+    CLocalAreaListener* pLanListener = nullptr;
     try
     {
         pLanListener = new CLocalAreaListener();
@@ -456,7 +409,7 @@ HANDLE ENZTCPLIBRARY_API CreateLocalAreaListenerEx()
         if (pLanListener)
         {
             delete pLanListener;
-            pLanListener = NULL;
+            pLanListener = nullptr;
         }
         return pLanListener;
     }
@@ -481,7 +434,7 @@ void ENZTCPLIBRARY_API DeleteLocalAreaListenerEx(HANDLE &hHandle)
     if (pLanListener)
     {
         delete pLanListener;
-        pLanListener = NULL;
+        pLanListener = nullptr;
     }
 }
 

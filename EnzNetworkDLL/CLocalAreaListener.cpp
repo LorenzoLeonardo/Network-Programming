@@ -2,24 +2,24 @@
 #include "CLocalAreaListener.h"
 #include "DebugLog.h"
 
-CLocalAreaListener* g_pCLocalAreaListener = NULL;
+CLocalAreaListener* g_pCLocalAreaListener = nullptr;
 CLocalAreaListener::CLocalAreaListener()
 {
-	m_fnptrCallbackLocalAreaListener = NULL;
+	m_fnptrCallbackLocalAreaListener = nullptr;
 	m_szStartingIP = "";
 	m_szSubnetMask = "";
-	m_threadMain = NULL;
+	m_threadMain = nullptr;
 	m_bHasStarted = false;
 	m_nPollingTimeMS = 0;
 	m_bMainThreadStarted = FALSE;
-	m_objICMP = NULL;
-	m_hStopThread = NULL;
-	m_hWaitThread = NULL;
-	m_hMainThread = NULL;
-	m_hMainStopThread = NULL;
+	m_objICMP = nullptr;
+	m_hStopThread = nullptr;
+	m_hWaitThread = nullptr;
+	m_hMainThread = nullptr;
+	m_hMainStopThread = nullptr;
 	try
 	{
-		m_objICMP = new CICMP();
+		m_objICMP = std::make_unique<CICMP>();
 	}
 	catch (int nError)
 	{
@@ -31,17 +31,17 @@ CLocalAreaListener::CLocalAreaListener(const char* szStartingIPAddress, const ch
 	m_fnptrCallbackLocalAreaListener = pFncPtr;
 	m_szStartingIP = szStartingIPAddress;
 	m_szSubnetMask = subNetMask;
-	m_threadMain = NULL;
+	m_threadMain = nullptr;
 	m_bHasStarted = false;
 	m_nPollingTimeMS = nPollingTimeMS;
 	m_bMainThreadStarted = FALSE;
-	m_objICMP = NULL;
-	m_hStopThread = NULL;
-	m_hWaitThread = NULL;
-	m_hMainThread = NULL;
+	m_objICMP = nullptr;
+	m_hStopThread = nullptr;
+	m_hWaitThread = nullptr;
+	m_hMainThread = nullptr;
 	try
 	{
-		m_objICMP = new CICMP();
+		m_objICMP = std::make_unique<CICMP>();
 	}
 	catch (int nError)
 	{
@@ -62,25 +62,19 @@ CLocalAreaListener::~CLocalAreaListener()
 		CloseHandle(m_hWaitThread);
 		CloseHandle(m_hMainThread);
 		CloseHandle(m_hMainStopThread);
-		m_hStopThread = NULL;
-		m_hWaitThread = NULL;
-		m_hMainThread = NULL;
-		m_hMainStopThread = NULL;
+		m_hStopThread = nullptr;
+		m_hWaitThread = nullptr;
+		m_hMainThread = nullptr;
+		m_hMainStopThread = nullptr;
 	}
 
-	if (m_threadMain != NULL)
+	if (m_threadMain != nullptr)
 	{
 		delete m_threadMain;
-		m_threadMain = NULL;
+		m_threadMain = nullptr;
 	}
-	if (m_objICMP != NULL)
-	{
-		delete m_objICMP;
-		m_objICMP = NULL;
-	}
-
 }
-map<thread*, int>* CLocalAreaListener::GetThreads()
+map<std::unique_ptr<thread>, int>* CLocalAreaListener::GetThreads()
 {
 	return &m_mapThreads;
 }
@@ -97,7 +91,7 @@ void CLocalAreaListener::MultiQueryingThread(void* args)
 			g_pCLocalAreaListener->m_fnptrCallbackLocalAreaListener((const char*)(*p).c_str(), (const char*)hostName.c_str(), (const char*)macAddress.c_str(), true);
 	}
 	delete p;
-	p = NULL;
+	p = nullptr;
 }
 
 void CLocalAreaListener::MainThread(void* args)
@@ -130,17 +124,17 @@ void CLocalAreaListener::MainThread(void* args)
 
 	do
 	{
-		g_pCLocalAreaListener->m_fnptrCallbackLocalAreaListener("start", NULL,NULL, false);
+		g_pCLocalAreaListener->m_fnptrCallbackLocalAreaListener("start", nullptr,nullptr, false);
 		for (ULONG i = 1; i <= (ulLimit-1); i++)
 		{
 			ulTemp = ulStartingIP + i;
 			ulTemp = htonl(ulTemp);
 			inet_ntop(AF_INET, &ulTemp, szIP, sizeof(szIP));
-			string* str = new string;
-			*str = szIP;//ipAddressStart + to_string(i);
-			(*pCLocalAreaListener->GetThreads())[new thread(MultiQueryingThread, str)] = i;
+			string *str = new string;
+			*str = szIP;
+			(*pCLocalAreaListener->GetThreads())[std::make_unique<thread>(MultiQueryingThread, str)] = i;
 		}
-		map<thread*, int>::iterator it = pCLocalAreaListener->GetThreads()->begin();
+		map<std::unique_ptr<thread>, int>::iterator it = pCLocalAreaListener->GetThreads()->begin();
 
 		while (it != pCLocalAreaListener->GetThreads()->end())
 		{
@@ -149,19 +143,15 @@ void CLocalAreaListener::MainThread(void* args)
 			it++;
 		}
 		it = pCLocalAreaListener->GetThreads()->begin();
-		while (it != pCLocalAreaListener->GetThreads()->end())
-		{
-			delete it->first;
-			it++;
-		}
+
 		pCLocalAreaListener->GetThreads()->clear();
-		g_pCLocalAreaListener->m_fnptrCallbackLocalAreaListener("end", NULL,NULL, false);
+		g_pCLocalAreaListener->m_fnptrCallbackLocalAreaListener("end", nullptr,nullptr, false);
 		Sleep(nPollTime);
 	} while (pCLocalAreaListener->HasNotStopped());
 
 	
 	pCLocalAreaListener->SetMainThreadHasStarted(FALSE);
-	g_pCLocalAreaListener->m_fnptrCallbackLocalAreaListener("stop", NULL, NULL, false);
+	g_pCLocalAreaListener->m_fnptrCallbackLocalAreaListener("stop", nullptr, nullptr, false);
 	DEBUG_LOG("CLocalAreaListener: Thread Ended.");
 	return;
 }
@@ -175,10 +165,10 @@ void CLocalAreaListener::Start()
 	{
 		m_bHasStarted = true;
 		g_pCLocalAreaListener = this;
-		if (m_threadMain != NULL)
+		if (m_threadMain != nullptr)
 		{
 			delete m_threadMain;
-			m_threadMain = NULL;
+			m_threadMain = nullptr;
 		}
 		m_threadMain = new thread(MainThread, this);
 		m_threadMain->join();
@@ -201,7 +191,10 @@ bool CLocalAreaListener::CheckIPDeviceConnected(string ipAddress,string &hostNam
 
 unsigned _stdcall CLocalAreaListener::MultiQueryingThreadEx(void* args)
 {
-	CLANObject* obj = (CLANObject*)args;
+	auto dumb_ptr = static_cast<std::shared_ptr<CLANObject>*>(args);
+	auto obj = std::move(*dumb_ptr);
+	delete dumb_ptr;
+
 	string hostName;
 	string macAddress = "";
 
@@ -210,8 +203,6 @@ unsigned _stdcall CLocalAreaListener::MultiQueryingThreadEx(void* args)
 		if (!(hostName.empty() || macAddress.empty()))
 			obj->m_pCLocalAreaListener->m_fnptrCallbackLocalAreaListener((const char*)(obj->ipAddress).c_str(), (const char*)hostName.c_str(), (const char*)macAddress.c_str(), true);
 	}
-	delete obj;
-	obj = NULL;
 
 	return 0;
 }
@@ -242,19 +233,21 @@ unsigned _stdcall CLocalAreaListener::MainThreadEx(void* args)
 	
 	do
 	{
-		pCLocalAreaListener->m_fnptrCallbackLocalAreaListener("start", NULL, NULL, false);
+		pCLocalAreaListener->m_fnptrCallbackLocalAreaListener("start", nullptr, nullptr, false);
 		dwRetSingleObject = WaitForSingleObject(pCLocalAreaListener->m_hStopThread, 0);
 		for (ULONG i = 1; (i <= (ulLimit - 1)) && (dwRetSingleObject != WAIT_OBJECT_0); i++)
 		{
 			ulTemp = ulStartingIP + i;
 			ulTemp = htonl(ulTemp);
 			inet_ntop(AF_INET, &ulTemp, szIP, sizeof(szIP));
-			CLANObject* obj = new CLANObject();
+			std::shared_ptr<CLANObject> obj = std::make_shared<CLANObject>();
 			if (!obj)
 				break;
 			obj->m_pCLocalAreaListener = pCLocalAreaListener;
 			obj->ipAddress = szIP;
-			HANDLE hThread = (HANDLE)_beginthreadex(NULL, 0, MultiQueryingThreadEx, obj, 0, NULL);
+			auto dumb_ptr = new std::shared_ptr<CLANObject>(obj); // or add `std::move` here if the original `shared_ptr` instance isn't required anymore
+
+			HANDLE hThread = (HANDLE)_beginthreadex(nullptr, 0, MultiQueryingThreadEx, static_cast<void*>(dumb_ptr), 0, nullptr);
 			if (!hThread)
 				break;
 			pCLocalAreaListener->m_mapThreadsEx[hThread] = i;
@@ -273,13 +266,13 @@ unsigned _stdcall CLocalAreaListener::MainThreadEx(void* args)
 			it++;
 		}
 		pCLocalAreaListener->m_mapThreadsEx.clear();
-		pCLocalAreaListener->m_fnptrCallbackLocalAreaListener("end", NULL, NULL, false);
+		pCLocalAreaListener->m_fnptrCallbackLocalAreaListener("end", nullptr, nullptr, false);
 		Sleep(nPollTime);
 	} while (dwRetSingleObject != WAIT_OBJECT_0);
 	SetEvent(pCLocalAreaListener->m_hWaitThread);
 	
 	DEBUG_LOG("CLocalAreaListener:MainThreadEx() Thread Ended.");
-	pCLocalAreaListener->m_fnptrCallbackLocalAreaListener("stop", NULL, NULL, false);
+	pCLocalAreaListener->m_fnptrCallbackLocalAreaListener("stop", nullptr, nullptr, false);
 
 	return 0;
 }
@@ -309,21 +302,21 @@ bool CLocalAreaListener::StartEx(const char* szStartingIPAddress, const char* su
 		CloseHandle(m_hWaitThread);
 		CloseHandle(m_hMainThread);
 		CloseHandle(m_hMainStopThread);
-		m_hStopThread = NULL;
-		m_hWaitThread = NULL;
-		m_hMainThread = NULL;
-		m_hMainStopThread = NULL;
+		m_hStopThread = nullptr;
+		m_hWaitThread = nullptr;
+		m_hMainThread = nullptr;
+		m_hMainStopThread = nullptr;
 	}
-	m_hStopThread = CreateEvent(NULL,TRUE, FALSE,NULL);
+	m_hStopThread = CreateEvent(nullptr,TRUE, FALSE,nullptr);
 	if (!m_hStopThread)
 		return false;
-	m_hWaitThread = CreateEvent(NULL, TRUE, FALSE, NULL);
+	m_hWaitThread = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 	if (!m_hWaitThread)
 	{
 		CloseHandle(m_hStopThread);
 		return false;
 	}
-	m_hMainThread = (HANDLE)_beginthreadex(NULL, 0, MainThreadEx, this, 0, NULL);
+	m_hMainThread = (HANDLE)_beginthreadex(nullptr, 0, MainThreadEx, this, 0, nullptr);
 	if (!m_hMainThread)
 	{
 		CloseHandle(m_hStopThread);
@@ -335,7 +328,7 @@ bool CLocalAreaListener::StartEx(const char* szStartingIPAddress, const char* su
 void CLocalAreaListener::StopEx()
 {
 	if (m_hMainThread)
-		m_hMainStopThread = (HANDLE)_beginthreadex(NULL, 0, StopThread, this, 0, NULL);
+		m_hMainStopThread = (HANDLE)_beginthreadex(nullptr, 0, StopThread, this, 0, nullptr);
 }
 
 void CLocalAreaListener::WaitListeningEx(HANDLE hHandle)
