@@ -99,7 +99,7 @@
     <None Include="res\Network Monitoring Tool.rc2">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="..\EnzNetworkDLL\.clang-format" />
+    <None Include=".clang-format" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\Network Monitoring Tool.ico">

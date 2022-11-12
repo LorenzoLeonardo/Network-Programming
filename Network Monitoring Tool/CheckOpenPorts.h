@@ -16,19 +16,19 @@
 
 class CCheckOpenPortsApp : public CWinApp {
 public:
-  CCheckOpenPortsApp();
+	CCheckOpenPortsApp();
 
-  // Overrides
+	// Overrides
 public:
-  virtual BOOL InitInstance();
+	virtual BOOL InitInstance();
 
-  // Implementation
+	// Implementation
 
-  DECLARE_MESSAGE_MAP()
+	DECLARE_MESSAGE_MAP()
 private:
-  void ElevateProcess();
-  BOOL IsAdministrator();
-  int ProcessAppToFirewall(LPCTSTR szAppName);
+	void ElevateProcess();
+	BOOL IsAdministrator();
+	int ProcessAppToFirewall(LPCTSTR szAppName);
 };
 
 extern CCheckOpenPortsApp theApp;
