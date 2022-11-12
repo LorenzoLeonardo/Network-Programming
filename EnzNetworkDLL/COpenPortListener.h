@@ -9,10 +9,9 @@ using namespace std;
 typedef struct
 {
 	string sPort;
-}THREADMON_t;
-class COpenPortListener
-{
-public :
+} THREADMON_t;
+class COpenPortListener {
+public:
 	COpenPortListener();
 	COpenPortListener(string ipTargetIPAddress, int nNumberOfPorts, FNCallbackFindOpenPort pfnPtr);
 	COpenPortListener(string ipTargetIPAddress, int nPort);
@@ -22,14 +21,14 @@ public :
 	void StartSearchingOpenPorts();
 	void StopSearchingOpenPorts();
 	string GetIPAddress();
-	map<thread*, int> *GetThreads();
+	map<thread*, int>* GetThreads();
 	thread* GetThreadMonitoring();
 	bool IsPortOpen(string ipAddress, string port, int* pLastError);
 	int GetNumPorts();
-	bool IsStopped()
-	{
+	bool IsStopped() {
 		return m_bStopSearchingOpenPorts;
 	}
+
 private:
 	string m_ipAddressTarget;
 	int m_nNumPorts;
@@ -38,4 +37,3 @@ private:
 	int m_nPort;
 	bool m_bStopSearchingOpenPorts;
 };
-

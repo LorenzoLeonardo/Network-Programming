@@ -7,16 +7,15 @@
 using namespace std;
 
 
-class CSocketServer
-{
+class CSocketServer {
 private:
 	vector<CSocket> v_clientSocket;
-	
+
 	SOCKET m_ListenSocket;
 	string m_serverPort;
+
 public:
-	CSocketServer()
-	{
+	CSocketServer() {
 		m_ListenSocket = INVALID_SOCKET;
 	}
 	CSocketServer(string serverPort);
@@ -26,4 +25,3 @@ public:
 	bool Cleanup();
 	CSocket* Accept();
 };
-

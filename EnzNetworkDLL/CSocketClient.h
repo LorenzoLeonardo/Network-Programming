@@ -4,18 +4,16 @@
 using namespace std;
 
 
-class CSocketClient : CSocket
-{
+class CSocketClient : CSocket {
 public:
 	CSocketClient();
 	CSocketClient(string ipServer);
 	virtual ~CSocketClient();
 	CSocketClient(string ipServer, string sPort);
-	bool ConnectToServer(string ipServer, string, int *pLastError);
+	bool ConnectToServer(string ipServer, string, int* pLastError);
 	bool ConnectToServer(int* pLastError);
 	bool DisconnectFromServer();
 
 private:
 	string m_sPortNum;
 };
-

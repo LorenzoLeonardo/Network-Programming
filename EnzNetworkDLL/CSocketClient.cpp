@@ -3,8 +3,7 @@
 #include <mutex>
 #include <iostream>
 
-CSocketClient::CSocketClient()
-{
+CSocketClient::CSocketClient() {
 	m_socket = INVALID_SOCKET;
 	WSADATA wsaData;
 	int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -12,8 +11,7 @@ CSocketClient::CSocketClient()
 		throw iResult;
 	}
 }
-CSocketClient::CSocketClient(string ipServer)
-{
+CSocketClient::CSocketClient(string ipServer) {
 	m_socket = INVALID_SOCKET;
 	m_ipAddress = ipServer;
 	WSADATA wsaData;
@@ -21,10 +19,8 @@ CSocketClient::CSocketClient(string ipServer)
 	if (iResult != 0) {
 		throw iResult;
 	}
-
 }
-CSocketClient::CSocketClient(string ipServer,string sPort)
-{
+CSocketClient::CSocketClient(string ipServer, string sPort) {
 	m_socket = INVALID_SOCKET;
 	m_ipAddress = ipServer;
 	m_sPortNum = sPort;
@@ -33,23 +29,19 @@ CSocketClient::CSocketClient(string ipServer,string sPort)
 	if (iResult != 0) {
 		throw iResult;
 	}
-
 }
-CSocketClient::~CSocketClient()
-{
-	if (m_socket != INVALID_SOCKET)
-	{
+CSocketClient::~CSocketClient() {
+	if (m_socket != INVALID_SOCKET) {
 		closesocket(m_socket);
 		m_socket = NULL;
 	}
 	WSACleanup();
 }
-bool CSocketClient::ConnectToServer(int* pLastError)
-{
+bool CSocketClient::ConnectToServer(int* pLastError) {
 	int iResult;
-	struct addrinfo* result = NULL,
-		* ptr = NULL,
-		hints;
+	struct addrinfo *result = NULL,
+					*ptr = NULL,
+					hints;
 
 	ZeroMemory(&hints, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
@@ -66,7 +58,7 @@ bool CSocketClient::ConnectToServer(int* pLastError)
 	}
 
 	// Attempt to connect to the first address returned by
-// the call to getaddrinfo
+	// the call to getaddrinfo
 	ptr = result;
 
 	// Create a SOCKET for connecting to server
@@ -91,14 +83,13 @@ bool CSocketClient::ConnectToServer(int* pLastError)
 	freeaddrinfo(result);
 	return true;
 }
-bool CSocketClient::ConnectToServer(string ipServer, string sPort, int *pLastError)
-{
+bool CSocketClient::ConnectToServer(string ipServer, string sPort, int* pLastError) {
 	int iResult;
 	*pLastError = 0;
 
-	struct addrinfo* result = NULL,
-		* ptr = NULL,
-		hints;
+	struct addrinfo *result = NULL,
+					*ptr = NULL,
+					hints;
 
 	ZeroMemory(&hints, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
@@ -114,7 +105,7 @@ bool CSocketClient::ConnectToServer(string ipServer, string sPort, int *pLastErr
 	}
 
 	// Attempt to connect to the first address returned by
-// the call to getaddrinfo
+	// the call to getaddrinfo
 	ptr = result;
 
 	// Create a SOCKET for connecting to server
@@ -139,8 +130,7 @@ bool CSocketClient::ConnectToServer(string ipServer, string sPort, int *pLastErr
 
 	return true;
 }
-bool CSocketClient::DisconnectFromServer()
-{
+bool CSocketClient::DisconnectFromServer() {
 	int iResult = shutdown(m_socket, SD_SEND);
 	if (iResult == SOCKET_ERROR) {
 		closesocket(m_socket);

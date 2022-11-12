@@ -193,7 +193,9 @@
     <ResourceCompile Include="EnzNetworkDLL.rc" />
   </ItemGroup>
   <ItemGroup>
-    <None Include=".clang-format" />
+    <None Include=".clang-format">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -5,8 +5,7 @@
 
 using namespace std;
 
-class CSocket : ISocket
-{
+class CSocket : ISocket {
 protected:
 	SOCKET m_socket;
 	struct sockaddr m_addr;
@@ -20,8 +19,8 @@ public:
 	CSocket();
 	CSocket(SOCKET s);
 	virtual ~CSocket();
-	SOCKET  GetSocket();
-	void  SetClientAddr(struct sockaddr addr);
+	SOCKET GetSocket();
+	void SetClientAddr(struct sockaddr addr);
 	const char* GetIP();
 	const char* GetHostName();
 	const char* Receive();
@@ -29,4 +28,3 @@ public:
 	bool GetDefaultGateway(char* szDefaultIPAddress);
 	bool GetDefaultGateway(const char* szAdapterName, char* szDefaultGateway, int nSize);
 };
-

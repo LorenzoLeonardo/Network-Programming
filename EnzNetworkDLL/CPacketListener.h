@@ -5,8 +5,7 @@
 
 using namespace std;
 
-class CPacketListener
-{
+class CPacketListener {
 private:
 	bool m_bIsStopped;
 	std::shared_ptr<thread> m_threadListening;
@@ -15,14 +14,15 @@ private:
 	HANDLE m_hThread;
 	HANDLE m_hStopThread;
 	HANDLE m_hWaitThread;
+
 protected:
 	void CleanupHandles();
-public :
 
+public:
 	CPacketListener(FNCallbackPacketListener fnPtr);
 	CPacketListener(FNCallbackPacketListenerEx fnPtr, void* pObject);
 	~CPacketListener();
-	
+
 	FNCallbackPacketListener m_fnCallbackDisplay;
 	FNCallbackPacketListenerEx m_fnCallbackDisplayEx;
 
@@ -33,17 +33,13 @@ public :
 	void StopListening();
 	void StopListeningEx();
 	void WaitListeningEx(HANDLE);
-	bool IsStopped()
-	{
+	bool IsStopped() {
 		return m_bIsStopped;
 	}
-	SOCKET GetSocket()
-	{
+	SOCKET GetSocket() {
 		return m_socket;
 	}
-	std::shared_ptr<thread> GetThread()
-	{
+	std::shared_ptr<thread> GetThread() {
 		return m_threadListening;
 	}
 };
-
