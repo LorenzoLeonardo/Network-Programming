@@ -5,32 +5,30 @@
 #pragma once
 
 #ifndef __AFXWIN_H__
-	#error "include 'pch.h' before including this file for PCH"
+#error "include 'pch.h' before including this file for PCH"
 #endif
 
-#include "resource.h"		// main symbols
-
+#include "resource.h" // main symbols
 
 // CCheckOpenPortsApp:
 // See CheckOpenPorst.cpp for the implementation of this class
 //
 
-class CCheckOpenPortsApp : public CWinApp
-{
+class CCheckOpenPortsApp : public CWinApp {
 public:
-	CCheckOpenPortsApp();
+  CCheckOpenPortsApp();
 
-// Overrides
+  // Overrides
 public:
-	virtual BOOL InitInstance();
+  virtual BOOL InitInstance();
 
-// Implementation
+  // Implementation
 
-	DECLARE_MESSAGE_MAP()
+  DECLARE_MESSAGE_MAP()
 private:
-	void  ElevateProcess();
-	BOOL  IsAdministrator();
-	int ProcessAppToFirewall(LPCTSTR szAppName);
+  void ElevateProcess();
+  BOOL IsAdministrator();
+  int ProcessAppToFirewall(LPCTSTR szAppName);
 };
 
 extern CCheckOpenPortsApp theApp;

@@ -2,306 +2,273 @@
 #include "CListCtrlCustom.h"
 #include "CheckOpenPortsDlg.h"
 
-CHeaderCtrlCustom::CHeaderCtrlCustom()
-{
-	
-	
-}
-CHeaderCtrlCustom:: ~CHeaderCtrlCustom()
-{
+CHeaderCtrlCustom::CHeaderCtrlCustom() {}
+CHeaderCtrlCustom::~CHeaderCtrlCustom() {}
 
-}
-
-
-
-
-CListCtrlCustom::CListCtrlCustom()
-{
-	m_colRow2 = RGB(255, 255, 255);
-	m_colRow1 = RGB(232, 232, 236);//RGB(0, 255, 255);
-	m_nColumnHeight = 0;
-	m_rect = { 0,0,0,0 };
-	m_csIP = _T("NULL");
+CListCtrlCustom::CListCtrlCustom() {
+  m_colRow2 = RGB(255, 255, 255);
+  m_colRow1 = RGB(232, 232, 236); // RGB(0, 255, 255);
+  m_nColumnHeight = 0;
+  m_rect = {0, 0, 0, 0};
+  m_csIP = _T("NULL");
 }
 
-CListCtrlCustom::~CListCtrlCustom()
-{
-	m_NewListFont.DeleteObject();
-}
-
-
-
+CListCtrlCustom::~CListCtrlCustom() { m_NewListFont.DeleteObject(); }
 
 BEGIN_MESSAGE_MAP(CListCtrlCustom, CListCtrl)
-	ON_WM_ERASEBKGND()
-	ON_NOTIFY_REFLECT(NM_CUSTOMDRAW, OnCustomDraw)
-	ON_WM_MEASUREITEM_REFLECT()
-	ON_WM_MEASUREITEM()
-	ON_MESSAGE(WM_SETFONT, OnSetFont)
-	ON_NOTIFY(HDN_ITEMCHANGINGA, 0, &CListCtrlCustom::OnHdnItemchanging)
-	ON_NOTIFY(HDN_ITEMCHANGINGW, 0, &CListCtrlCustom::OnHdnItemchanging)
+ON_WM_ERASEBKGND()
+ON_NOTIFY_REFLECT(NM_CUSTOMDRAW, OnCustomDraw)
+ON_WM_MEASUREITEM_REFLECT()
+ON_WM_MEASUREITEM()
+ON_MESSAGE(WM_SETFONT, OnSetFont)
+ON_NOTIFY(HDN_ITEMCHANGINGA, 0, &CListCtrlCustom::OnHdnItemchanging)
+ON_NOTIFY(HDN_ITEMCHANGINGW, 0, &CListCtrlCustom::OnHdnItemchanging)
 END_MESSAGE_MAP()
 
-void CListCtrlCustom::OnInitialize()
-{
-	m_NewListFont.CreatePointFont(85, _T("Microsoft Sans Serif"));
-	SetFont(&m_NewListFont);
-	SetBkColor(RGB(128, 128, 128));
-	CHeaderCtrl* pHeader = NULL;
-	pHeader = GetHeaderCtrl();
+void CListCtrlCustom::OnInitialize() {
+  m_NewListFont.CreatePointFont(85, _T("Microsoft Sans Serif"));
+  SetFont(&m_NewListFont);
+  SetBkColor(RGB(128, 128, 128));
+  CHeaderCtrl *pHeader = NULL;
+  pHeader = GetHeaderCtrl();
 
-	if (pHeader == NULL)
-		return;
+  if (pHeader == NULL)
+    return;
 
-	VERIFY(m_ctrlHeader.SubclassWindow(pHeader->m_hWnd));
+  VERIFY(m_ctrlHeader.SubclassWindow(pHeader->m_hWnd));
 
-	HDITEM hdItem;
+  HDITEM hdItem;
 
-	hdItem.mask = HDI_FORMAT;
+  hdItem.mask = HDI_FORMAT;
 
-	for (int i = 0; i < m_ctrlHeader.GetItemCount(); i++)
-	{
-		m_ctrlHeader.GetItem(i, &hdItem);
+  for (int i = 0; i < m_ctrlHeader.GetItemCount(); i++) {
+    m_ctrlHeader.GetItem(i, &hdItem);
 
-		hdItem.fmt |= HDF_OWNERDRAW| HDF_CENTER;
+    hdItem.fmt |= HDF_OWNERDRAW | HDF_CENTER;
 
-		m_ctrlHeader.SetItem(i, &hdItem);
-	}
-	GetClientRect(&m_rect);
+    m_ctrlHeader.SetItem(i, &hdItem);
+  }
+  GetClientRect(&m_rect);
 }
 
-LRESULT CListCtrlCustom::OnSetFont(WPARAM wParam, LPARAM)
-{
-	LRESULT res = Default();
+LRESULT CListCtrlCustom::OnSetFont(WPARAM wParam, LPARAM) {
+  LRESULT res = Default();
 
-	CRect rc;
-	GetWindowRect(&rc);
+  CRect rc;
+  GetWindowRect(&rc);
 
-	WINDOWPOS wp;
-	wp.hwnd = m_hWnd;
-	wp.cx = rc.Width();
-	wp.cy = rc.Height();
-	wp.flags = SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER;
-	SendMessage(WM_WINDOWPOSCHANGED, 0, (LPARAM)&wp);
+  WINDOWPOS wp;
+  wp.hwnd = m_hWnd;
+  wp.cx = rc.Width();
+  wp.cy = rc.Height();
+  wp.flags = SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER;
+  SendMessage(WM_WINDOWPOSCHANGED, 0, (LPARAM)&wp);
 
-	return res;
+  return res;
 }
 
-void CListCtrlCustom::OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult)
-{
-	*pResult = 0;
-	LPNMLVCUSTOMDRAW  lplvcd = (LPNMLVCUSTOMDRAW)pNMHDR;
+void CListCtrlCustom::OnCustomDraw(NMHDR *pNMHDR, LRESULT *pResult) {
+  *pResult = 0;
+  LPNMLVCUSTOMDRAW lplvcd = (LPNMLVCUSTOMDRAW)pNMHDR;
 
-	size_t iRow = lplvcd->nmcd.dwItemSpec;
-	bool bHighlighted = false;
+  size_t iRow = lplvcd->nmcd.dwItemSpec;
+  bool bHighlighted = false;
 
-	switch (lplvcd->nmcd.dwDrawStage)
-	{
-		case CDDS_PREPAINT:
-		{
-			*pResult = CDRF_NOTIFYITEMDRAW;
-			CDC* pDC = CDC::FromHandle(lplvcd->nmcd.hdc);
-			//pDC->SetBkColor(RGB(0, 0, 0));
-			RECT rect = m_rect;
-			rect.top -= 2;
-			rect.bottom = m_nColumnHeight;
-			CBrush brush0(m_colRow1);
-			CBrush brush1(m_colRow2);
+  switch (lplvcd->nmcd.dwDrawStage) {
+  case CDDS_PREPAINT: {
+    *pResult = CDRF_NOTIFYITEMDRAW;
+    CDC *pDC = CDC::FromHandle(lplvcd->nmcd.hdc);
+    // pDC->SetBkColor(RGB(0, 0, 0));
+    RECT rect = m_rect;
+    rect.top -= 2;
+    rect.bottom = m_nColumnHeight;
+    CBrush brush0(m_colRow1);
+    CBrush brush1(m_colRow2);
 
-			int chunk_height = GetCountPerPage();
+    int chunk_height = GetCountPerPage();
 
-			for (int i = 0; i <= chunk_height+1; i++)
-			{
-				pDC->FillRect(&rect, i % 2 ? &brush1 : &brush0);
-				rect.top += m_nColumnHeight;
-				rect.bottom += m_nColumnHeight;
-			}
-			return;
-		}
-		// Modify item text and or background
-		
-		case CDDS_ITEMPREPAINT:
-		{
-			*pResult = CDRF_NOTIFYITEMDRAW;//CDRF_NOTIFYSUBITEMDRAW;
+    for (int i = 0; i <= chunk_height + 1; i++) {
+      pDC->FillRect(&rect, i % 2 ? &brush1 : &brush0);
+      rect.top += m_nColumnHeight;
+      rect.bottom += m_nColumnHeight;
+    }
+    return;
+  }
+    // Modify item text and or background
 
-			return;
-		}
+  case CDDS_ITEMPREPAINT: {
+    *pResult = CDRF_NOTIFYITEMDRAW; // CDRF_NOTIFYSUBITEMDRAW;
 
-		case CDDS_POSTPAINT://CDDS_SUBITEM | CDDS_PREPAINT | CDDS_ITEM:
-		{
-			*pResult = CDRF_NOTIFYITEMDRAW;
-			CDC* pDC = CDC::FromHandle(lplvcd->nmcd.hdc);
-			RECT rect = m_rect;
-			rect.top -= 2;
-			rect.bottom = m_nColumnHeight;
-			CBrush brush0(m_colRow1);
-			CBrush brush1(m_colRow2);
+    return;
+  }
 
-			int chunk_height = GetCountPerPage();
+  case CDDS_POSTPAINT: // CDDS_SUBITEM | CDDS_PREPAINT | CDDS_ITEM:
+  {
+    *pResult = CDRF_NOTIFYITEMDRAW;
+    CDC *pDC = CDC::FromHandle(lplvcd->nmcd.hdc);
+    RECT rect = m_rect;
+    rect.top -= 2;
+    rect.bottom = m_nColumnHeight;
+    CBrush brush0(m_colRow1);
+    CBrush brush1(m_colRow2);
 
-			for (int i = 0; i <= chunk_height + 1; i++)
-			{
-				pDC->FillRect(&rect, i % 2 ? &brush1 : &brush0);
-				rect.top += m_nColumnHeight;
-				rect.bottom += m_nColumnHeight;
-			}
-			return;
-		}
-	}
+    int chunk_height = GetCountPerPage();
+
+    for (int i = 0; i <= chunk_height + 1; i++) {
+      pDC->FillRect(&rect, i % 2 ? &brush1 : &brush0);
+      rect.top += m_nColumnHeight;
+      rect.bottom += m_nColumnHeight;
+    }
+    return;
+  }
+  }
 }
-int CListCtrlCustom::InsertItem(_In_ UINT nMask, _In_ int nItem, _In_z_ LPCTSTR lpszItem, _In_ UINT nState,
-	_In_ UINT nStateMask, _In_ int nImage, _In_ LPARAM lParam)
-{
+int CListCtrlCustom::InsertItem(_In_ UINT nMask, _In_ int nItem,
+                                _In_z_ LPCTSTR lpszItem, _In_ UINT nState,
+                                _In_ UINT nStateMask, _In_ int nImage,
+                                _In_ LPARAM lParam) {
 
-	return CListCtrl::InsertItem(nMask, nItem, lpszItem, nState, nStateMask, nImage, lParam);
+  return CListCtrl::InsertItem(nMask, nItem, lpszItem, nState, nStateMask,
+                               nImage, lParam);
 }
-int CListCtrlCustom::InsertColumn(_In_ int nCol, _In_ const LVCOLUMN* pColumn)
-{
-	
-	return  CListCtrl::InsertColumn(nCol, pColumn);
-}
-int CListCtrlCustom::InsertColumn(_In_ int nCol, _In_z_ LPCTSTR lpszColumnHeading,
-	_In_ int nFormat, _In_ int nWidth, _In_ int nSubItem)
-{
-	m_vFormat.push_back({ nWidth ,nFormat });
-	return  CListCtrl::InsertColumn(nCol, lpszColumnHeading, nFormat, nWidth, nSubItem);
-}
-BOOL CListCtrlCustom::DeleteItem(_In_ int nItem)
-{
-	LockWindowUpdate();
-	BOOL bRet =  CListCtrl::DeleteItem(nItem);
-	UnlockWindowUpdate();
-	//RedrawItems(nItem, GetItemCount());
-	RedrawWindow();
-	return bRet;
-}
-BOOL CListCtrlCustom::OnEraseBkgnd(CDC* pDC)
-{
-	// TODO: Add your message handler code here and/or call default
+int CListCtrlCustom::InsertColumn(_In_ int nCol, _In_ const LVCOLUMN *pColumn) {
 
-	return FALSE;
+  return CListCtrl::InsertColumn(nCol, pColumn);
+}
+int CListCtrlCustom::InsertColumn(_In_ int nCol,
+                                  _In_z_ LPCTSTR lpszColumnHeading,
+                                  _In_ int nFormat, _In_ int nWidth,
+                                  _In_ int nSubItem) {
+  m_vFormat.push_back({nWidth, nFormat});
+  return CListCtrl::InsertColumn(nCol, lpszColumnHeading, nFormat, nWidth,
+                                 nSubItem);
+}
+BOOL CListCtrlCustom::DeleteItem(_In_ int nItem) {
+  LockWindowUpdate();
+  BOOL bRet = CListCtrl::DeleteItem(nItem);
+  UnlockWindowUpdate();
+  // RedrawItems(nItem, GetItemCount());
+  RedrawWindow();
+  return bRet;
+}
+BOOL CListCtrlCustom::OnEraseBkgnd(CDC *pDC) {
+  // TODO: Add your message handler code here and/or call default
+
+  return FALSE;
 }
 
-void CListCtrlCustom::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
-{
-	// TODO:  Add your code to draw the specified item
-	TCHAR  lpBuffer[256];
-	LV_ITEM lvi;
-	CString csString;
-	csString = this->GetItemText((int)lpDrawItemStruct->itemID, (int)CCheckOpenPortsDlg::COL_IPADDRESS);
+void CListCtrlCustom::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct) {
+  // TODO:  Add your code to draw the specified item
+  TCHAR lpBuffer[256];
+  LV_ITEM lvi;
+  CString csString;
+  csString = this->GetItemText((int)lpDrawItemStruct->itemID,
+                               (int)CCheckOpenPortsDlg::COL_IPADDRESS);
 
-	memset(lpBuffer, 0, sizeof(lpBuffer));
-	lvi.mask = LVIF_TEXT | LVIF_PARAM;
-	lvi.iItem = lpDrawItemStruct->itemID;
-	lvi.iSubItem = 0;
-	lvi.pszText = lpBuffer;
-	lvi.cchTextMax = sizeof(lpBuffer);
-	VERIFY(GetItem(&lvi));
+  memset(lpBuffer, 0, sizeof(lpBuffer));
+  lvi.mask = LVIF_TEXT | LVIF_PARAM;
+  lvi.iItem = lpDrawItemStruct->itemID;
+  lvi.iSubItem = 0;
+  lvi.pszText = lpBuffer;
+  lvi.cchTextMax = sizeof(lpBuffer);
+  VERIFY(GetItem(&lvi));
 
-	LV_COLUMN lvc, lvcprev;
-	::ZeroMemory(&lvc, sizeof(lvc));
-	::ZeroMemory(&lvcprev, sizeof(lvcprev));
-	lvc.mask = LVCF_WIDTH | LVCF_FMT;
-	lvcprev.mask = LVCF_WIDTH | LVCF_FMT;
+  LV_COLUMN lvc, lvcprev;
+  ::ZeroMemory(&lvc, sizeof(lvc));
+  ::ZeroMemory(&lvcprev, sizeof(lvcprev));
+  lvc.mask = LVCF_WIDTH | LVCF_FMT;
+  lvcprev.mask = LVCF_WIDTH | LVCF_FMT;
 
-	lpDrawItemStruct->rcItem.bottom = lpDrawItemStruct->rcItem.top + m_nColumnHeight;
-	RECT rectText = lpDrawItemStruct->rcItem;
-	rectText.top += 6;
-	
-	for (int nCol = 0; GetColumn(nCol, &lvc); nCol++)
-	{
-		if (nCol > 0)
-		{
-			// Get Previous Column Width in order to move the next display item
-			GetColumn(nCol - 1, &lvcprev);
-			rectText.left = (lpDrawItemStruct->rcItem.left += lvcprev.cx) + 6;
-			rectText.right = lpDrawItemStruct->rcItem.right += lpDrawItemStruct->rcItem.left;
-		}
-		else
-		{
-			rectText.left = (lpDrawItemStruct->rcItem.left += 0) + 6;
-			rectText.right = lpDrawItemStruct->rcItem.right += lpDrawItemStruct->rcItem.left;
-		}
+  lpDrawItemStruct->rcItem.bottom =
+      lpDrawItemStruct->rcItem.top + m_nColumnHeight;
+  RECT rectText = lpDrawItemStruct->rcItem;
+  rectText.top += 6;
 
-		// Get the text 
-		::ZeroMemory(&lvi, sizeof(lvi));
-		lvi.iItem = lpDrawItemStruct->itemID;
-		lvi.mask = LVIF_TEXT | LVIF_PARAM;
-		lvi.iSubItem = nCol;
-		lvi.pszText = lpBuffer;
-		lvi.cchTextMax = sizeof(lpBuffer);
-		VERIFY(GetItem(&lvi));
+  for (int nCol = 0; GetColumn(nCol, &lvc); nCol++) {
+    if (nCol > 0) {
+      // Get Previous Column Width in order to move the next display item
+      GetColumn(nCol - 1, &lvcprev);
+      rectText.left = (lpDrawItemStruct->rcItem.left += lvcprev.cx) + 6;
+      rectText.right = lpDrawItemStruct->rcItem.right +=
+          lpDrawItemStruct->rcItem.left;
+    } else {
+      rectText.left = (lpDrawItemStruct->rcItem.left += 0) + 6;
+      rectText.right = lpDrawItemStruct->rcItem.right +=
+          lpDrawItemStruct->rcItem.left;
+    }
 
-		CDC* pDC;
-		pDC = CDC::FromHandle(lpDrawItemStruct->hDC);
+    // Get the text
+    ::ZeroMemory(&lvi, sizeof(lvi));
+    lvi.iItem = lpDrawItemStruct->itemID;
+    lvi.mask = LVIF_TEXT | LVIF_PARAM;
+    lvi.iSubItem = nCol;
+    lvi.pszText = lpBuffer;
+    lvi.cchTextMax = sizeof(lpBuffer);
+    VERIFY(GetItem(&lvi));
 
-		if (lpDrawItemStruct->itemState & ODS_SELECTED)
-		{
-			pDC->FillSolidRect(&lpDrawItemStruct->rcItem, GetSysColor(COLOR_HIGHLIGHT));
-			pDC->SetTextColor(GetSysColor(COLOR_HIGHLIGHTTEXT));
-		}
-		else
-		{
-			
-			if (csString.Compare(m_csIP) == 0)
-			{
-				pDC->FillSolidRect(&lpDrawItemStruct->rcItem, RGB(255, 255, 0));
-				pDC->SetTextColor(RGB(0, 0, 0));
-			}
-			else
-			{
-				if (lpDrawItemStruct->itemID % 2)
-					pDC->FillSolidRect(&lpDrawItemStruct->rcItem, m_colRow1);// GetSysColor(COLOR_WINDOW));
-				else
-					pDC->FillSolidRect(&lpDrawItemStruct->rcItem, m_colRow2);
-				pDC->SetTextColor(RGB(80, 80, 80));
-			}
-			//pDC->SetTextColor(GetSysColor(COLOR_WINDOWTEXT));
-			
-		}
+    CDC *pDC;
+    pDC = CDC::FromHandle(lpDrawItemStruct->hDC);
 
-		pDC->SelectObject(GetStockObject(DEFAULT_GUI_FONT));
+    if (lpDrawItemStruct->itemState & ODS_SELECTED) {
+      pDC->FillSolidRect(&lpDrawItemStruct->rcItem,
+                         GetSysColor(COLOR_HIGHLIGHT));
+      pDC->SetTextColor(GetSysColor(COLOR_HIGHLIGHTTEXT));
+    } else {
 
-		UINT		uFormat = DT_END_ELLIPSIS| DT_PATH_ELLIPSIS | DT_WORD_ELLIPSIS | DT_MODIFYSTRING;
+      if (csString.Compare(m_csIP) == 0) {
+        pDC->FillSolidRect(&lpDrawItemStruct->rcItem, RGB(255, 255, 0));
+        pDC->SetTextColor(RGB(0, 0, 0));
+      } else {
+        if (lpDrawItemStruct->itemID % 2)
+          pDC->FillSolidRect(&lpDrawItemStruct->rcItem,
+                             m_colRow1); // GetSysColor(COLOR_WINDOW));
+        else
+          pDC->FillSolidRect(&lpDrawItemStruct->rcItem, m_colRow2);
+        pDC->SetTextColor(RGB(80, 80, 80));
+      }
+      // pDC->SetTextColor(GetSysColor(COLOR_WINDOWTEXT));
+    }
 
-		//lpDrawItemStruct->rcItem.top = 2;
-		
-		::DrawText(lpDrawItemStruct->hDC, lpBuffer, (int)_tcslen(lpBuffer),
-			&rectText, uFormat);
+    pDC->SelectObject(GetStockObject(DEFAULT_GUI_FONT));
 
-		pDC->SelectStockObject(SYSTEM_FONT);
-	}
+    UINT uFormat =
+        DT_END_ELLIPSIS | DT_PATH_ELLIPSIS | DT_WORD_ELLIPSIS | DT_MODIFYSTRING;
+
+    // lpDrawItemStruct->rcItem.top = 2;
+
+    ::DrawText(lpDrawItemStruct->hDC, lpBuffer, (int)_tcslen(lpBuffer),
+               &rectText, uFormat);
+
+    pDC->SelectStockObject(SYSTEM_FONT);
+  }
 }
 
+void CListCtrlCustom::OnMeasureItem(int nIDCtl,
+                                    LPMEASUREITEMSTRUCT lpMeasureItemStruct) {
+  // TODO: Add your message handler code here and/or call default
 
-void CListCtrlCustom::OnMeasureItem(int nIDCtl, LPMEASUREITEMSTRUCT lpMeasureItemStruct)
-{
-	// TODO: Add your message handler code here and/or call default
-
-	CListCtrl::OnMeasureItem(nIDCtl, lpMeasureItemStruct);
+  CListCtrl::OnMeasureItem(nIDCtl, lpMeasureItemStruct);
 }
 
-void CListCtrlCustom::MeasureItem(LPMEASUREITEMSTRUCT lpMeasureItemStruct)
-{
-	// Get the LOGFONT for the current font.
-	LOGFONT lf;
-	::ZeroMemory(&lf, sizeof(lf));
+void CListCtrlCustom::MeasureItem(LPMEASUREITEMSTRUCT lpMeasureItemStruct) {
+  // Get the LOGFONT for the current font.
+  LOGFONT lf;
+  ::ZeroMemory(&lf, sizeof(lf));
 
-	CFont* pFont = GetFont();
-	ASSERT_VALID(pFont);
+  CFont *pFont = GetFont();
+  ASSERT_VALID(pFont);
 
-	if (pFont)
-		VERIFY(pFont->GetLogFont(&lf));
+  if (pFont)
+    VERIFY(pFont->GetLogFont(&lf));
 
-	int nAdj(14);
-	
+  int nAdj(14);
 
-	if (lf.lfHeight < 0)
-		lpMeasureItemStruct->itemHeight = ((-lf.lfHeight + nAdj));
-	else
-		lpMeasureItemStruct->itemHeight = ((lf.lfHeight + nAdj) );
+  if (lf.lfHeight < 0)
+    lpMeasureItemStruct->itemHeight = ((-lf.lfHeight + nAdj));
+  else
+    lpMeasureItemStruct->itemHeight = ((lf.lfHeight + nAdj));
 
-	m_nColumnHeight = lpMeasureItemStruct->itemHeight;
+  m_nColumnHeight = lpMeasureItemStruct->itemHeight;
 }
 
 BEGIN_MESSAGE_MAP(CHeaderCtrlCustom, CHeaderCtrl)
@@ -310,97 +277,85 @@ ON_NOTIFY(HDN_ITEMCHANGINGA, 0, &CHeaderCtrlCustom::OnHdnItemchanging)
 ON_NOTIFY(HDN_ITEMCHANGINGW, 0, &CHeaderCtrlCustom::OnHdnItemchanging)
 END_MESSAGE_MAP()
 
+void CHeaderCtrlCustom::OnNMCustomdraw(NMHDR *pNMHDR, LRESULT *pResult) {
+  LPNMCUSTOMDRAW pNMCD = reinterpret_cast<LPNMCUSTOMDRAW>(pNMHDR);
+  // TODO: Add your control notification handler code here
+  *pResult = CDRF_DODEFAULT;
 
-void CHeaderCtrlCustom::OnNMCustomdraw(NMHDR* pNMHDR, LRESULT* pResult)
-{
-	LPNMCUSTOMDRAW pNMCD = reinterpret_cast<LPNMCUSTOMDRAW>(pNMHDR);
-	// TODO: Add your control notification handler code here
-	*pResult = CDRF_DODEFAULT;
+  if (pNMCD->dwDrawStage == CDDS_PREPAINT) {
+    //	CDC* pDC = CDC::FromHandle(pNMCD->hdc);
+    //	CRect rect(0, 0, 0, 0);
+    //	GetClientRect(&rect);
+    //	pDC->FillSolidRect(&rect, RGB(64, 86, 141));
+    //	pDC->SetTextColor(RGB(255, 255, 255));
+    *pResult = CDRF_NOTIFYITEMDRAW;
+  } else if (pNMCD->dwDrawStage == CDDS_ITEMPREPAINT) {
 
-	if (pNMCD->dwDrawStage == CDDS_PREPAINT)
-	{
-	//	CDC* pDC = CDC::FromHandle(pNMCD->hdc);
-	//	CRect rect(0, 0, 0, 0);
-	//	GetClientRect(&rect);
-	//	pDC->FillSolidRect(&rect, RGB(64, 86, 141));
-	//	pDC->SetTextColor(RGB(255, 255, 255));
-		*pResult = CDRF_NOTIFYITEMDRAW;
-	}
-	else if (pNMCD->dwDrawStage == CDDS_ITEMPREPAINT)
-	{
+    *pResult = CDRF_NOTIFYPOSTPAINT;
+  } else if (pNMCD->dwDrawStage == CDDS_ITEMPOSTPAINT) {
+    *pResult = CDRF_NOTIFYITEMDRAW;
+    HDITEM hditem;
+    TCHAR buffer[MAX_PATH] = {0};
+    SecureZeroMemory(&hditem, sizeof(HDITEM));
+    hditem.mask = HDI_TEXT;
+    hditem.pszText = buffer;
+    hditem.cchTextMax = MAX_PATH;
+    GetItem(pNMCD->dwItemSpec, &hditem);
+    RECT rect;
+    rect = pNMCD->rc;
+    // rect.right--;
+    rect.left += 1;
+    rect.top++;
+    // rect.bottom-=2;
+    CDC *pDC = CDC::FromHandle(pNMCD->hdc);
+    pDC->FillSolidRect(&rect, RGB(64, 86, 141));
 
-		*pResult = CDRF_NOTIFYPOSTPAINT;
-	}
-	else if (pNMCD->dwDrawStage == CDDS_ITEMPOSTPAINT)
-	{
-		*pResult = CDRF_NOTIFYITEMDRAW;
-		HDITEM hditem;
-		TCHAR buffer[MAX_PATH] = { 0 };
-		SecureZeroMemory(&hditem, sizeof(HDITEM));
-		hditem.mask = HDI_TEXT;
-		hditem.pszText = buffer;
-		hditem.cchTextMax = MAX_PATH;
-		GetItem(pNMCD->dwItemSpec, &hditem);
-		RECT rect;
-		rect = pNMCD->rc;
-		//rect.right--;
-		rect.left+=1;
-		rect.top++;
-		//rect.bottom-=2;
-		CDC* pDC = CDC::FromHandle(pNMCD->hdc);
-		pDC->FillSolidRect(&rect, RGB(64, 86, 141));
-	
-		pDC->SetBkColor(RGB(64, 86, 141));
-		pDC->SetTextColor(RGB(255, 255, 255));
+    pDC->SetBkColor(RGB(64, 86, 141));
+    pDC->SetTextColor(RGB(255, 255, 255));
 
-		CString str(buffer);
+    CString str(buffer);
 
-		LOGFONT logFont;
-		CFont boldFont;
-		CFont* pOldFont = NULL;
-		CFont* pFont = pDC->SelectObject(CFont::FromHandle((HFONT)GetStockObject(DEFAULT_GUI_FONT)));
-		if (pFont)
-		{
-			pFont->GetLogFont(&logFont);
-			logFont.lfWeight = FW_NORMAL;//or FW_BOLD or FW_BLACK or other...
-			boldFont.CreateFontIndirect(&logFont);
-			pOldFont = pDC->SelectObject(&boldFont);
-		}
-		// draw your text
+    LOGFONT logFont;
+    CFont boldFont;
+    CFont *pOldFont = NULL;
+    CFont *pFont = pDC->SelectObject(
+        CFont::FromHandle((HFONT)GetStockObject(DEFAULT_GUI_FONT)));
+    if (pFont) {
+      pFont->GetLogFont(&logFont);
+      logFont.lfWeight = FW_NORMAL; // or FW_BOLD or FW_BLACK or other...
+      boldFont.CreateFontIndirect(&logFont);
+      pOldFont = pDC->SelectObject(&boldFont);
+    }
+    // draw your text
 
-		rect.left += 4;
-		rect.top += 4;
-		pDC->DrawText(str, CRect(rect), DT_VCENTER | DT_LEFT);
-		if (pOldFont)
-			pDC->SelectObject(pOldFont);
-		boldFont.DeleteObject();
-	}
+    rect.left += 4;
+    rect.top += 4;
+    pDC->DrawText(str, CRect(rect), DT_VCENTER | DT_LEFT);
+    if (pOldFont)
+      pDC->SelectObject(pOldFont);
+    boldFont.DeleteObject();
+  }
 }
 
+void CHeaderCtrlCustom::OnHdnItemchanging(NMHDR *pNMHDR, LRESULT *pResult) {
+  LPNMHEADER phdr = reinterpret_cast<LPNMHEADER>(pNMHDR);
+  // TODO: Add your control notification handler code here
+  *pResult = 0;
 
-void CHeaderCtrlCustom::OnHdnItemchanging(NMHDR* pNMHDR, LRESULT* pResult)
-{
-	LPNMHEADER phdr = reinterpret_cast<LPNMHEADER>(pNMHDR);
-	// TODO: Add your control notification handler code here
-	*pResult = 0;
+  if ((phdr->pitem->mask & HDI_WIDTH) != 0) {
 
-	if ((phdr->pitem->mask & HDI_WIDTH) != 0)
-	{
-		
-		if(phdr->iItem == 0)
-			phdr->pitem->cxy = 30;
-	}
+    if (phdr->iItem == 0)
+      phdr->pitem->cxy = 30;
+  }
 }
 
-
-void CListCtrlCustom::OnHdnItemchanging(NMHDR* pNMHDR, LRESULT* pResult)
-{
-	LPNMHEADER phdr = reinterpret_cast<LPNMHEADER>(pNMHDR);
-	// TODO: Add your control notification handler code here
-	*pResult = 0;
-	if ((phdr->pitem->mask & HDI_WIDTH) != 0)
-	{
-		if ((m_vFormat[phdr->iItem].nFormat & LVCFMT_FIXED_WIDTH) == LVCFMT_FIXED_WIDTH)
-			phdr->pitem->cxy = m_vFormat[phdr->iItem].nColWidth;
-	}
+void CListCtrlCustom::OnHdnItemchanging(NMHDR *pNMHDR, LRESULT *pResult) {
+  LPNMHEADER phdr = reinterpret_cast<LPNMHEADER>(pNMHDR);
+  // TODO: Add your control notification handler code here
+  *pResult = 0;
+  if ((phdr->pitem->mask & HDI_WIDTH) != 0) {
+    if ((m_vFormat[phdr->iItem].nFormat & LVCFMT_FIXED_WIDTH) ==
+        LVCFMT_FIXED_WIDTH)
+      phdr->pitem->cxy = m_vFormat[phdr->iItem].nColWidth;
+  }
 }
