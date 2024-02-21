@@ -9,6 +9,8 @@
 #include "afxdialogex.h"
 #include "framework.h"
 
+#include <afxver_.h> // For VS_FIXEDFILEINFO definition
+
 CCheckOpenPortsDlg* g_pCCheckOpenPortsDlg;
 mutex mtx_enumPorts;
 mutex mtx_lanlistener;
@@ -27,6 +29,8 @@ inline bool key_compare(Map const& lhs, Map const& rhs) {
 	return lhs.size() == rhs.size() &&
 		   std::equal(lhs.begin(), lhs.end(), rhs.begin(), pred);
 }
+
+CString GetProductVersion();
 
 class CAboutDlg : public CDialogEx {
 public:
@@ -418,6 +422,10 @@ BOOL CCheckOpenPortsDlg::OnInitDialog() {
 	m_hThreadClock = (HANDLE)_beginthreadex(NULL, 0, ClockThread, this, 0, NULL);
 	OnBnClickedButtonStartListenLan();
 	OnBnClickedButtonShowPackets();
+
+	CString title;
+	title.Format(_T("Enzo Tech Network Monitoring Tool - Version %s"), GetProductVersion());
+	SetWindowText(title);
 
 	return TRUE; // return TRUE  unless you set the focus to a control
 }
@@ -2120,4 +2128,29 @@ void CCheckOpenPortsDlg::OnMouseLeave() {
 
 afx_msg LRESULT CAboutDlg::OnSiteVisited(WPARAM wParam, LPARAM lParam) {
 	return 0;
+}
+
+CString GetProductVersion() {
+	CString versionString;
+	TCHAR szFilePath[MAX_PATH] = {};
+	if (GetModuleFileName(NULL, szFilePath, MAX_PATH) != 0) {
+		DWORD dwDummy = 0;
+		DWORD dwSize = GetFileVersionInfoSize(szFilePath, &dwDummy);
+		if (dwSize != 0) {
+			BYTE* pVersionInfo = new BYTE[dwSize];
+			if (GetFileVersionInfo(szFilePath, 0, dwSize, pVersionInfo) != 0) {
+				VS_FIXEDFILEINFO* pFileInfo = nullptr;
+				UINT uLen;
+				if (VerQueryValue(pVersionInfo, _T("\\"), (LPVOID*)&pFileInfo, &uLen) != 0) {
+					WORD major = HIWORD(pFileInfo->dwProductVersionMS);
+					WORD minor = LOWORD(pFileInfo->dwProductVersionMS);
+					WORD build = HIWORD(pFileInfo->dwProductVersionLS);
+					WORD revision = LOWORD(pFileInfo->dwProductVersionLS);
+					versionString.Format(_T("%d.%d.%d.%d"), major, minor, build, revision);
+				}
+			}
+			delete[] pVersionInfo;
+		}
+	}
+	return versionString;
 }
