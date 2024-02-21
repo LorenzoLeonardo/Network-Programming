@@ -16,7 +16,7 @@ static std::unique_ptr<CSNMP> g_SNMP = nullptr;
 static std::unique_ptr<CICMP> g_pICMP = nullptr;
 static char g_szAdapterName[MAX_ADAPTER_NAME_LENGTH + 4] = {};
 static char g_szAdapterIP[32] = {};
-static ULONG g_ulAdapterIP;
+static ULONG g_ulAdapterIP = 0;
 
 extern "C" BOOL APIENTRY DllMain(HMODULE hModule,
 	DWORD ul_reason_for_call,
@@ -70,13 +70,13 @@ HANDLE ENZTCPLIBRARY_API ConnectToServer(const char* ipAddress, const char* port
 		pSocket = std::make_shared<CSocketClient>(ipAddress, portNum);
 		int nLastError = 0;
 		if (pSocket == nullptr)
-			throw(HANDLE) SOCKET_ERROR;
+			throw (HANDLE)SOCKET_ERROR;
 
 		if (pSocket->ConnectToServer(&nLastError))
 			return (HANDLE)pSocket.get();
 		else {
 			pSocket->DisconnectFromServer();
-			throw(HANDLE) SOCKET_ERROR;
+			throw (HANDLE)SOCKET_ERROR;
 		}
 	}
 	catch (HANDLE nError) {

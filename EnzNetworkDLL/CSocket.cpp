@@ -38,7 +38,7 @@ void CSocket::SetHostname() {
 	char servInfo[NI_MAXSERV] = {};
 
 
-	struct addrinfo *result = nullptr, hints;
+	struct addrinfo *result = nullptr, hints = {};
 	int iResult = 0;
 
 	ZeroMemory(&hints, sizeof(hints));
@@ -56,7 +56,7 @@ void CSocket::SetHostname() {
 	}
 }
 bool CSocket::GetDefaultGateway(char* szDefaultIPAddress) {
-	WSADATA wsaData;
+	WSADATA wsaData = {};
 
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
 		return false;
@@ -65,7 +65,7 @@ bool CSocket::GetDefaultGateway(char* szDefaultIPAddress) {
 	char hostname[NI_MAXHOST] = {};
 	char servInfo[NI_MAXSERV] = {};
 
-	addrinfo *result = nullptr, hints;
+	addrinfo *result = nullptr, hints = {};
 	int iResult = 0;
 
 	ZeroMemory(&hints, sizeof(hints));
@@ -98,7 +98,7 @@ bool CSocket::GetDefaultGateway(char* szDefaultIPAddress) {
 }
 
 bool CSocket::GetDefaultGateway(const char* szAdapterName, char* pDefaultGateway, int nSize) {
-	WSADATA wsaData;
+	WSADATA wsaData = {};
 	PIP_ADAPTER_INFO pAdapterInfo = nullptr, pAdapter = nullptr;
 	ULONG ulOutBufLen = 0;
 	bool bRet = false;

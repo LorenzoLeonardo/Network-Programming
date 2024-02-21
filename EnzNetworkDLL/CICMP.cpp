@@ -11,11 +11,11 @@ CICMP::~CICMP() {
 	WSACleanup();
 }
 int CICMP::InitializeLocalIPAndHostname(const char* szIP) {
-	struct addrinfo *result = nullptr, *ptr = nullptr, hints;
+	struct addrinfo *result = nullptr, *ptr = nullptr, hints = {};
 	int iResult = 0;
 	char hostname[NI_MAXHOST] = {};
 	char ipAddress[INET_ADDRSTRLEN] = {};
-	ULONG ulIP, ulNICIP;
+	ULONG ulIP = 0, ulNICIP = 0;
 
 	ZeroMemory(&hints, sizeof(hints));
 	hints.ai_family = AF_INET;
@@ -35,13 +35,7 @@ int CICMP::InitializeLocalIPAndHostname(const char* szIP) {
 		result = nullptr;
 		return iResult;
 	}
-	freeaddrinfo(result);
-	result = nullptr;
 	m_HostName = hostname;
-	iResult = getaddrinfo(hostname, nullptr, &hints, &result);
-	if (iResult != 0)
-		return iResult;
-
 	ptr = result;
 	while (ptr != nullptr) {
 		memcpy(&ulIP, (ptr->ai_addr->sa_data + 2), sizeof(ulIP));
@@ -58,8 +52,8 @@ int CICMP::InitializeLocalIPAndHostname(const char* szIP) {
 	return iResult;
 }
 string CICMP::GetHostName(string ipAddress) {
-	struct sockaddr_in sa;
-	struct sockaddr_in saGNI;
+	struct sockaddr_in sa = {};
+	struct sockaddr_in saGNI = {};
 	char hostname[NI_MAXHOST] = {};
 	u_short port = 27015;
 	DWORD dwRetval = 0;
@@ -131,10 +125,10 @@ bool CICMP::Ping(HANDLE hIcmpFile, string sSrc, string sDest, IPAddr& dest, UCHA
 	return bRet;
 }
 bool CICMP::CheckDeviceEx(string ipAddress, string& hostname, string& sMacAddress) {
-	SOCKET sockRaw;
+	SOCKET sockRaw = INVALID_SOCKET;
 	const char* lpdest = ipAddress.c_str();
 	char *icmp_data = nullptr, *recvbuf = nullptr;
-	struct sockaddr_in dest, from;
+	struct sockaddr_in dest = {}, from = {};
 	int iResult = 0, fromlen = sizeof(from), datasize = 0;
 	struct hostent* hp = nullptr;
 	USHORT usSequenceNumber = atoi(ipAddress.substr(ipAddress.rfind('.', ipAddress.size()) + 1, ipAddress.size()).c_str());
@@ -194,11 +188,11 @@ bool CICMP::CheckDeviceEx(string ipAddress, string& hostname, string& sMacAddres
 	}
 	else {
 		if (DecodeICMPHeader(usSequenceNumber, recvbuf, iResult, &from)) {
-			ULONG MacAddr[2];
+			ULONG MacAddr[2] = {};
 			ULONG PhysAddrLen = 6;
-			IPAddr ipSource;
-			LPBYTE bPhysAddr;
-			DWORD dwRetVal;
+			IPAddr ipSource = {};
+			LPBYTE bPhysAddr = nullptr;
+			DWORD dwRetVal = 0;
 
 			inet_pton(AF_INET, m_HostIP.c_str(), &ipSource);
 
@@ -269,8 +263,8 @@ bool CICMP::CheckDevice(string ipAddress, string& hostname, string& sMacAddress)
 
 	ULONG MacAddr[2] = {};
 	ULONG PhysAddrLen = 6;
-	IPAddr ipSource;
-	LPBYTE bPhysAddr;
+	IPAddr ipSource = {};
+	LPBYTE bPhysAddr = nullptr;
 
 	if (inet_pton(AF_INET, m_HostIP.c_str(), &ipSource) != 1)
 		return bRet;
@@ -315,8 +309,8 @@ bool CICMP::CheckDevice(string ipAddress, string& hostname, string& sMacAddress,
 	DWORD dwRetVal = 0;
 	ULONG MacAddr[2] = {};
 	ULONG PhysAddrLen = 6;
-	IPAddr ipSource;
-	LPBYTE bPhysAddr;
+	IPAddr ipSource = {};
+	LPBYTE bPhysAddr = nullptr;
 	bool bRet = false;
 
 	if (ipAddress.empty()) {
@@ -417,7 +411,7 @@ USHORT CICMP::CheckSum(USHORT* buffer, int size) {
 bool CICMP::DecodeICMPHeader(USHORT usSeq, char* buf, int bytes, struct sockaddr_in* from) {
 	IPV4_HDR* iphdr = nullptr;
 	ICMP_HDR* icmphdr = nullptr;
-	unsigned short iphdrlen;
+	unsigned short iphdrlen = 0;
 
 	iphdr = (IPV4_HDR*)buf;
 	iphdrlen = iphdr->ucIPHeaderLen * 4;

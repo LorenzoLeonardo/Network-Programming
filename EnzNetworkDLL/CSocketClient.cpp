@@ -38,10 +38,10 @@ CSocketClient::~CSocketClient() {
 	WSACleanup();
 }
 bool CSocketClient::ConnectToServer(int* pLastError) {
-	int iResult;
+	int iResult = 0;
 	struct addrinfo *result = nullptr,
 					*ptr = nullptr,
-					hints;
+					hints = {};
 
 	ZeroMemory(&hints, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
@@ -84,7 +84,7 @@ bool CSocketClient::ConnectToServer(int* pLastError) {
 	return true;
 }
 bool CSocketClient::ConnectToServer(string ipServer, string sPort, int* pLastError) {
-	int iResult;
+	int iResult = 0;
 	*pLastError = 0;
 
 	struct addrinfo *result = nullptr,

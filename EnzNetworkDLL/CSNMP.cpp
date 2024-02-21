@@ -173,7 +173,7 @@ smiVALUE CSNMP::Get(const char* szOID, DWORD& dwLastError) {
 }
 
 void CSNMP::GetSessionMessage() {
-	MSG uMsg;
+	MSG uMsg = {};
 
 	// get the next message for this session
 	while (GetMessage(&uMsg, m_pSession->hWnd, 0, 0)) {
@@ -192,7 +192,7 @@ void CSNMP::GetSessionMessage() {
 
 bool CSNMP::ProcessVarBind(PSNMP_SESSION pSession) {
 	// if we hit the end of tree, break.
-	int oidCount;
+	int oidCount = 0;
 	int i = 1;
 
 
@@ -262,9 +262,9 @@ bool CSNMP::ProcessNotification(PSNMP_SESSION pSession) {
 	HSNMP_ENTITY hAgentEntity = (HSNMP_ENTITY)NULL;
 	HSNMP_ENTITY hManagerEntity = (HSNMP_ENTITY)NULL;
 	HSNMP_CONTEXT hViewContext = (HSNMP_CONTEXT)NULL;
-	smiINT32 nPduType;
-	smiINT32 nRequestId;
-	char szBuf[1024];
+	smiINT32 nPduType = 0;
+	smiINT32 nRequestId = 0;
+	char szBuf[1024] = {};
 
 	// validate pointer
 	if (pSession == NULL)
@@ -374,8 +374,8 @@ LRESULT CALLBACK CSNMP::NotificationWndProc(HWND hWnd, UINT uMsg, WPARAM wParam,
 } // end of NotificationWndProc
 
 bool CSNMP::CreateNotificationWindow(PSNMP_SESSION pSession) {
-	BOOL fOk;
-	WNDCLASSA wc;
+	BOOL fOk = false;
+	WNDCLASSA wc = {};
 
 	if (pSession == nullptr) {
 		return FALSE;

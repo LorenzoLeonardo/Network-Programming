@@ -85,10 +85,10 @@ void CLocalAreaListener::MainThread(void* args) {
 	int nPollTime = pCLocalAreaListener->GetPollingTime();
 	ULONG ulLimit = 0;
 
-	ULONG ulIP;
-	ULONG ulMask;
-	ULONG ulStartingIP;
-	ULONG ulTemp;
+	ULONG ulIP = 0;
+	ULONG ulMask = 0;
+	ULONG ulStartingIP = 0;
+	ULONG ulTemp = 0;
 	inet_pton(AF_INET, ipAddressStart.c_str(), &ulIP);
 	inet_pton(AF_INET, subnetMask.c_str(), &ulMask);
 
@@ -180,10 +180,10 @@ unsigned _stdcall CLocalAreaListener::MainThreadEx(void* args) {
 	string subnetMask = pCLocalAreaListener->GetSubnetMask();
 	int nPollTime = pCLocalAreaListener->GetPollingTime();
 	ULONG ulLimit = 0;
-	ULONG ulIP;
-	ULONG ulMask;
-	ULONG ulStartingIP;
-	ULONG ulTemp;
+	ULONG ulIP = 0;
+	ULONG ulMask = 0;
+	ULONG ulStartingIP = 0;
+	ULONG ulTemp = 0;
 	inet_pton(AF_INET, ipAddressStart.c_str(), &ulIP);
 	inet_pton(AF_INET, subnetMask.c_str(), &ulMask);
 	ulIP = htonl(ulIP);

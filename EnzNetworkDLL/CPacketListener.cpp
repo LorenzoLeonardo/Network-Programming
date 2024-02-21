@@ -136,7 +136,6 @@ bool CPacketListener::StartListening() {
 		return false;
 	}
 
-
 	int nInput = 1;
 
 	if (WSAIoctl(m_socket, SIO_RCVALL, &nInput, sizeof(nInput), 0, 0, (LPDWORD)&iResult, 0, 0) == SOCKET_ERROR) {
@@ -155,7 +154,7 @@ bool CPacketListener::StartListeningEx(ULONG ulNICIP) {
 	int iResult = 0;
 	char szHostname[100] = {};
 	int nInput = 1;
-	ULONG ulIP;
+	ULONG ulIP = 0;
 
 	m_socket = INVALID_SOCKET;
 	m_socket = socket(AF_INET, SOCK_RAW, IPPROTO_IP);

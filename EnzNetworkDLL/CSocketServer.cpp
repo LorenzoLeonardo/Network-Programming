@@ -11,8 +11,8 @@ CSocketServer::~CSocketServer() {
 }
 
 bool CSocketServer::Initialize(string port) {
-	WSADATA wsaData;
-	int iResult;
+	WSADATA wsaData = {};
+	int iResult = 0;
 	int nError = 0;
 
 	m_serverPort = port;
