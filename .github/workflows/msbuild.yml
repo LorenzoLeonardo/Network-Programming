@@ -1,0 +1,40 @@
+name: MSBuild
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+env:
+  SOLUTION_FILE_PATH: .
+  BUILD_CONFIGURATION_RELEASE: Release
+  BUILD_CONFIGURATION_DEBUG: Debug
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Update Submodules
+      run: |
+        git submodule update --init --recursive
+
+    - name: Add MSBuild to PATH
+      uses: microsoft/setup-msbuild@v1.0.2
+
+    - name: Restore NuGet packages
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: nuget restore ${{env.SOLUTION_FILE_PATH}}
+
+    - name: Build Debug
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION_DEBUG}} ${{env.SOLUTION_FILE_PATH}}
+
+    - name: Build Release
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION_RELEASE}} ${{env.SOLUTION_FILE_PATH}}
