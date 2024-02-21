@@ -305,7 +305,7 @@ void CHeaderCtrlCustom::OnNMCustomdraw(NMHDR* pNMHDR, LRESULT* pResult) {
 		hditem.mask = HDI_TEXT;
 		hditem.pszText = buffer;
 		hditem.cchTextMax = MAX_PATH;
-		GetItem(pNMCD->dwItemSpec, &hditem);
+		GetItem(static_cast<int>(pNMCD->dwItemSpec), &hditem);
 		RECT rect;
 		rect = pNMCD->rc;
 		// rect.right--;
