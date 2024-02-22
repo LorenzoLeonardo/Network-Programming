@@ -10,6 +10,7 @@
 #include "framework.h"
 
 #include <afxver_.h> // For VS_FIXEDFILEINFO definition
+#include <afxwin.h>
 
 CCheckOpenPortsDlg* g_pCCheckOpenPortsDlg;
 mutex mtx_enumPorts;
@@ -31,6 +32,7 @@ inline bool key_compare(Map const& lhs, Map const& rhs) {
 }
 
 CString GetProductVersion();
+CString GetLegalCopyright();
 
 class CAboutDlg : public CDialogEx {
 public:
@@ -49,13 +51,32 @@ protected:
 	DECLARE_MESSAGE_MAP()
 
 	afx_msg LRESULT OnSiteVisited(WPARAM wParam, LPARAM lParam);
+
+public:
+	virtual BOOL OnInitDialog();
+
+private:
+	CButton m_ctrlCopyRight;
 };
 
 CAboutDlg::CAboutDlg() : CDialogEx(IDD_ABOUTBOX) {}
 
 void CAboutDlg::DoDataExchange(CDataExchange* pDX) {
 	CDialogEx::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_STATIC_ABOUT_COPY_RIGHT, m_ctrlCopyRight);
 }
+
+
+BOOL CAboutDlg::OnInitDialog() {
+	CDialogEx::OnInitDialog();
+
+	// TODO:  Add extra initialization here
+	CString copyRight = GetLegalCopyright();
+	m_ctrlCopyRight.SetWindowText(copyRight);
+	return TRUE; // return TRUE unless you set the focus to a control
+				 // EXCEPTION: OCX Property Pages should return FALSE
+}
+
 
 BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
 
@@ -139,6 +160,7 @@ void CCheckOpenPortsDlg::DoDataExchange(CDataExchange* pDX) {
 	DDX_Control(pDX, IDC_STATIC_NIC_LISTEN, m_ctrlStaticNICListen);
 	DDX_Control(pDX, IDC_STATIC_ROUTER_PIC, m_ctrlStaticRouterImage);
 	DDX_Control(pDX, IDC_STATIC_NUM_DEVICE, m_ctrlStaticNumDevice);
+	DDX_Control(pDX, IDC_STATIC_COPYRIGHT, m_ctrlCopyRight);
 }
 
 BEGIN_MESSAGE_MAP(CCheckOpenPortsDlg, CDialogEx)
@@ -423,10 +445,12 @@ BOOL CCheckOpenPortsDlg::OnInitDialog() {
 	OnBnClickedButtonStartListenLan();
 	OnBnClickedButtonShowPackets();
 
-	CString title;
-	title.Format(_T("Enzo Tech Network Monitoring Tool - Version %s"), GetProductVersion());
+	CString title = _T("Version ") + GetProductVersion() + _T(" - Enzo Tech Network Monitoring Tool Win32 C++ Programming");
+
 	SetWindowText(title);
 
+	CString copyRight = GetLegalCopyright();
+	m_ctrlCopyRight.SetWindowText(copyRight);
 	return TRUE; // return TRUE  unless you set the focus to a control
 }
 
@@ -2153,4 +2177,49 @@ CString GetProductVersion() {
 		}
 	}
 	return versionString;
+}
+
+CString GetLegalCopyright() {
+	TCHAR strFilePath[MAX_PATH] = {};
+	if (GetModuleFileName(NULL, strFilePath, MAX_PATH) == 0) {
+		return _T("");
+	}
+
+	// Get the size of the version information
+	DWORD dwHandle = 0, dwSize = 0;
+	dwSize = GetFileVersionInfoSize(strFilePath, &dwHandle);
+	if (dwSize == 0) {
+		std::cerr << "Failed to get version information size." << std::endl;
+		return CString();
+	}
+
+	// Allocate memory for the version information
+	std::vector<BYTE> versionInfo(dwSize);
+	if (!GetFileVersionInfo(strFilePath, 0, dwSize, versionInfo.data())) {
+		std::cerr << "Failed to get version information." << std::endl;
+		return CString();
+	}
+
+	// Get the language and code page
+	DWORD* pTranslation = nullptr;
+	UINT cbTranslation = 0;
+	if (!VerQueryValue(versionInfo.data(), _T("\\VarFileInfo\\Translation"), reinterpret_cast<LPVOID*>(&pTranslation), &cbTranslation)) {
+		std::cerr << "Failed to get translation information." << std::endl;
+		return CString();
+	}
+
+	// Form the query string for LegalCopyright
+	CString strQuery;
+	strQuery.Format(_T("\\StringFileInfo\\%04x%04x\\LegalCopyright"),
+		LOWORD(*pTranslation), HIWORD(*pTranslation));
+
+	// Retrieve the LegalCopyright
+	LPTSTR lpLegalCopyright = nullptr;
+	UINT cbData = 0;
+	if (!VerQueryValue(versionInfo.data(), strQuery, reinterpret_cast<LPVOID*>(&lpLegalCopyright), &cbData)) {
+		std::cerr << "Failed to get LegalCopyright." << std::endl;
+		return CString();
+	}
+
+	return CString(lpLegalCopyright);
 }

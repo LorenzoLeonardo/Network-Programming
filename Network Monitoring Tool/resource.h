@@ -71,6 +71,7 @@
 #define IDC_LIST_VISITED                1042
 #define IDC_STATIC_VISITED              1044
 #define IDC_STATIC_COPYRIGHT            1045
+#define IDC_STATIC_ABOUT_COPY_RIGHT     1046
 #define ID_BUTTON32773                  32773
 #define ID_BUTTON32774                  32774
 #define ID_BUTTON32775                  32775
@@ -81,7 +82,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        148
 #define _APS_NEXT_COMMAND_VALUE         32776
-#define _APS_NEXT_CONTROL_VALUE         1046
+#define _APS_NEXT_CONTROL_VALUE         1047
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
