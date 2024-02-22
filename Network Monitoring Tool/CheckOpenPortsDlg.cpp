@@ -2106,7 +2106,7 @@ void CCheckOpenPortsDlg::OnLButtonDown(UINT nFlags, CPoint point) {
 		((point.x) <= translatedRect.right) &&
 		((translatedRect.top) <= point.y) &&
 		(point.y <= (translatedRect.bottom))) {
-		ShellExecute(NULL, _T("open"), _T("https://m.me/Lorenzo.Leonardo.92"), NULL,
+		ShellExecute(NULL, _T("open"), _T("https://m.me/EnzoTechComputerSolutions"), NULL,
 			NULL, SW_SHOWNORMAL);
 	}
 	this->GetWindowRect(&rectDlg);
