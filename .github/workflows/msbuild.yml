@@ -39,8 +39,15 @@ jobs:
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION_RELEASE}} ${{env.SOLUTION_FILE_PATH}}
 
+    - name: Copy artifacts
+      run: |
+       mkdir -p release
+       cp x64\Release\*.exe release/
+       cp x64\Release\*.dll release/
     - name: Archive artifacts
       uses: actions/upload-artifact@v2
       with:
-        name: Network Monitoring Builds
-        path: D:\a\Network-Programming\Network-Programming\x64*
+        name: Release Build
+        path: ./release
+
+
